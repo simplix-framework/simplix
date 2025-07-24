@@ -2,10 +2,10 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     
-    <!-- Console Appender with conditional TraceId -->
+    <!-- Console Appender with TraceId -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36}%X{traceId: [TraceId: %X{traceId}]} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{traceId}] - %msg%n</pattern>
         </encoder>
     </appender>
     
@@ -20,7 +20,19 @@
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36}%X{traceId: [TraceId: %X{traceId}]} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{traceId}] - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- Application Log File -->
+    <appender name="APPLICATION_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/application.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/application-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{traceId}] - %msg%n</pattern>
         </encoder>
     </appender>
     
@@ -28,8 +40,12 @@
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="ERROR_FILE"/>
+        <appender-ref ref="APPLICATION_FILE"/>
     </root>
     
     <!-- SimpliX Framework Logging -->
     <logger name="dev.simplecore.simplix" level="DEBUG"/>
+    
+    <!-- HTTP Request/Response Logging -->
+    <logger name="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping" level="DEBUG"/>
 </configuration> 
