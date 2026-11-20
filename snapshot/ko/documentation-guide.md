@@ -132,7 +132,7 @@ GitHub Actions 탭에서 "Deploy Documentation" 워크플로우를 수동 실행
 ### 배포 URL
 
 ```
-https://simplecore-inc.github.io/simplix/
+https://simplix-framework.github.io/simplix/
 ```
 
 ## 문서 기여
