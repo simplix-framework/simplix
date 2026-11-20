@@ -4,7 +4,7 @@
 
 [![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.x-green.svg)](https://spring.io/projects/spring-boot)
-[![License](https://img.shields.io/badge/License-SCL--1.0-blue.svg)](https://github.com/simplecore-inc/simplix/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-SCL--1.0-blue.svg)](https://github.com/simplix-framework/simplix/blob/main/LICENSE)
 
 빠른 엔터프라이즈 애플리케이션 개발을 위한 모듈형 Spring Boot 스타터 라이브러리입니다.
 
@@ -69,7 +69,7 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         maven {
-            url = uri("https://maven.pkg.github.com/simplecore-inc/simplix")
+            url = uri("https://maven.pkg.github.com/simplix-framework/simplix")
             credentials {
                 username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
                 password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
@@ -254,7 +254,7 @@ SimpliX는 엔터프라이즈 보안을 고려하여 설계되었습니다:
 
 ```bash
 # 저장소 클론
-git clone https://github.com/simplecore-inc/simplix.git
+git clone https://github.com/simplix-framework/simplix.git
 cd simplix
 
 # 빌드 (테스트 제외)
