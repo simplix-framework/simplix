@@ -58,7 +58,7 @@ java {
 repositories {
     mavenCentral()
     maven {
-        url = uri("https://maven.pkg.github.com/simplecore-inc/simplix")
+        url = uri("https://maven.pkg.github.com/simplix-framework/simplix")
         credentials {
             username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
             password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
@@ -101,7 +101,7 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         maven {
-            url = uri("https://maven.pkg.github.com/simplecore-inc/simplix")
+            url = uri("https://maven.pkg.github.com/simplix-framework/simplix")
             credentials {
                 username = settings.ext.find('gpr.user') ?: System.getenv("GITHUB_USERNAME")
                 password = settings.ext.find('gpr.token') ?: System.getenv("GITHUB_TOKEN")

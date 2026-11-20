@@ -69,7 +69,7 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         maven {
-            url = uri("https://maven.pkg.github.com/simplecore-inc/simplix")
+            url = uri("https://maven.pkg.github.com/simplix-framework/simplix")
             credentials {
                 username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
                 password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
@@ -228,7 +228,7 @@ SimpliX is built with enterprise security in mind:
 
 ```bash
 # Clone the repository
-git clone https://github.com/simplecore-inc/simplix.git
+git clone https://github.com/simplix-framework/simplix.git
 cd simplix
 
 # Build (skip tests)
