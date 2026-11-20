@@ -250,12 +250,12 @@ subprojects {
                     } else {
                         throw new RuntimeException("No metadata found for project: ${project.name}")
                     }
-                    url = 'https://github.com/simplecore-inc/simplix'
+                    url = 'https://github.com/simplix-framework/simplix'
 
                     licenses {
                         license {
                             name = 'SimpliX License, Version 1.0'
-                            url = 'https://github.com/simplecore-inc/simplix/LICENSE.txt'
+                            url = 'https://github.com/simplix-framework/simplix/LICENSE.txt'
                         }
                     }
                     developers {
@@ -265,9 +265,9 @@ subprojects {
                         }
                     }
                     scm {
-                        connection = 'scm:git:git://github.com/simplecore-inc/simplix.git'
-                        developerConnection = 'scm:git:ssh://github.com:simplecore-inc/simplix.git'
-                        url = 'https://github.com/simplecore-inc/simplix.git'
+                        connection = 'scm:git:git://github.com/simplix-framework/simplix.git'
+                        developerConnection = 'scm:git:ssh://github.com:simplix-framework/simplix.git'
+                        url = 'https://github.com/simplix-framework/simplix.git'
                     }
                 }
             }
@@ -277,7 +277,7 @@ subprojects {
             mavenLocal()
             maven {
                 name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/simplecore-inc/simplix")
+                url = uri("https://maven.pkg.github.com/simplix-framework/simplix")
                 credentials {
                     username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
                     password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
