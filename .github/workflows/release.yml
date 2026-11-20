@@ -32,7 +32,7 @@ jobs:
           if [ -z "$ACCESSCORE_GITHUB_TOKEN" ]; then
             echo "✖ Error: ACCESSCORE_GITHUB_TOKEN secret is not set."
             echo "  simplix-license resolves dev.accesscore:license-sdk from"
-            echo "  https://maven.pkg.github.com/accesscore-dev/accesscore-license-sdk-dist,"
+            echo "  https://maven.pkg.github.com/simplecore-labs/accesscore-license-sdk-dist,"
             echo "  which requires a token with the read:packages scope."
             exit 1
           fi
