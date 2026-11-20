@@ -107,7 +107,7 @@ convert_links() {
   # Common link conversions
   sed_args+=(-e 's|(/ko/|(ko/|g')
   sed_args+=(-e 's|\.\./\.\./README\.md|ko/README.md|g')
-  sed_args+=(-e 's|\.\./\.\./LICENSE|https://github.com/simplecore-inc/simplix/blob/main/LICENSE|g')
+  sed_args+=(-e 's|\.\./\.\./LICENSE|https://github.com/simplix-framework/simplix/blob/main/LICENSE|g')
 
   # Module-specific link conversions
   for mapping in "${MODULE_MAPPINGS[@]}"; do

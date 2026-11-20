@@ -71,7 +71,7 @@ confirm_github_publish() {
     echo -e "${YELLOW}You are about to publish to GitHub Packages.${NC}"
     echo -e "${YELLOW}This action will make your artifacts publicly available.${NC}"
     echo ""
-    echo -e "${CYAN}Repository: https://github.com/simplecore-inc/simplix/packages${NC}"
+    echo -e "${CYAN}Repository: https://github.com/simplix-framework/simplix/packages${NC}"
     echo -e "${CYAN}Artifacts will be published with version: $(grep 'version =' build.gradle | head -1 | cut -d"'" -f2)${NC}"
     echo ""
     
@@ -241,7 +241,7 @@ show_build_results() {
             ;;
         4)
             echo -e "${CYAN}Published to GitHub Packages${NC}"
-            echo "  🌐 https://github.com/simplecore-inc/simplix/packages"
+            echo "  🌐 https://github.com/simplix-framework/simplix/packages"
             ;;
     esac
 }
