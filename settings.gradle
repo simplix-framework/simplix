@@ -57,6 +57,7 @@ dependencyResolutionManagement {
             content {
                 excludeGroup "dev.simplecore.searchable"
                 excludeGroup "dev.simplecore.simplix"
+                excludeGroup "dev.accesscore"
             }
         }
 
