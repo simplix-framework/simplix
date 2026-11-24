@@ -46,7 +46,7 @@
 | `security.enable-web-security` | `true` | 웹 체인과 로그인 페이지 등록 |
 | `security.permit-all-patterns` | 없음 | 로그인 없이 접근할 수 있는 경로 |
 | `security.prefer-token-over-session` | `true` | 요청에 토큰과 세션이 모두 있으면 토큰으로 인증 |
-| `security.enable-cors` | `true` | CORS 설정 적용 |
+| `security.enable-cors` | `true` | CORS 설정을 웹 체인에 적용합니다. 토큰 체인과 API 체인에는 항상 적용됩니다 |
 | `security.enable-csrf` | `true` | 웹 체인의 CSRF 보호 |
 | `security.csrf-ignore-patterns` | `/api/token/**`, `/h2-console/**` | CSRF에서 제외할 웹 체인 경로 |
 | `security.enable-http-basic` | `false` | 웹 체인에서 HTTP Basic 허용 |

@@ -93,6 +93,8 @@ The guides show the methods a task needs. The types they name also have these pu
 | `StreamSession` | `touch()`, `markDisconnected()`, `markReconnected()`, `markTerminated()`, `addSubscription(key)`, `removeSubscription(key)`, `clearSubscriptions()` | change the state and the subscriptions of the session; the module calls them as the connection changes |
 | `StreamSession` | `addMetadata(key, value)`, `getMetadata(key)`, `addTransientMetadata(key, value)`, `getTransientMetadata(key)` | keep values with the session; persistence stores the metadata with the session, and the transient metadata stays in the memory of the instance |
 | `StreamMessage` | `subscriptionRemoved(key, reason)`, `sessionTerminated(reason)`, `serialize(objectMapper)` | create the message for a removed subscription and for an ended session, and return the message as JSON |
+| `SimpliXStreamDataCollectorRegistry`, `SimpliXStreamEventSourceRegistry` | `register(collector)`, `register(source)` | add a collector or an event source that is not a bean; the beans of these types are registered at start |
+| `StreamAuthorizationService` | `registerAuthorizer(authorizer)` | adds a `ResourceAuthorizer` that is not a bean |
 
 ## Related documents
 
