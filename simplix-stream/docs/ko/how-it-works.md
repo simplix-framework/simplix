@@ -103,6 +103,14 @@
 | `SimpliXStreamEventSourceRegistry` | `getRegisteredResources()`, `getRegisteredEventTypes()`, `getEventSources()`, `unregister(resource)` | 등록된 리소스 이름, 이벤트 타입, 이벤트 소스 목록을 반환합니다. `unregister`는 리소스의 이벤트 소스를 제거하고 제거한 이벤트 소스 또는 `null`을 반환합니다 |
 | `SubscriptionManager` | `updateSubscriptions(sessionId, subscriptions)`, `clearSubscriptions(sessionId)` | 세션의 구독 목록을 교체하고 `SubscriptionUpdateResult`를 반환합니다. `clearSubscriptions`는 세션의 구독을 모두 해제합니다. 구독 엔드포인트가 `updateSubscriptions`를 호출합니다 |
 | `SubscriptionManager` | `setOnSubscriptionAdded(callback)`, `setOnSubscriptionRemoved(callback)`, `getActualInterval(key, requested)` | 구독 추가와 구독 해제에 모듈이 사용하는 콜백을 등록하고, 구독이 실제로 실행되는 주기를 반환합니다 |
+| `StreamStatisticsService` | `getStats`, `getSessionStatsByState`, `getTopResources`, `getServerStats`, `getSessions`, `getSessionDetails`, `getSubscriptionsByResource` | 관리 API의 전역 엔드포인트가 반환하는 수치와 목록을 반환합니다. 코드에서 같은 값을 읽으려면 이 서비스를 주입하세요 |
+| `SchedulerManager` | `getScheduler`, `getAllSchedulers`, `getSchedulerCount`, `getLocalSubscribers`, `getLocalSubscriberCount`, `isLeader`, `isDistributedMode` | 실행 중인 수집 작업, 현재 인스턴스의 구독자, 실행 모드를 조회합니다 |
+| `SchedulerManager` | `triggerNow`, `stopScheduler`, `forceStopScheduler` | 수집 작업을 즉시 실행하거나 중지합니다. 관리 API가 호출합니다 |
+| `SchedulerManager` | `addSubscriber`, `removeSubscriber`, `asSubscriberLookup` | 구독이 바뀔 때 모듈이 호출하는 메서드입니다 |
+| `SubscriptionScheduler` | `getSubscribers`, `getSubscriberCount`, `hasSubscribers`, `getIntervalMs`, `isActive`, `getExecutionCount`, `getSuccessCount`, `getErrorCount`, `getConsecutiveErrors`, `getLastSuccessAt`, `getLastError` | 해당 수집 작업의 구독자, 주기, 상태, 카운터, 마지막 성공 시각, 마지막 오류를 반환합니다. 관리 API가 보고하는 값입니다 |
+| `SubscriptionScheduler` | `addSubscriber`, `removeSubscriber`, `recordSuccess`, `recordError`, `setScheduledFuture` | 수집 작업을 실행하는 동안 모듈이 호출하는 메서드입니다 |
+| `StreamServerManager` | `getActiveServers`, `getServer`, `getActiveServerCount`, `isRunning` | 데이터베이스에 등록된 인스턴스와 매니저의 실행 여부를 조회합니다 |
+| `StreamServerManager` | `registerInstance`, `unregisterInstance`, `updateStats`, `handleDeadServer`, `setOnDeadServerDetected` | 시작, 종료, 하트비트 기록, 중단된 인스턴스 감지 시점에 모듈이 호출하는 메서드입니다 |
 
 ## 관련 문서
 
