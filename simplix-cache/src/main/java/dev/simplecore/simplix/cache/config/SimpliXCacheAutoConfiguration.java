@@ -39,7 +39,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * SimpliX Cache Auto Configuration
  * Automatically configures caching based on available dependencies and properties
  */
-@AutoConfiguration
+@AutoConfiguration(afterName = {
+        "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration",
+        "org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration",
+        "dev.simplecore.simplix.messaging.autoconfigure.MessagingAutoConfiguration"
+})
 @Configuration
 @EnableCaching
 @EnableConfigurationProperties(CacheProperties.class)
