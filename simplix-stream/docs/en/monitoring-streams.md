@@ -38,6 +38,8 @@ Alert on the gauges that move: sessions that approach what the instance can hold
 | `simplix.stream.monitoring.metrics-prefix` | `simplix.stream` | the prefix of the metric names |
 | `simplix.stream.monitoring.health-check-interval` | 10 seconds | no effect: no code reads it |
 
+With `micrometer-registry-prometheus` among the dependencies and the endpoint exposed, Prometheus scrapes the gauges from `/actuator/prometheus`, as it does every other metric of a Spring Boot application.
+
 ## Alert rules
 
 ```yaml

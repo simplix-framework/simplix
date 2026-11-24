@@ -159,6 +159,13 @@ server {
 
 Data is collected by the instance that holds the subscribing sessions. Two instances with subscribers to the same key each call the collector.
 
+## When an instance stops
+
+1. The connections of the instance end, and its clients see the `error` event of their `EventSource`.
+2. A client that connects again reaches another instance and opens a new session there. A client that authenticates with the header can call `/reconnect` with its old session id instead: the other instance restores the session and its subscriptions from the database.
+3. The remaining instances notice the missing heartbeat. After `server.dead-threshold` they mark the instance `DEAD` and terminate the sessions it left behind, so the global lists show the real state.
+4. Collections the stopped instance ran start on whichever instance the subscribers arrive at.
+
 ## Admin commands across instances
 
 ```yaml

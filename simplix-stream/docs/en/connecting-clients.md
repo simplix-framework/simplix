@@ -218,6 +218,74 @@ result.failed.forEach((failure) => console.warn(failure.resource, failure.reason
 - The client keeps the last list and sends it again after a reconnection, because a new session starts without subscriptions.
 - In a React application, create the client once, for example in a context provider, and call `on` and `subscribe` from an effect that calls `close` on cleanup.
 
+## What the client has to handle
+
+| The client sees | Meaning | Do |
+|---|---|---|
+| 401 on `/tickets` or on a session call | the access token is missing or expired | renew the token, then call again |
+| 404 `Stream session not found` on a session call | the session ended: timeout, a restart of the server, or an administrator | connect again and send the subscriptions again |
+| entries under `failed` in a subscription response | the resource does not exist, or the user may not subscribe | show or log the `reason`; the other entries are subscribed |
+| an `error` event with `errorCode` `SCHEDULER_ERROR` | the collector of one subscription failed this time | keep the last data on the screen; the next interval tries again |
+| a `session_terminated` event | the server ended the session and gives the reason in `message` | stop reconnecting and tell the user |
+| the `error` event of the `EventSource` | the connection ended: `session.timeout`, the network, or a deployment | open a new connection with a new ticket and subscribe again |
+
+## Use it from React
+
+```javascript
+import { createContext, createElement, useContext, useEffect, useState } from 'react';
+import { StreamClient } from './stream-client.mjs';
+
+const StreamContext = createContext(null);
+
+export function StreamProvider({ baseUrl, getAccessToken, subscriptions, children }) {
+  const [client, setClient] = useState(null);
+
+  useEffect(() => {
+    const created = new StreamClient(baseUrl, getAccessToken);
+    let active = true;
+    created.connect()
+      .then(() => created.subscribe(subscriptions))
+      .then(() => { if (active) setClient(created); });
+    return () => {
+      active = false;
+      created.close();
+    };
+  }, [baseUrl]);
+
+  return createElement(StreamContext.Provider, { value: client }, children);
+}
+
+export function useStreamData(resource) {
+  const client = useContext(StreamContext);
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    if (client) {
+      client.on(resource, setData);
+    }
+  }, [client, resource]);
+
+  return data;
+}
+```
+
+```javascript
+function ShelfBadge() {
+  const data = useStreamData('shelf-occupancy');
+  return createElement('span', null, data ? 'free: ' + data.free : 'waiting');
+}
+
+createElement(StreamProvider, {
+  baseUrl: '/api/stream',
+  getAccessToken: () => auth.accessToken(),
+  subscriptions: [{ resource: 'shelf-occupancy', params: { shelfId: 's1' } }],
+}, createElement(ShelfBadge));
+```
+
+- The provider opens one connection for the part of the application below it and states the whole subscription list once, because a subscription call replaces the list. Components read a resource with the hook and render `waiting` until the first message of that resource arrives.
+- Unmounting the provider closes the session.
+- The same handler registration feeds another store: `client.on(resource, payload => store.dispatch(received(resource, payload)))`.
+
 ## Types for TypeScript
 
 ```typescript

@@ -2,6 +2,17 @@
 
 WebSocket 연결의 STOMP로 스트림을 제공하는 방법, 클라이언트가 전송하는 메시지와 수신 위치, Server-Sent Events 대신 선택하기 전에 확인할 사항을 설명합니다.
 
+## Server-Sent Events와 WebSocket 비교
+
+|  | Server-Sent Events | WebSocket |
+|---|---|---|
+| 필요 사항 | 모듈 외에 없음 | `spring-boot-starter-websocket`과 `websocket.enabled` |
+| 구독 전송 | HTTP 호출 | 같은 연결의 STOMP 메시지 |
+| 메시지 수신 대상 | 해당 세션의 연결만 | 목적지를 구독한 모든 클라이언트 |
+| 사용자 식별 | 요청의 토큰 또는 연결 티켓 | 핸드셰이크의 principal |
+| 끊긴 세션 | `/reconnect`로 복원 가능 | 새 세션으로 다시 시작 |
+| 적합한 경우 | 사용자별로 다른 데이터(일반적인 경우) | 연결된 모든 클라이언트가 조회해도 되는 데이터 |
+
 ## 전송 방식 활성화
 
 ```groovy
