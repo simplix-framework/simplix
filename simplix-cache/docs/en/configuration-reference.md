@@ -9,8 +9,8 @@ Every property of the module, under `simplix.cache`.
 | `default-ttl-seconds` | `3600` | the time to live of the Redis cache manager and of NATS buckets, for a cache that sets none |
 | `cache-null-values` | `false` | lets the Redis cache manager store `null` results |
 | `cache-configs.<name>.ttl-seconds` | none | declares a cache for the annotations and sets its time to live in Redis and NATS |
-| `redis.key-prefix` | `cache:` | the prefix of the Redis keys |
-| `redis.use-key-prefix` | `true` | writes the prefix |
+| `redis.key-prefix` | `cache:` | the prefix of the Redis keys the `CacheService` writes; the cache annotations write keys without it |
+| `redis.use-key-prefix` | `true` | writes the prefix in front of the keys of the `CacheService` |
 | `nats.bucket-prefix` | `simplix-cache-` | the prefix of the NATS bucket names |
 | `nats.replicas` | `1` | the replicas of a NATS bucket |
 | `metrics.enabled` | `true` | collects cache statistics |
