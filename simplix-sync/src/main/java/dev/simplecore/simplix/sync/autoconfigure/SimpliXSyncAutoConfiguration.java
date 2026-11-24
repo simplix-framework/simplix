@@ -39,7 +39,11 @@ import org.springframework.data.redis.serializer.RedisSerializer;
  *   </li>
  * </ul>
  */
-@AutoConfiguration
+@AutoConfiguration(afterName = {
+        "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration",
+        "org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration",
+        "dev.simplecore.simplix.messaging.autoconfigure.MessagingAutoConfiguration"
+})
 @EnableConfigurationProperties(SyncProperties.class)
 @ConditionalOnProperty(name = "simplix.sync.enabled", havingValue = "true", matchIfMissing = true)
 public class SimpliXSyncAutoConfiguration {
