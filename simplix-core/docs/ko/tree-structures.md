@@ -214,6 +214,85 @@ categoryService.getTreeMetrics();
 
 저장소는 연결의 제품 이름을 읽어 PostgreSQL, MySQL, MariaDB, Oracle, SQL Server, H2의 문법에 맞는 재귀 쿼리를 작성합니다.
 
+## 직접 작성하는 서비스 메서드용 보조 메서드
+
+직접 연산을 추가하는 서비스는 검사를 다시 구현하지 않고 `SimpliXTreeBaseService`의 protected 보조 메서드를 사용합니다.
+
+```java
+@Service
+public class CategoryMaintenance extends SimpliXSortableTreeBaseService<Category, String> {
+
+    private final CategoryRepository repository;
+
+    public CategoryMaintenance(CategoryRepository repository) {
+        super(repository);
+        this.repository = repository;
+    }
+
+    @Transactional
+    public Category reparent(String categoryId, String newParentId) {
+        String parentId = normalizeParentId(newParentId);          // "" becomes null: a root
+        validateNoCircularReference(categoryId, parentId);          // IllegalArgumentException
+        return move(categoryId, parentId);
+    }
+
+    @Transactional
+    public void removeLeaf(String categoryId) {
+        validateNoChildren(categoryId, () ->
+            new SimpliXGeneralException(ErrorCode.GEN_CONFLICT, "The category still has children", categoryId));
+        deleteById(categoryId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryNode> outline() {
+        List<Category> roots = buildTreeFromFlatList(repository.findAll(), null);
+        return mapToTreeDto(roots,
+            category -> new CategoryNode(category.getId(), category.getName()),
+            Category::getChildren,
+            CategoryNode::setChildren);
+    }
+}
+```
+
+```java
+@Getter
+@Setter
+@RequiredArgsConstructor
+public class CategoryNode {
+
+    private final String id;
+    private final String name;
+    private List<CategoryNode> children = new ArrayList<>();
+}
+```
+
+| 보조 메서드 | 동작 | 검사 실패 시 |
+|---|---|---|
+| `normalizeParentId(parentId)` | 빈 문자열을 루트의 상위 값인 `null`로 변환합니다. 폼에서 "상위 없음"을 빈 문자열로 보낼 때 사용합니다 | 실패하지 않음 |
+| `validateNoCircularReference(nodeId, newParentId)` | 새 상위 노드가 자기 자신이나 자신의 하위 노드가 아닌지 검사합니다 | `IllegalArgumentException`: `Cannot move node <id> to its descendant <id>` |
+| `validateNoChildren(id)` | 가지를 삭제하면 안 되는 삭제 전에 노드에 자식이 없는지 검사합니다 | `IllegalStateException` |
+| 마지막 인수로 supplier를 받는 두 검사 | 같은 검사 | supplier가 반환한 예외. 예: 오류 코드를 지정한 `SimpliXGeneralException` |
+| `buildTreeFromFlatList(nodes, rootParentId)` | 평면 목록을 상위 ID 기준으로 메모리에서 중첩해 `children`이 채워진 루트 목록을 반환합니다 | 실패하지 않음 |
+| `mapToTreeDto(entities, mapper, childrenGetter, childrenSetter)` | 중첩된 엔티티 트리를 중첩된 DTO 트리로 변환합니다 | 실패하지 않음 |
+| `mapToTreeDtoWithChildInfo(entities, mapper, childrenGetter, setter)` | 같은 변환을 수행하며 setter에 자식 수도 전달합니다. 건수나 펼침 표시가 필요한 화면에 사용합니다 | 실패하지 않음 |
+
+분류가 Fiction > Fantasy > Epic fantasy일 때 `reparent(fiction, epicFantasy)`는 거부되고, `reparent(epicFantasy, "")`를 호출하면 Epic fantasy가 루트가 됩니다. 이후 `outline()`은 Fantasy를 하위에 둔 Fiction과 Epic fantasy를 같은 수준으로 반환합니다.
+
+## 저장소 메서드
+
+서비스는 `SimpliXTreeRepository`의 아래 메서드를 호출합니다. 서비스 없이 행이 필요한 쿼리에서는 직접 호출하세요.
+
+| 메서드 | 반환값 |
+|---|---|
+| `findRootItems()` | 상위가 없는 노드 |
+| `findDirectChildren(parentId)` | 특정 노드의 자식 |
+| `findItemWithAllDescendants(itemId)` | 노드와 모든 하위 노드의 평면 목록 |
+| `findCompleteHierarchy()` | 모든 수준의 `children`이 채워진 루트 목록 |
+| `buildHierarchy(allItems)` | 전달한 평면 목록을 중첩한 루트 목록 |
+| `findByLookup(parameters)` | 조회 컬럼이 지정한 값과 같은 노드 |
+| `countChildrenByParentId()` | 상위 ID와 자식 수로 구성된 행 |
+| `findRootItemsWithChildCount()`, `findDirectChildrenWithChildCount(parentId)` | 엔티티와 자식 수로 구성된 행. 단계적으로 펼치는 트리 화면에 사용합니다 |
+
 ## 연산 요약
 
 | 구분 | 메서드 |
