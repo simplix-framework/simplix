@@ -50,6 +50,28 @@ POI로 시트를 직접 작성하는 코드에서는 `ExcelConverter`와 `ExcelS
 
 파일을 기록하는 중에 발생한 오류는 `ExcelExportException` 또는 스트림의 `IOException`으로 호출자에게 전달됩니다. 이때 응답에는 이미 파일의 일부가 기록되었을 수 있습니다. 다운로드 헤더는 익스포터로 설정하고, 예외는 중단된 다운로드로 클라이언트에 전달되도록 하세요. 이 시점에는 오류 본문을 보낼 수 없습니다.
 
+## 그 밖의 공개 메서드
+
+가이드에서는 작업에 필요한 메서드를 설명합니다. 가이드에 나온 타입은 아래 공개 메서드도 제공합니다.
+
+| 타입 | 메서드 | 동작 |
+|---|---|---|
+| `StringUtil` | `hasText(str)`, `isBlank(str)`, `defaultIfEmpty(str, defaultValue)` | 문자열에 내용이 있는지 검사하고, 빈 문자열을 기본값으로 대체합니다 |
+| `ExcelLabels` | `columnName(name)`, `enumLabel(value)`, `booleanLabel(value)` | 익스포터가 출력하는 컬럼 제목, 열거형 상수의 라벨, 불리언 값의 텍스트를 반환합니다 |
+| `ExcelLabels` | `configure(source, labelResolvers, format)`, `reset()` | 라벨에 사용할 `MessageSource`와 리졸버를 지정하고, 초기 상태로 되돌립니다. `configure`는 모듈이 시작할 때 호출하며 `reset`은 테스트에 사용합니다 |
+| `ExcelLabelResolver` | `resolve(key, locale)` | 직접 작성하는 리졸버에서 구현하는 메서드입니다. 로케일에 맞는 키의 텍스트를 반환합니다 |
+| `ValueFormatter` | `formatValue(value, column)`, `parseValue(value, targetType, pattern)`, `registerFormatter(type, formatter)` | 값을 타입과 `@ExcelColumn`에 따라 포맷하고, 문자열을 지정한 타입으로 파싱하고, 타입의 `Formatter`를 등록합니다 |
+| `Formatter` | `parse(value, pattern)`, `getDefaultPattern()` | 패턴으로 문자열을 파싱하고, 컬럼에 패턴이 없을 때 사용하는 패턴을 반환합니다 |
+| `TypeConverter` | `formatNumber`, `formatDate`, `formatLocalDate`, `formatLocalDateTime`, `formatLocalTime`, `formatZonedDateTime`, `formatOffsetDateTime`, `formatInstant`, `formatEnum`, `formatMap`, `formatCollection`, `formatArray` | 해당 타입의 값을 문자열로 변환합니다 |
+| `TypeConverter` | `fromString`, `parseDate`, `parseLocalDate`, `parseLocalDateTime`, `parseLocalTime`, `parseZonedDateTime`, `parseOffsetDateTime`, `parseInstant`, `parseEnum`, `parseTemporal` | 문자열을 해당 타입의 값으로 변환합니다 |
+| `TypeConverter`, `TemporalConverter` | `setDefaultZone(zone)` | 시간대 정보가 없는 값에 사용할 시간대를 지정합니다 |
+| `TemporalConverter` | `isTemporal`, `formatTemporal`, `formatLocalDate`, `formatLocalTime`, `formatLocalDateTime`, `formatZonedDateTime`, `formatOffsetDateTime`, `formatInstant` | 타입이 `java.time` 타입인지 반환하고, 해당 타입의 값을 문자열로 변환합니다 |
+| `TemporalConverter` | `parseTemporalFromString`, `parseLocalDate`, `parseLocalTime`, `parseLocalDateTime`, `parseZonedDateTime`, `parseOffsetDateTime`, `parseInstant` | 문자열을 `java.time` 타입의 값으로 변환합니다 |
+| `DateConverter` | `formatDate(date, pattern)`, `formatCalendar(calendar, pattern)`, `parseDate(value)`, `parseCalendar(value)` | `java.util.Date` 값과 `Calendar` 값을 포맷하고 파싱합니다 |
+| `Converter` | `fromString(value, targetType)` | 날짜 변환기에서 문자열을 대상 타입으로 변환하는 메서드입니다 |
+| `ConverterRegistry` | `registerFromStringConverter(targetType, converter)`, `fromString(str, targetType, defaultValue)`, `clear()` | 문자열 변환 함수를 등록하고, 실패 시 사용할 기본값과 함께 문자열을 변환하고, 등록한 변환 함수를 모두 제거합니다 |
+| `ExcelTemplateGenerator` | `generateDefaultTemplate()`, `generateTemplateResource()` | JXLS 익스포터의 기본 템플릿을 만듭니다. 파일로 만들어 위치를 반환하거나 `Resource`로 반환합니다 |
+
 ## 관련 문서
 
 - [데이터 내보내기](./exporting-data.md)

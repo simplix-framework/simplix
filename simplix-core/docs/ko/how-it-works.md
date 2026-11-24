@@ -45,6 +45,32 @@
 
 이 모듈은 searchable-jpa를 사용하는 쪽에 전이 의존성으로 노출합니다. 그래서 애플리케이션은 SimpliX 패키지 저장소와 함께 searchable-jpa 패키지 저장소도 추가합니다. Spring Data JPA, Spring Web, Jackson, Hibernate Validator, ModelMapper, OWASP HTML 새니타이저는 모듈 내부에서 사용하므로, 애플리케이션에서 직접 호출하려면 의존성을 따로 선언하세요.
 
+## 그 밖의 공개 메서드
+
+가이드에서는 작업에 필요한 메서드를 설명합니다. 가이드에 나온 타입은 아래 공개 메서드도 제공합니다.
+
+| 타입 | 메서드 | 동작 |
+|---|---|---|
+| `Event` | `getEventId()`, `getEventType()`, `getAggregateId()`, `getOccurredAt()` | 이벤트 ID, 이벤트 타입, 관련 애그리거트의 ID, 발생 시각을 반환합니다 |
+| `Event` | `getUserId()`, `getTenantId()` | 이벤트를 발생시킨 사용자와 이벤트가 속한 테넌트를 반환합니다. 사용자와 테넌트는 없을 수 있습니다 |
+| `Event` | `getMetadata()`, `getPayload()` | 이벤트의 메타데이터 맵과 페이로드를 반환합니다 |
+| `EventMessage` | `payloadInt(key)`, `metadataString(key)` | 페이로드에서 `Integer` 값을, 메타데이터에서 문자열 값을 읽습니다 |
+| `EventMessage` | `isType(type)`, `isAggregate(type)` | 이벤트 타입이 지정한 값과 같은지, 이벤트가 지정한 애그리거트 타입에 속하는지 반환합니다 |
+| `EventMessage` | `isSoftDelete()`, `hasAnyChangedProperty(properties...)` | 논리 삭제로 발생한 이벤트인지, 수정 이벤트에서 지정한 속성 중 하나가 변경되었는지 반환합니다 |
+| `EventContext` | `isEventsSuppressed()` | 현재 스레드에서 이벤트 발행이 억제되어 있는지 반환합니다 |
+| `EventManager` | `getPublisherName()` | 사용 중인 발행기의 이름을 반환합니다 |
+| `BooleanConverter`, `EnumConverter`, `DateTimeConverter` | `getDefault()` | 기본 변환기를 반환합니다. `DateTimeConverter`의 기본 변환기는 기본 시간대를 사용합니다 |
+| `TimezoneContext` | `getZoneIdOrDefault(fallback)` | 현재 요청의 시간대를 반환합니다. 요청에 시간대가 없으면 전달받은 값을 반환합니다 |
+| `EntityUtils` | `getEntityClass(clazz)` | 클래스의 제네릭 상위 클래스에 지정된 첫 번째 타입 인자를 반환합니다. `SimpliXBaseService<Book, Long>`을 상속한 서비스에서는 엔티티 타입입니다 |
+| `RoundRobinSelector` | `getCursorPosition()` | 커서의 현재 위치를 반환합니다. 진단용입니다 |
+| `RateLimiter` | `getAvailableTokens()` | 현재 사용할 수 있는 토큰 수를 반환합니다 |
+| `EntityMessageResolver`, `EnumMessageResolver` | `setLocale(locale)`, `getLocale()`, `clearLocale()` | 현재 스레드에서 리졸버가 사용하는 로케일을 지정하고, 조회하고, 지웁니다 |
+| `EntityMessageResolver`, `EnumMessageResolver` | `getDiscoveredBundles()` | 리졸버가 찾은 메시지 번들 이름을 반환합니다. 진단과 테스트에 사용합니다 |
+| `RetryAfterHint` | `retryAfterSeconds()` | 직접 작성하는 예외에서 구현하는 메서드입니다. 호출자가 몇 초 뒤에 재시도할 수 있는지 반환합니다 |
+| `HashingUtils` | `isValidSha256Hash(hash)`, `isValidSha512Hash(hash)` | 문자열이 Base64로 표현한 SHA-256 또는 SHA-512 해시 형식인지 반환합니다 |
+| `InputSanitizer` | `isValidEmail(email)`, `isValidUrl(url)`, `isAlphanumericWithSpace(input)` | 이메일 주소와 URL의 형식을 검사하고, 문자열이 영문자, 숫자, 공백으로만 구성되어 있는지 검사합니다 |
+| `SqlInjectionValidator` | `matchesSafePattern(input)` | 문자열이 허용 문자 패턴과 일치하는지 반환합니다 |
+
 ## 관련 문서
 
 - [simplix-core 시작하기](./getting-started.md)

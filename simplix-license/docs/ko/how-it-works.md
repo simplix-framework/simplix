@@ -50,7 +50,7 @@
 | 허용 상한 보관 위치 | 같은 행의 `compromise_ceiling` 컬럼 | 같은 파일의 `compromiseCeiling` 항목 |
 | 컨테이너 교체 | 볼륨 없이 라이선스를 유지합니다 | 파일을 볼륨에 보관해야 합니다 |
 
-저장소를 직접 작성할 때는 SDK의 `LicenseStore`와 `CompromiseCeilingStore`를 함께 구현하세요. `CompromiseCeilingStore`의 `loadCeiling()`은 저장된 허용 상한을 반환하고, 확정된 허용 상한이 없으면 빈 `Optional`을 반환합니다. `saveCeiling(ceiling)`은 저장된 값을 전달받은 값으로 교체합니다. 한쪽만 구현하면 애플리케이션이 시작되지 않습니다. 허용 상한을 보관하지 못하는 배포본은 오류 없이 제한이 해제되기 때문입니다. 등록 정보와 허용 상한은 같은 위치에 보관해야 하며, 그래야 양쪽의 유지 기간이 어긋나지 않습니다. `LicenseStorePackage`는 엔티티 패키지를 직접 지정하는 애플리케이션에서 엔티티의 패키지를 가리키는 데 사용합니다.
+저장소를 직접 작성할 때는 SDK의 `LicenseStore`와 `CompromiseCeilingStore`를 함께 구현하세요. `LicenseStore`의 `load()`는 저장된 `RegistrationRecord`를 반환하고, 저장된 값이 없으면 빈 `Optional`을 반환합니다. `save(record)`는 등록 정보를 저장하고 `clear()`는 삭제합니다. `CompromiseCeilingStore`의 `loadCeiling()`은 저장된 허용 상한을 반환하고, 확정된 허용 상한이 없으면 빈 `Optional`을 반환합니다. `saveCeiling(ceiling)`은 저장된 값을 전달받은 값으로 교체합니다. 한쪽만 구현하면 애플리케이션이 시작되지 않습니다. 허용 상한을 보관하지 못하는 배포본은 오류 없이 제한이 해제되기 때문입니다. 등록 정보와 허용 상한은 같은 위치에 보관해야 하며, 그래야 양쪽의 유지 기간이 어긋나지 않습니다. `LicenseStorePackage`는 엔티티 패키지를 직접 지정하는 애플리케이션에서 엔티티의 패키지를 가리키는 데 사용합니다.
 
 ## 상태
 
@@ -80,6 +80,21 @@
 | `LicenseActuatorAutoConfiguration`: `LicenseHealthIndicator`와 `LicenseMetrics` | Spring Boot Actuator가 클래스패스에 있을 때. 메트릭에는 Micrometer도 필요합니다 |
 
 설치 게이트는 라이선스 필터보다 먼저 실행됩니다. 설치되지 않은 배포본에는 판정할 라이선스가 없고, 설치 마법사에는 계속 접근할 수 있어야 합니다. `LicenseRuntimeHints`는 네이티브 이미지에서 모듈에 필요한 리플렉션을 선언하고, `RuntimeIntegrityChecker`는 애플리케이션 바이너리를 기준 해시와 비교해 변조를 감지합니다. `ActivationServerProbe`는 라이선스 서버 주소를 저장하기 전에 서버에 식별 정보를 요청해 서명 키의 지문을 비교하고, `ActivationFailures`는 서버 오류를 메시지 키로 변환합니다.
+
+## 그 밖의 공개 메서드
+
+가이드에서는 작업에 필요한 메서드를 설명합니다. 가이드에 나온 타입은 아래 공개 메서드도 제공합니다.
+
+| 타입 | 메서드 | 동작 |
+|---|---|---|
+| `LicenseManager` | `initialize()` | 모듈이 시작할 때 호출합니다. 저장소에 등록 정보가 없으면 직접 배치한 토큰을 가져온 뒤 라이선스를 판정합니다 |
+| `LicenseManager` | `isFeatureAvailable(feature)` | 현재 라이선스가 해당 기능을 허용하는지 반환합니다 |
+| `LicenseManager` | `availableFeatures()` | 현재 라이선스가 허용하는 모듈 목록을 반환합니다. 허용된 릴리스보다 높은 버전으로 실행 중인 배포본에는 빈 목록을 반환합니다 |
+| `LicenseManager` | `isGracePeriodReadOnly()` | 라이선스가 유예 기간 상태이고 유예 기간 모드가 `READ_ONLY`이면 `true`를 반환합니다 |
+| `LicenseManager` | `getPublicKeyFingerprint()`, `verificationKeyFingerprints()` | 첫 번째 검증 키의 지문과, 토큰 검증에 사용하는 모든 키의 지문을 반환합니다 |
+| `LicenseManager` | `collectedIdentifiers()` | 장비에서 수집한 식별 정보를 값의 출처와 함께 반환합니다 |
+| `ContactIdentity` | `contactEmail()` | 애플리케이션의 빈에서 구현하는 메서드입니다. 라이선스를 구매한 주소를 반환하며, 라이선스 서버가 좌석을 할당할 때 고객 정보의 주소와 비교합니다 |
+| `InstallationDiscriminator` | `installationDiscriminator()` | 애플리케이션의 빈에서 구현하는 메서드입니다. 같은 호스트의 설치본을 서로 구분하는 값을 실행 환경에서 읽어 반환합니다 |
 
 ## 관련 문서
 

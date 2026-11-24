@@ -38,6 +38,16 @@ The classes behind an upload, what the module registers and what it leaves to th
 - It does not scan for viruses or look inside a file to verify its type.
 - It never deletes a file on its own.
 
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `FileValidator` | `validate(file, maxSize, allowedMimeTypes)` | checks an uploaded file against a size limit and a set of MIME types, and throws when it does not pass |
+| `FileValidator` | `validateImage(file, maxWidth, maxHeight)` | checks an uploaded image against a width and a height limit |
+| `FileValidator` | `determineFileCategory(mimeType, extension)` | returns the `FileCategory` of a MIME type and an extension |
+
 ## Related documents
 
 - [Uploading files](./uploading-files.md)

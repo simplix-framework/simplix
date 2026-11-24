@@ -58,6 +58,32 @@ An application that configures security by hand imports the same beans with `@En
 | `JweKeyException` | a key cannot be loaded, decrypted, rotated or stored |
 | `OAuth2AuthenticationException` | a social login fails; it carries an error code for the client |
 
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `SimpliXAsymmetricTokenSigner` | `fromKeyFile(keyFile, keyId)` | creates the signer from a properties file with `private-key` and `public-key`; when the file does not exist it writes a new pair there, readable by its owner only |
+| `SimpliXAsymmetricTokenSigner` | `keyId()` | returns the key id written into every token |
+| `SimpliXStatelessTokenSigner` | `mac(value)` | returns the keyed digest of a value as a URL-safe text, for a repeatable identifier derived from sensitive input; the result is not a token and cannot be verified |
+| `OAuth2ProviderType` | `isSupported(registrationId)` | says whether the enum names the registration id |
+| `TokenAuditEvent` | `isSuccess()` | is `true` when the failure reason of the event is `NONE` |
+| `JweKeyProvider` | `getCurrentKeyPair()` | returns the key pair new tokens are encrypted with |
+| `JweKeyProvider` | `getKeyPair(version)` | returns the key pair of a version, the `kid` of a token that is read |
+| `JweKeyProvider` | `getCurrentVersion()` | returns the version written as `kid` into new tokens |
+| `JweKeyProvider` | `getAvailableVersions()` | returns every key version the provider holds |
+| `JweKeyProvider` | `isConfigured()` | says whether the provider is ready to provide keys |
+| `JweKeyRotationService` | `initializeIfEmpty()` | creates the first key when the store holds none, and says whether it did |
+| `JweKeyRotationService` | `getRsaKeySize()` | returns the size of new RSA keys in bits |
+| `OAuth2UserInfoExtractor` | `extract(authentication)` | returns the `OAuth2UserInfo` of a social login authentication |
+| `OAuth2UserInfoExtractor` | `registerExtractor(strategy)` | adds an `OAuth2UserInfoExtractorStrategy`, or replaces the built-in one of the same provider |
+| `OAuth2UserInfoExtractor` | `hasExtractor(provider)` | says whether an extractor is registered for the provider |
+| `OAuth2UserInfoExtractorStrategy` | `extract(attributes, oauth2User)` | the method an extractor of your own implements: turns the attributes of the provider into an `OAuth2UserInfo` |
+| `OAuth2UserInfoExtractorStrategy` | `getString(map, key)`, `getBoolean(map, key)`, `getMap(map, key)` | default methods that read a text, a boolean or a nested map from the attributes |
+| `PendingSocialRegistration` | `getProviderName()` | returns the name of the provider as text, or `null` |
+| `BlacklistProbe` | `probe()` | the check a probe of your own token store implements for the blacklist health indicator: it returns when the store answers and throws a runtime exception when it does not |
+
 ## Related documents
 
 - [Securing paths](./securing-paths.md)

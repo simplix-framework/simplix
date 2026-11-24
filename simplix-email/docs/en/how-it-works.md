@@ -34,7 +34,19 @@ The classes behind a send, what the module registers and where a message can sto
 - It does not check the form of an address or keep a list of addresses that must not be mailed.
 - It does not limit the rate of sends. Stay under the limit of the provider in the code that sends many messages.
 
-`EmailTemplateEngine` is a bean as well: `processText(template, variables, locale)` and `processHtml(template, variables, locale)` render one text in the text or the HTML syntax, and `process(resolvedTemplate, variables, locale)` renders the subject and the bodies of a resolved template, whose `hasHtmlBody()` and `hasTextBody()` say which bodies exist. The two Thymeleaf engines are the beans `textTemplateEngine` and `htmlTemplateEngine`. A `TemplateEngine` bean of your application with one of these names replaces that engine, for example to add a dialect.
+`EmailTemplateEngine` is a bean as well: `processText(template, variables, locale)` and `processHtml(template, variables, locale)` render one text in the text or the HTML syntax, and `process(resolvedTemplate, variables, locale)` renders the subject and the bodies of a resolved template, whose `hasHtmlBody()` and `hasTextBody()` say which bodies exist. The two Thymeleaf engines are the beans `textTemplateEngine` and `htmlTemplateEngine`. A bean of your application with one of these names replaces that engine, for example to add a dialect. Declare its type as `TemplateEngine`. Declared as `SpringTemplateEngine`, the bean also displaces the engine of the starter that renders web pages, and the application does not start: `Parameter 0 of method thymeleafViewResolver [...] required a single bean, but 2 were found`.
+
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `EmailRequest` | `getTotalRecipientCount()` | returns the number of addresses in `to`, `cc` and `bcc` together |
+| `BulkEmailRequest` | `getRecipientCount()` | returns the number of recipients of the bulk send |
+| `MailPriority` | `getWeight()` | returns the number the constant declares as its weight |
+| `EmailAttachment` | `getFilename()`, `getContentType()`, `getContent()`, `getContentId()`, `isInline()` | the file name, the MIME type and the bytes of the attachment, the content id an HTML body refers to, and whether the attachment is inline |
+| `EmailResult` | `getRetryCount()` | returns the retry count of the result; the module does not retry and leaves it at 0 |
 
 ## Related documents
 

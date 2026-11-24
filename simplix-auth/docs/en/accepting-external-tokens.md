@@ -57,7 +57,7 @@ public class LibraryJwtConverter implements SimpliXJwtAuthenticationConverter {
 
 ## CORS rules of the resource server
 
-The chain of the resource server takes its CORS rules from the bean named `corsConfigurationSource`. When no bean of that name exists, the module builds one from `simplix.auth.cors`. Declare a `CorsConfigurationSource` bean with that name to supply rules of your own.
+The chain of the resource server uses the CORS rules of `simplix.auth.cors`, as the other chains do; set them through those properties. Do not declare a `CorsConfigurationSource` bean named `corsConfigurationSource` beside the standard chains. The module registers a bean of that name, and the application does not start: `The bean 'corsConfigurationSource' [...] could not be registered. A bean with that name has already been defined`.
 
 ## Related documents
 

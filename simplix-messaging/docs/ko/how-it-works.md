@@ -45,6 +45,23 @@
 | `capabilities()`, `name()`, `isReady()` | 호출자, 로그, 헬스 인디케이터에 브로커 정보를 제공합니다 |
 | `initialize()`, `shutdown()` | 연결을 열고 닫습니다 |
 
+## 그 밖의 공개 메서드
+
+가이드에서는 작업에 필요한 메서드를 설명합니다. 가이드에 나온 타입은 아래 공개 메서드도 제공합니다.
+
+| 타입 | 메서드 | 동작 |
+|---|---|---|
+| `Message` | `getMessageId()`, `getChannel()`, `getTimestamp()` | 메시지 ID, 메시지가 속한 채널, 메시지를 만든 시각을 반환합니다 |
+| `MessageHeaders` | `toMap()`, `isEmpty()` | 모든 항목을 수정할 수 없는 맵으로 반환하고, 항목이 없는지 반환합니다 |
+| `MessageListener` | `onMessage(message, acknowledgment)` | 리스너에서 구현하는 메서드입니다. 메시지를 받을 때마다 호출됩니다 |
+| `Subscription` | `isActive()` | 구독이 활성 상태인지 반환합니다 |
+| `MessageHandlerRegistrar` | `getActiveSubscriptions()` | `@MessageHandler` 메서드의 구독 목록을 반환합니다. 수명 주기 처리와 테스트에 사용합니다 |
+| `MessageScheduler` | `stop()` | 진행 중인 전달을 마친 뒤 백그라운드 스레드를 중지합니다 |
+| `JsonCodec` | `getObjectMapper()`, `defaultMapper()` | 코덱의 `ObjectMapper`와 공유 기본 `ObjectMapper`를 반환합니다 |
+| `DeadLetterStrategy` | `dlqChannelFor(channel)` | 채널에 대응하는 데드 레터 채널 이름을 반환합니다 |
+| `IdempotencyStore` | `tryAcquire(channel, groupName, messageId)` | 직접 작성하는 저장소에서 구현하는 메서드입니다. 처음 받은 메시지 ID이면 `true`, 중복이면 `false`를 반환합니다 |
+| `LocalBrokerStrategy` | `clearPublishedMessages()` | 로컬 브로커에 기록된 메시지를 비웁니다. 테스트를 초기화할 때 사용합니다 |
+
 ## 관련 문서
 
 - [브로커 선택](./choosing-a-broker.md)
