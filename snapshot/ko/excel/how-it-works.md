@@ -73,6 +73,7 @@ POI로 시트를 직접 작성하는 코드에서는 `ExcelConverter`와 `ExcelS
 | `ExcelTemplateGenerator` | `generateDefaultTemplate()`, `generateTemplateResource()` | JXLS 익스포터의 기본 템플릿을 만듭니다. 임시 `.xlsx` 파일로 만들어 경로를 반환하거나 `Resource`로 반환합니다 |
 | `UnifiedCsvExporter.Encoding` | `getName()`, `getCharset()`, `isIncludeBom()` | 인코딩 이름, `Charset`, 바이트 순서 표시(BOM) 기록 여부를 반환합니다 |
 | `StandardExcelImporter` | `setApplicationZoneId(zone)`, `getApplicationZoneId()` | 임포터가 날짜·시간 값에 사용하는 시간대를 지정하고 조회합니다. 기본값은 시스템 시간대입니다 |
+| `JxlsExporterImpl` | `getTemplatePath()`, `getFilename()`, `getSheetName()`, `getRowAccessWindowSize()`, `isEnableFormulaProcessor()`, `isStreamingEnabled()`, `isHideGridLines()` | 익스포터에 지정한 옵션을 조회합니다 |
 
 ## 관련 문서
 

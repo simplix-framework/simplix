@@ -57,6 +57,7 @@ The guides show the methods a task needs. The types they name also have these pu
 | `PendingEviction` | `getEntityClass()` | loads the entity class from the class name the record stores |
 | `PendingEviction` | `getEntityClassName()`, `getEntityId()`, `getRegion()`, `getOperation()`, `isEvictQueryCache()`, `getTimestamp()` | the class name of the entity, the id when one record is meant, the region, the operation, whether the query cache is evicted too, and the time the eviction was collected |
 | `PendingEvictionCompletedEvent` | `getPendingEvictions()` | returns the evictions of the transaction |
+| `HibernateCacheHolder` | `getCache()`, `setCache(cache)`, `isReset()` | static access to the Hibernate `Cache` the module holds: the module sets it once at start, and `getCache()` returns it to code outside the Spring context |
 
 ## Related documents
 

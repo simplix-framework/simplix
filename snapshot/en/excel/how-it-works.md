@@ -73,6 +73,7 @@ The guides show the methods a task needs. The types they name also have these pu
 | `ExcelTemplateGenerator` | `generateDefaultTemplate()`, `generateTemplateResource()` | create the default template of the JXLS exporter: as a temporary `.xlsx` file whose path is returned, or as a `Resource` |
 | `UnifiedCsvExporter.Encoding` | `getName()`, `getCharset()`, `isIncludeBom()` | the name of the encoding, its `Charset`, and whether a byte order mark is written |
 | `StandardExcelImporter` | `setApplicationZoneId(zone)`, `getApplicationZoneId()` | set and read the time zone the importer uses for date and time values; the default is the time zone of the system |
+| `JxlsExporterImpl` | `getTemplatePath()`, `getFilename()`, `getSheetName()`, `getRowAccessWindowSize()`, `isEnableFormulaProcessor()`, `isStreamingEnabled()`, `isHideGridLines()` | read back the options the exporter was given |
 
 ## Related documents
 
