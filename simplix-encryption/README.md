@@ -24,6 +24,7 @@ dependencies {
 | encrypt values in code | [Encrypting values in code](docs/en/encrypting-values-in-code.md) |
 | decide where the keys come from | [Choosing a key provider](docs/en/choosing-a-key-provider.md) |
 | replace a key | [Rotating keys](docs/en/rotating-keys.md) |
+| create, store and watch keys, and respond to a leak | [Keeping keys safe](docs/en/keeping-keys-safe.md) |
 | look a property up | [Configuration reference](docs/en/configuration-reference.md) |
 | size, search and migrate an encrypted column | [Encrypting columns](docs/en/encrypting-columns.md) |
 | see how a value is encrypted and which provider is chosen | [How simplix-encryption works](docs/en/how-it-works.md) |
