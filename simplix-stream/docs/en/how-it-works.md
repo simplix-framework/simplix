@@ -97,6 +97,12 @@ The guides show the methods a task needs. The types they name also have these pu
 | `StreamAuthorizationService` | `registerAuthorizer(authorizer)` | adds a `ResourceAuthorizer` that is not a bean |
 | `SubscriptionKey`, `Subscription`, `StreamSession` | `getParamsHash()`, `getRequestedAt()`, `getDisconnectedAt()` | the hash of the parameters of a key, the time a subscription was requested, and the time a session lost its connection |
 | `CommandResponse` | `getErrorMessage()` | the reason an admin command failed |
+| `SimpliXStreamDataCollectorRegistry` | `getCollector(resource)`, `findCollector(resource)`, `hasCollector(resource)` | return the collector of a resource name, the same as an `Optional`, and whether one is registered |
+| `SimpliXStreamDataCollectorRegistry` | `getRegisteredResources()`, `getCollectors()`, `unregister(resource)` | return the registered resource names and collectors, and remove the collector of a resource, returning it or `null` |
+| `SimpliXStreamEventSourceRegistry` | `findByResource(resource)`, `findByEventType(eventType)`, `hasEventSource(resource)`, `hasEventSourceForEventType(eventType)` | find the event source of a resource name or of an event type, and say whether one is registered |
+| `SimpliXStreamEventSourceRegistry` | `getRegisteredResources()`, `getRegisteredEventTypes()`, `getEventSources()`, `unregister(resource)` | return the registered resource names, event types and event sources, and remove the event source of a resource, returning it or `null` |
+| `SubscriptionManager` | `updateSubscriptions(sessionId, subscriptions)`, `clearSubscriptions(sessionId)` | replace the subscription list of a session, returning the `SubscriptionUpdateResult`, and remove every subscription of a session; the subscription endpoint calls the first |
+| `SubscriptionManager` | `setOnSubscriptionAdded(callback)`, `setOnSubscriptionRemoved(callback)`, `getActualInterval(key, requested)` | register the callbacks the module uses for added and removed subscriptions, and return the interval a subscription runs at |
 
 ## Related documents
 

@@ -64,6 +64,61 @@ gpr.user=<your GitHub user name>
 gpr.token=<personal access token with read:packages>
 ```
 
+### Maven 사용
+
+Maven 프로젝트는 `spring-boot-starter-parent`를 상속해야 합니다. 부모 POM이 전이 의존성의 버전을 관리하며, 부모 POM이 없으면 Maven이 의존성을 수집하지 못합니다. `pom.xml`에 같은 저장소와 의존성을 선언하세요.
+
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>${spring-boot.version}</version>
+    <relativePath/>
+</parent>
+
+<repositories>
+    <repository>
+        <id>simplix</id>
+        <url>https://maven.pkg.github.com/simplix-framework/simplix</url>
+    </repository>
+    <repository>
+        <id>searchable-jpa</id>
+        <url>https://maven.pkg.github.com/simplix-framework/searchable-jpa</url>
+    </repository>
+    <repository>
+        <id>egovframe</id>
+        <url>https://maven.egovframe.go.kr/maven/</url>
+    </repository>
+</repositories>
+
+<dependencies>
+    <dependency>
+        <groupId>dev.simplecore.simplix</groupId>
+        <artifactId>spring-boot-starter-simplix</artifactId>
+        <version>${version}</version>
+    </dependency>
+</dependencies>
+```
+
+Maven은 GitHub Packages 저장소의 자격 증명을 `~/.m2/settings.xml`에서 읽으며, 저장소의 `id`로 대응시킵니다.
+
+```xml
+<settings>
+    <servers>
+        <server>
+            <id>simplix</id>
+            <username>${env.GITHUB_USERNAME}</username>
+            <password>${env.GITHUB_TOKEN}</password>
+        </server>
+        <server>
+            <id>searchable-jpa</id>
+            <username>${env.GITHUB_USERNAME}</username>
+            <password>${env.GITHUB_TOKEN}</password>
+        </server>
+    </servers>
+</settings>
+```
+
 ## 2단계. 애플리케이션 클래스 작성
 
 ```java
