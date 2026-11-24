@@ -84,6 +84,10 @@ public class EvictionLog {
 }
 ```
 
+### 커밋 대기 중인 무효화 확인
+
+트랜잭션 안에서 요청한 무효화는 커밋될 때까지 보류됩니다. `TransactionAwareCacheEvictionCollector` 빈의 `getPendingCount()`와 `hasPendingEvictions()`는 호출 스레드의 트랜잭션에 보류된 무효화를 반환하며, 트랜잭션 밖에서는 0과 `false`를 반환합니다. 테스트나 디버그 로그에서 변경 작업이 무효화를 등록했는지 확인할 때 사용하세요.
+
 ## 쿼리 캐시
 
 `use_query_cache`가 켜져 있으면 캐시 가능으로 지정한 쿼리의 결과가 보관됩니다. `simplix.hibernate.cache.query-cache-auto-eviction`(기본값 켜짐)은 엔티티 캐시와 함께 쿼리 캐시를 비우므로, 캐시된 쿼리가 일괄 변경으로 삭제된 행을 반환하지 않습니다.

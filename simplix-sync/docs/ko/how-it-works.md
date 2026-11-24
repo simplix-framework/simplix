@@ -69,6 +69,18 @@ public InstanceSyncBroadcaster instanceSyncBroadcaster() {
 
 내장 전송 수단은 인스턴스 식별자를 직접 추가하고 검사합니다. 직접 작성한 전송 수단에서 발신 인스턴스를 제외하려면 같은 방식으로 처리하세요. `broadcast`에서 식별자를 앞에 추가하고, 리스너에서 해당 식별자가 있는 페이로드를 버립니다.
 
+## 로그
+
+```text
+SimpliX Sync: local mode (NoOp broadcaster)
+SimpliX Sync: distributed mode (Redis Pub/Sub broadcaster)
+SimpliX Sync: distributed mode (NATS core pub/sub broadcaster)
+NATS instance sync broadcaster initialized [instanceId=447b4a68-3928-42aa-aa43-cbae1557b2c7]
+Subscribed to NATS sync channel: shelf-changed
+```
+
+모듈은 애플리케이션이 시작될 때 선택한 모드와 구독한 채널을 `INFO`로 기록합니다. 설정을 변경한 뒤에는 첫 줄을 확인하세요. 분산 모드여야 하는 애플리케이션에서 `local mode`가 기록되면 전송 계층이 선택되지 않은 것입니다. 로거는 `dev.simplecore.simplix.sync`입니다.
+
 ## 관련 문서
 
 - [상태 일관성 유지](./keeping-state-consistent.md)

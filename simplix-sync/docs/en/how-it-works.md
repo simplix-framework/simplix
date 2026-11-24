@@ -69,6 +69,18 @@ public InstanceSyncBroadcaster instanceSyncBroadcaster() {
 
 The built-in transports add and check the instance id themselves. A transport of your own that has to leave out the sender does the same: put an id in front in `broadcast`, and drop the payloads that carry it in the listener.
 
+## Log lines
+
+```text
+SimpliX Sync: local mode (NoOp broadcaster)
+SimpliX Sync: distributed mode (Redis Pub/Sub broadcaster)
+SimpliX Sync: distributed mode (NATS core pub/sub broadcaster)
+NATS instance sync broadcaster initialized [instanceId=447b4a68-3928-42aa-aa43-cbae1557b2c7]
+Subscribed to NATS sync channel: shelf-changed
+```
+
+The module logs the mode it chose at `INFO` when the application starts, and each subscribed channel. Read the first line after a configuration change: `local mode` in an application that should be distributed means the transport was not selected. The logger is `dev.simplecore.simplix.sync`.
+
 ## Related documents
 
 - [Keeping state consistent](./keeping-state-consistent.md)
