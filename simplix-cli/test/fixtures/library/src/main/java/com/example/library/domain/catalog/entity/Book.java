@@ -87,4 +87,13 @@ public class Book extends BaseEntity<String> {
     @Column(name = "reviews")
     @Comment("What readers wrote about the book")
     private List<BookReview> reviews;
+    @Override
+    public String getId() {
+        return bookId;
+    }
+
+    @Override
+    public void setId(String id) {
+        this.bookId = id;
+    }
 }
