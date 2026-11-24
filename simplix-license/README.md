@@ -17,13 +17,20 @@ dependencies {
     // Optional: keep the registration in the database
     implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 
-    // Optional: @RequiresFeature
+    // Optional: @RequiresFeature (the Spring AOP starter of your line, see the table below)
     implementation "org.springframework.boot:spring-boot-starter-aspectj"
 
     // Optional: health and metrics
     implementation "org.springframework.boot:spring-boot-starter-actuator"
 }
 ```
+
+The starter that brings Spring AOP is named differently on each release line.
+
+| SimpliX line | Dependency for `@RequiresFeature` |
+|---|---|
+| 2.x | `org.springframework.boot:spring-boot-starter-aspectj` |
+| 1.x | `org.springframework.boot:spring-boot-starter-aop` |
 
 The module brings the license SDK (`dev.accesscore:license-sdk`), which is downloaded from a package repository of its own. Give Gradle the credentials for it.
 

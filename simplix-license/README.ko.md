@@ -17,13 +17,20 @@ dependencies {
     // Optional: keep the registration in the database
     implementation "org.springframework.boot:spring-boot-starter-data-jpa"
 
-    // Optional: @RequiresFeature
+    // Optional: @RequiresFeature (the Spring AOP starter of your line, see the table below)
     implementation "org.springframework.boot:spring-boot-starter-aspectj"
 
     // Optional: health and metrics
     implementation "org.springframework.boot:spring-boot-starter-actuator"
 }
 ```
+
+Spring AOP를 제공하는 스타터의 이름은 릴리스 라인마다 다릅니다.
+
+| SimpliX 라인 | `@RequiresFeature`용 의존성 |
+|---|---|
+| 2.x | `org.springframework.boot:spring-boot-starter-aspectj` |
+| 1.x | `org.springframework.boot:spring-boot-starter-aop` |
 
 이 모듈은 라이선스 SDK(`dev.accesscore:license-sdk`)를 함께 가져오며, SDK는 별도의 패키지 저장소에서 내려받습니다. Gradle에 해당 저장소의 인증 정보를 지정하세요.
 
