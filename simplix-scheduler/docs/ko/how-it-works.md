@@ -52,9 +52,11 @@
 | `SchedulerLoggingService` | `isEnabled()`, `isExcluded(schedulerName)` | 실행 기록 기능이 활성화되어 있는지, 지정한 스케줄러가 기록 대상에서 제외되어 있는지 반환합니다 |
 | `DefaultSchedulerLoggingService` | `getActiveStrategy()` | 사용 중인 `SchedulerLoggingStrategy`를 반환합니다 |
 | `SchedulerRegistryProvider` | `existsBySchedulerName(schedulerName)` | 기본 메서드입니다. 레지스트리에 해당 이름의 항목이 있는지 반환합니다 |
-| `SchedulerRegistryProvider` | `updateMetadata(registryId, metadata)` | 기본 메서드입니다. 등록된 스케줄러의 클래스 이름, 크론 식, 잠금 이름이 바뀌면 호출되며 갱신한 항목 수를 반환합니다 |
+| `SchedulerRegistryProvider` | `updateMetadata(registryId, metadata)` | 기본 메서드입니다. 등록된 스케줄러의 클래스 이름, 크론 식, 잠금 이름이 바뀌면 호출되며 갱신한 항목 수를 반환합니다. 기본 구현은 아무것도 갱신하지 않고 0을 반환합니다 |
 | `SchedulerRegistryEntry` | `fromMetadata(metadata)`, `needsMetadataUpdate(metadata)` | 메타데이터로 새 레지스트리 ID의 항목을 만들고, 항목이 메타데이터와 다른지 반환합니다 |
 | `InMemoryLoggingStrategy` | `getRegistryCount()`, `getExecutionCount()` | 등록된 스케줄러 수와 메모리에 보관 중인 실행 기록 수를 반환합니다 |
+| `SchedulerMetadata`, `SchedulerRegistryEntry` | `getSchedulerType()` | 스케줄러의 `SchedulerMetadata.SchedulerType`을 반환합니다. 값은 `LOCAL` 또는 `DISTRIBUTED`입니다 |
+| `SchedulerRegistryEntry` | `getDisplayName()` | 스케줄러의 표시 이름을 반환합니다. `fromMetadata`는 스케줄러 이름을 표시 이름으로 지정합니다 |
 
 ## 관련 문서
 

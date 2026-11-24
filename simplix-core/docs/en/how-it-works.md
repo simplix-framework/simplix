@@ -71,6 +71,7 @@ The guides show the methods a task needs. The types they name also have these pu
 | `InputSanitizer` | `isValidEmail(email)`, `isValidUrl(url)`, `isAlphanumericWithSpace(input)` | check the form of an e-mail address and of a URL, and whether a text has only letters, digits and spaces |
 | `SqlInjectionValidator` | `matchesSafePattern(input)` | says whether a text matches the pattern of allowed characters |
 | `EntityEventPayloadProvider` | `getEventPayloadData()` | the method an entity implements to add values of its own to the payload of its lifecycle events, beside the entity id and the class name |
+| `EventMessage` | `changedProperties()` | the names of the properties an update changed |
 
 ## Related documents
 

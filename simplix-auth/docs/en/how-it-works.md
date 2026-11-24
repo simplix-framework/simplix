@@ -83,6 +83,8 @@ The guides show the methods a task needs. The types they name also have these pu
 | `OAuth2UserInfoExtractorStrategy` | `getString(map, key)`, `getBoolean(map, key)`, `getMap(map, key)` | default methods that read a text, a boolean or a nested map from the attributes |
 | `PendingSocialRegistration` | `getProviderName()` | returns the name of the provider as text, or `null` |
 | `BlacklistProbe` | `probe()` | the check a probe of your own token store implements for the blacklist health indicator: it returns when the store answers and throws a runtime exception when it does not |
+| `TokenAuditEvent` | `tokenType()`, `additionalDetails()` | the type of the token, `access` or `refresh`, and further details of the event |
+| `OAuth2ProviderType` | `getRegistrationId()`, `getDisplayName()`, `isSupportsOidc()` | the registration id of the provider, its name for display, and whether it speaks OpenID Connect |
 
 ## Related documents
 

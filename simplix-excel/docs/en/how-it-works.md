@@ -61,7 +61,7 @@ The guides show the methods a task needs. The types they name also have these pu
 | `ExcelLabels` | `configure(source, labelResolvers, format)`, `reset()` | point the labels at a `MessageSource` and at resolvers, and restore the initial state; the module calls `configure` at start, and `reset` suits tests |
 | `ExcelLabelResolver` | `resolve(key, locale)` | the method a resolver of your own implements: the text of a key in a locale |
 | `ValueFormatter` | `formatValue(value, column)`, `parseValue(value, targetType, pattern)`, `registerFormatter(type, formatter)` | format a value by its type and its `@ExcelColumn`, parse a text into a type, and register the `Formatter` of a type |
-| `Formatter` | `parse(value, pattern)`, `getDefaultPattern()` | parse a text with a pattern, and return the pattern used when a column names none |
+| `Formatter` | `parse(value, pattern)`, `getDefaultPattern()` | parse a text with a pattern, and return the default pattern of the formatter |
 | `TypeConverter` | `formatNumber`, `formatDate`, `formatLocalDate`, `formatLocalDateTime`, `formatLocalTime`, `formatZonedDateTime`, `formatOffsetDateTime`, `formatInstant`, `formatEnum`, `formatMap`, `formatCollection`, `formatArray` | turn a value of that type into text |
 | `TypeConverter` | `fromString`, `parseDate`, `parseLocalDate`, `parseLocalDateTime`, `parseLocalTime`, `parseZonedDateTime`, `parseOffsetDateTime`, `parseInstant`, `parseEnum`, `parseTemporal` | turn text into a value of that type |
 | `TypeConverter`, `TemporalConverter` | `setDefaultZone(zone)` | sets the time zone used for values that carry none |
@@ -70,7 +70,9 @@ The guides show the methods a task needs. The types they name also have these pu
 | `DateConverter` | `formatDate(date, pattern)`, `formatCalendar(calendar, pattern)`, `parseDate(value)`, `parseCalendar(value)` | format and parse `java.util.Date` and `Calendar` values |
 | `Converter` | `fromString(value, targetType)` | the method of the date converters that turns text into the target type |
 | `ConverterRegistry` | `registerFromStringConverter(targetType, converter)`, `fromString(str, targetType, defaultValue)`, `clear()` | register a conversion from text, convert a text with a default for failures, and remove every registered conversion |
-| `ExcelTemplateGenerator` | `generateDefaultTemplate()`, `generateTemplateResource()` | create the default template of the JXLS exporter, as a file whose location is returned or as a `Resource` |
+| `ExcelTemplateGenerator` | `generateDefaultTemplate()`, `generateTemplateResource()` | create the default template of the JXLS exporter: as a temporary `.xlsx` file whose path is returned, or as a `Resource` |
+| `UnifiedCsvExporter.Encoding` | `getName()`, `getCharset()`, `isIncludeBom()` | the name of the encoding, its `Charset`, and whether a byte order mark is written |
+| `StandardExcelImporter` | `setApplicationZoneId(zone)`, `getApplicationZoneId()` | set and read the time zone the importer uses for date and time values; the default is the time zone of the system |
 
 ## Related documents
 
