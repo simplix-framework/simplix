@@ -81,6 +81,15 @@ Subscribed to NATS sync channel: shelf-changed
 
 모듈은 애플리케이션이 시작될 때 선택한 모드와 구독한 채널을 `INFO`로 기록합니다. 설정을 변경한 뒤에는 첫 줄을 확인하세요. 분산 모드여야 하는 애플리케이션에서 `local mode`가 기록되면 전송 계층이 선택되지 않은 것입니다. 로거는 `dev.simplecore.simplix.sync`입니다.
 
+## 그 밖의 공개 메서드
+
+가이드에서는 작업에 필요한 메서드를 설명합니다. 가이드에 나온 타입은 아래 공개 메서드도 제공합니다.
+
+| 타입 | 메서드 | 동작 |
+|---|---|---|
+| `InMemoryStateStore` | `getOrCreate(key)` | 키의 상태를 반환합니다. 상태가 없으면 팩토리로 만들어 저장합니다 |
+| `SyncChannel` | `getChannelName()` | 채널 이름을 반환합니다 |
+
 ## 관련 문서
 
 - [상태 일관성 유지](ko/sync/keeping-state-consistent.md)

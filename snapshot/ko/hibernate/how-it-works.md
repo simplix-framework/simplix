@@ -47,6 +47,17 @@ SQLite처럼 한 번에 한 writer만 허용하는 데이터베이스는 다른 
 | `CacheEvictionStrategy` | 이 인스턴스의 캐시에서 항목을 제거합니다 |
 | `HibernateCacheHolder`, `HibernateCacheInitializer` | Hibernate 캐시의 참조를 보관하고, `EntityCacheScanner`와 함께 시작 시 초기화합니다 |
 
+## 그 밖의 공개 메서드
+
+가이드에서는 작업에 필요한 메서드를 설명합니다. 가이드에 나온 타입은 아래 공개 메서드도 제공합니다.
+
+| 타입 | 메서드 | 동작 |
+|---|---|---|
+| `PendingEvictionCompletedEvent` | `getEvictionCount()` | 이벤트에 포함된 캐시 제거 건수를 반환합니다 |
+| `PendingEviction` | `getEntityClass()` | 레코드에 저장된 클래스 이름으로 엔티티 클래스를 로드합니다 |
+| `PendingEviction` | `getEntityClassName()`, `getEntityId()`, `getRegion()`, `getOperation()`, `isEvictQueryCache()`, `getTimestamp()` | 엔티티 클래스 이름, 단건 대상일 때의 ID, 리전, 작업 종류, 쿼리 캐시 동시 제거 여부, 캐시 제거를 수집한 시각을 반환합니다 |
+| `PendingEvictionCompletedEvent` | `getPendingEvictions()` | 트랜잭션의 캐시 제거 목록을 반환합니다 |
+
 ## 관련 문서
 
 - [엔티티 이벤트 발행](ko/hibernate/publishing-entity-events.md)

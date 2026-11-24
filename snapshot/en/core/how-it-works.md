@@ -45,6 +45,32 @@ The module registers no auto-configuration. Its classes work wherever they are u
 
 The module exposes searchable-jpa to its consumers, which is why an application adds the searchable-jpa package repository beside the SimpliX one. Spring Data JPA, Spring Web, Jackson, Hibernate Validator, ModelMapper and the OWASP HTML sanitizer are used inside the module; an application that calls them directly declares them itself.
 
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `Event` | `getEventId()`, `getEventType()`, `getAggregateId()`, `getOccurredAt()` | the id of the event, its type, the id of the aggregate it relates to and the time it occurred |
+| `Event` | `getUserId()`, `getTenantId()` | the user who triggered the event and the tenant it belongs to; both are optional |
+| `Event` | `getMetadata()`, `getPayload()` | the metadata map and the payload of the event |
+| `EventMessage` | `payloadInt(key)`, `metadataString(key)` | read an `Integer` from the payload and a text from the metadata |
+| `EventMessage` | `isType(type)`, `isAggregate(type)` | say whether the event has the given event type or belongs to the given aggregate type |
+| `EventMessage` | `isSoftDelete()`, `hasAnyChangedProperty(properties...)` | say whether a soft delete caused the event, and whether an update event changed one of the named properties |
+| `EventContext` | `isEventsSuppressed()` | says whether events are suppressed on the current thread |
+| `EventManager` | `getPublisherName()` | returns the name of the publisher in use |
+| `BooleanConverter`, `EnumConverter`, `DateTimeConverter` | `getDefault()` | returns the default converter; the one of `DateTimeConverter` uses the default time zone |
+| `TimezoneContext` | `getZoneIdOrDefault(fallback)` | returns the time zone of the current request, or the fallback when the request has none |
+| `EntityUtils` | `getEntityClass(clazz)` | returns the first type argument of the generic superclass of a class, for example the entity type of a service that extends `SimpliXBaseService<Book, Long>` |
+| `RoundRobinSelector` | `getCursorPosition()` | returns the current position of the cursor, for diagnostics |
+| `RateLimiter` | `getAvailableTokens()` | returns the number of tokens available now |
+| `EntityMessageResolver`, `EnumMessageResolver` | `setLocale(locale)`, `getLocale()`, `clearLocale()` | set, read and clear the locale the resolver uses on the current thread |
+| `EntityMessageResolver`, `EnumMessageResolver` | `getDiscoveredBundles()` | returns the names of the message bundles the resolver found, for diagnostics and tests |
+| `RetryAfterHint` | `retryAfterSeconds()` | the method an exception of your own implements to state after how many seconds a caller may retry |
+| `HashingUtils` | `isValidSha256Hash(hash)`, `isValidSha512Hash(hash)` | say whether a text has the form of a SHA-256 or a SHA-512 hash in Base64 |
+| `InputSanitizer` | `isValidEmail(email)`, `isValidUrl(url)`, `isAlphanumericWithSpace(input)` | check the form of an e-mail address and of a URL, and whether a text has only letters, digits and spaces |
+| `SqlInjectionValidator` | `matchesSafePattern(input)` | says whether a text matches the pattern of allowed characters |
+
 ## Related documents
 
 - [Getting started with simplix-core](en/core/getting-started.md)

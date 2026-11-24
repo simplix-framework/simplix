@@ -81,6 +81,15 @@ Subscribed to NATS sync channel: shelf-changed
 
 The module logs the mode it chose at `INFO` when the application starts, and each subscribed channel. Read the first line after a configuration change: `local mode` in an application that should be distributed means the transport was not selected. The logger is `dev.simplecore.simplix.sync`.
 
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `InMemoryStateStore` | `getOrCreate(key)` | returns the state of a key, creating it with the factory when the key has none |
+| `SyncChannel` | `getChannelName()` | returns the name of the channel |
+
 ## Related documents
 
 - [Keeping state consistent](en/sync/keeping-state-consistent.md)

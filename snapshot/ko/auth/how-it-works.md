@@ -58,6 +58,32 @@
 | `JweKeyException` | 키를 불러오거나 복호화 · 교체 · 저장하지 못했을 때 |
 | `OAuth2AuthenticationException` | 소셜 로그인에 실패했을 때. 클라이언트에 전달할 오류 코드를 포함합니다 |
 
+## 그 밖의 공개 메서드
+
+가이드에서는 작업에 필요한 메서드를 설명합니다. 가이드에 나온 타입은 아래 공개 메서드도 제공합니다.
+
+| 타입 | 메서드 | 동작 |
+|---|---|---|
+| `SimpliXAsymmetricTokenSigner` | `fromKeyFile(keyFile, keyId)` | `private-key`와 `public-key`가 있는 프로퍼티 파일로 서명기를 만듭니다. 파일이 없으면 새 키 쌍을 만들어 소유자만 읽을 수 있는 파일로 저장합니다 |
+| `SimpliXAsymmetricTokenSigner` | `keyId()` | 모든 토큰에 기록하는 키 ID를 반환합니다 |
+| `SimpliXStatelessTokenSigner` | `mac(value)` | 값의 키 기반 다이제스트를 URL에 안전한 문자열로 반환합니다. 민감한 입력에서 항상 같은 식별자를 만들 때 사용하며, 결과는 토큰이 아니므로 검증할 수 없습니다 |
+| `OAuth2ProviderType` | `isSupported(registrationId)` | 열거형에 해당 등록 ID가 있는지 반환합니다 |
+| `TokenAuditEvent` | `isSuccess()` | 이벤트의 실패 사유가 `NONE`이면 `true`를 반환합니다 |
+| `JweKeyProvider` | `getCurrentKeyPair()` | 새 토큰을 암호화하는 키 쌍을 반환합니다 |
+| `JweKeyProvider` | `getKeyPair(version)` | 지정한 버전의 키 쌍을 반환합니다. 토큰을 읽을 때 토큰의 `kid` 값으로 조회합니다 |
+| `JweKeyProvider` | `getCurrentVersion()` | 새 토큰의 `kid`에 기록하는 버전을 반환합니다 |
+| `JweKeyProvider` | `getAvailableVersions()` | 프로바이더가 보유한 모든 키 버전을 반환합니다 |
+| `JweKeyProvider` | `isConfigured()` | 프로바이더가 키를 제공할 수 있는 상태인지 반환합니다 |
+| `JweKeyRotationService` | `initializeIfEmpty()` | 저장소에 키가 없으면 첫 키를 만들고, 만들었는지 여부를 반환합니다 |
+| `JweKeyRotationService` | `getRsaKeySize()` | 새 RSA 키의 크기를 비트 단위로 반환합니다 |
+| `OAuth2UserInfoExtractor` | `extract(authentication)` | 소셜 로그인 인증 객체에서 `OAuth2UserInfo`를 추출합니다 |
+| `OAuth2UserInfoExtractor` | `registerExtractor(strategy)` | `OAuth2UserInfoExtractorStrategy`를 추가합니다. 같은 제공자의 기본 추출기가 있으면 교체합니다 |
+| `OAuth2UserInfoExtractor` | `hasExtractor(provider)` | 해당 제공자의 추출기가 등록되어 있는지 반환합니다 |
+| `OAuth2UserInfoExtractorStrategy` | `extract(attributes, oauth2User)` | 직접 작성하는 추출기에서 구현하는 메서드입니다. 제공자의 속성을 `OAuth2UserInfo`로 변환합니다 |
+| `OAuth2UserInfoExtractorStrategy` | `getString(map, key)`, `getBoolean(map, key)`, `getMap(map, key)` | 속성 맵에서 문자열, 불리언, 중첩 맵을 읽는 기본 메서드입니다 |
+| `PendingSocialRegistration` | `getProviderName()` | 제공자 이름을 문자열로 반환합니다. 제공자가 없으면 `null`입니다 |
+| `BlacklistProbe` | `probe()` | 직접 작성한 토큰 저장소의 상태 검사를 블랙리스트 헬스 인디케이터에 제공할 때 구현하는 메서드입니다. 저장소가 응답하면 정상 반환하고, 응답하지 않으면 런타임 예외를 던집니다 |
+
 ## 관련 문서
 
 - [경로 보안](ko/auth/securing-paths.md)

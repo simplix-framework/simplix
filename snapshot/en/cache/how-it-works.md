@@ -36,6 +36,14 @@ A value stored with `cacheService.put("authors", ...)` is not what `@Cacheable(c
 
 Use one of the two for a given cache name, so nobody expects an eviction through one to clear the other.
 
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `CacheStrategy` | `initialize()`, `shutdown()` | the hooks a strategy of your own implements for start and stop |
+
 ## Related documents
 
 - [Choosing a store](en/cache/choosing-a-store.md)

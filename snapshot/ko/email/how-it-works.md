@@ -34,7 +34,19 @@
 - 주소 형식을 검사하지 않으며 발송 금지 주소 목록을 관리하지 않습니다.
 - 발송 속도를 제한하지 않습니다. 대량으로 발송하는 코드에서 프로바이더의 한도를 넘지 않도록 조절하세요.
 
-`EmailTemplateEngine`도 빈입니다. `processText(template, variables, locale)`와 `processHtml(template, variables, locale)`은 텍스트 하나를 텍스트 문법 또는 HTML 문법으로 렌더링합니다. `process(resolvedTemplate, variables, locale)`는 조회된 템플릿의 제목과 본문을 렌더링하며, 본문의 존재 여부는 템플릿의 `hasHtmlBody()`와 `hasTextBody()`로 확인합니다. 텍스트용 Thymeleaf 엔진과 HTML용 Thymeleaf 엔진은 각각 `textTemplateEngine` 빈과 `htmlTemplateEngine` 빈입니다. 애플리케이션에서 같은 이름의 `TemplateEngine` 빈을 선언하면 해당 엔진이 교체됩니다. 방언(dialect)을 추가할 때 사용하세요.
+`EmailTemplateEngine`도 빈입니다. `processText(template, variables, locale)`와 `processHtml(template, variables, locale)`은 텍스트 하나를 텍스트 문법 또는 HTML 문법으로 렌더링합니다. `process(resolvedTemplate, variables, locale)`는 조회된 템플릿의 제목과 본문을 렌더링하며, 본문의 존재 여부는 템플릿의 `hasHtmlBody()`와 `hasTextBody()`로 확인합니다. 텍스트용 Thymeleaf 엔진과 HTML용 Thymeleaf 엔진은 각각 `textTemplateEngine` 빈과 `htmlTemplateEngine` 빈입니다. 애플리케이션에서 같은 이름의 빈을 선언하면 해당 엔진이 교체됩니다. 방언(dialect)을 추가할 때 사용하세요. 빈의 타입은 `TemplateEngine`으로 선언하세요. `SpringTemplateEngine`으로 선언하면 스타터가 웹 페이지 렌더링용 엔진을 등록하지 않아 애플리케이션이 시작되지 않고 `Parameter 0 of method thymeleafViewResolver [...] required a single bean, but 2 were found` 오류가 발생합니다.
+
+## 그 밖의 공개 메서드
+
+가이드에서는 작업에 필요한 메서드를 설명합니다. 가이드에 나온 타입은 아래 공개 메서드도 제공합니다.
+
+| 타입 | 메서드 | 동작 |
+|---|---|---|
+| `EmailRequest` | `getTotalRecipientCount()` | `to`, `cc`, `bcc`에 지정한 주소 수의 합계를 반환합니다 |
+| `BulkEmailRequest` | `getRecipientCount()` | 대량 발송의 수신자 수를 반환합니다 |
+| `MailPriority` | `getWeight()` | 상수에 선언된 가중치 숫자를 반환합니다 |
+| `EmailAttachment` | `getFilename()`, `getContentType()`, `getContent()`, `getContentId()`, `isInline()` | 첨부 파일의 이름, MIME 타입, 바이트 내용, HTML 본문에서 참조하는 콘텐츠 ID, 인라인 첨부 여부를 반환합니다 |
+| `EmailResult` | `getRetryCount()` | 결과의 재시도 횟수를 반환합니다. 모듈은 재시도하지 않으며 값을 0으로 유지합니다 |
 
 ## 관련 문서
 

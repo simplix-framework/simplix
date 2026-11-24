@@ -50,6 +50,28 @@ The exporters extend `AbstractExporter`, which reads the annotated fields of the
 
 A failure while a file is written reaches the caller as `ExcelExportException` or as the `IOException` of the stream. The response may already carry part of the file then, so set the download headers through the exporter and let the exception reach the client as a broken download: an error body cannot be sent any more.
 
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `StringUtil` | `hasText(str)`, `isBlank(str)`, `defaultIfEmpty(str, defaultValue)` | check whether a text has content, and replace an empty text by a default |
+| `ExcelLabels` | `columnName(name)`, `enumLabel(value)`, `booleanLabel(value)` | return the heading of a column, the label of an enum constant and the text of a boolean value as the exporters write them |
+| `ExcelLabels` | `configure(source, labelResolvers, format)`, `reset()` | point the labels at a `MessageSource` and at resolvers, and restore the initial state; the module calls `configure` at start, and `reset` suits tests |
+| `ExcelLabelResolver` | `resolve(key, locale)` | the method a resolver of your own implements: the text of a key in a locale |
+| `ValueFormatter` | `formatValue(value, column)`, `parseValue(value, targetType, pattern)`, `registerFormatter(type, formatter)` | format a value by its type and its `@ExcelColumn`, parse a text into a type, and register the `Formatter` of a type |
+| `Formatter` | `parse(value, pattern)`, `getDefaultPattern()` | parse a text with a pattern, and return the pattern used when a column names none |
+| `TypeConverter` | `formatNumber`, `formatDate`, `formatLocalDate`, `formatLocalDateTime`, `formatLocalTime`, `formatZonedDateTime`, `formatOffsetDateTime`, `formatInstant`, `formatEnum`, `formatMap`, `formatCollection`, `formatArray` | turn a value of that type into text |
+| `TypeConverter` | `fromString`, `parseDate`, `parseLocalDate`, `parseLocalDateTime`, `parseLocalTime`, `parseZonedDateTime`, `parseOffsetDateTime`, `parseInstant`, `parseEnum`, `parseTemporal` | turn text into a value of that type |
+| `TypeConverter`, `TemporalConverter` | `setDefaultZone(zone)` | sets the time zone used for values that carry none |
+| `TemporalConverter` | `isTemporal`, `formatTemporal`, `formatLocalDate`, `formatLocalTime`, `formatLocalDateTime`, `formatZonedDateTime`, `formatOffsetDateTime`, `formatInstant` | say whether a type is a `java.time` type, and turn a value of such a type into text |
+| `TemporalConverter` | `parseTemporalFromString`, `parseLocalDate`, `parseLocalTime`, `parseLocalDateTime`, `parseZonedDateTime`, `parseOffsetDateTime`, `parseInstant` | turn text into a value of a `java.time` type |
+| `DateConverter` | `formatDate(date, pattern)`, `formatCalendar(calendar, pattern)`, `parseDate(value)`, `parseCalendar(value)` | format and parse `java.util.Date` and `Calendar` values |
+| `Converter` | `fromString(value, targetType)` | the method of the date converters that turns text into the target type |
+| `ConverterRegistry` | `registerFromStringConverter(targetType, converter)`, `fromString(str, targetType, defaultValue)`, `clear()` | register a conversion from text, convert a text with a default for failures, and remove every registered conversion |
+| `ExcelTemplateGenerator` | `generateDefaultTemplate()`, `generateTemplateResource()` | create the default template of the JXLS exporter, as a file whose location is returned or as a `Resource` |
+
 ## Related documents
 
 - [Exporting data](en/excel/exporting-data.md)

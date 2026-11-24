@@ -50,7 +50,7 @@ A key marked `compromised` still verifies, but a token signed with it cannot giv
 | Keeps the ceiling in | the column `compromise_ceiling` of the same row | the member `compromiseCeiling` of the same file |
 | A replaced container | keeps its license without a volume | needs the file on a volume |
 
-A store of your own implements `LicenseStore` of the SDK and `CompromiseCeilingStore` together. `CompromiseCeilingStore` has `loadCeiling()`, which returns the stored ceiling or an empty `Optional` when none was fixed yet, and `saveCeiling(ceiling)`, which replaces what was stored. With only one of the two the application does not start: a deployment that cannot keep its ceiling would lose the limit without any error. The registration and the ceiling belong in the same place, so that a ceiling never outlives or predates its registration. `LicenseStorePackage` marks the package of the entity for applications that list their entity packages by hand.
+A store of your own implements `LicenseStore` of the SDK and `CompromiseCeilingStore` together. `LicenseStore` has `load()`, which returns the stored `RegistrationRecord` or an empty `Optional`, `save(record)` and `clear()`. `CompromiseCeilingStore` has `loadCeiling()`, which returns the stored ceiling or an empty `Optional` when none was fixed yet, and `saveCeiling(ceiling)`, which replaces what was stored. With only one of the two the application does not start: a deployment that cannot keep its ceiling would lose the limit without any error. The registration and the ceiling belong in the same place, so that a ceiling never outlives or predates its registration. `LicenseStorePackage` marks the package of the entity for applications that list their entity packages by hand.
 
 ## Statuses
 
@@ -80,6 +80,21 @@ A store of your own implements `LicenseStore` of the SDK and `CompromiseCeilingS
 | `LicenseActuatorAutoConfiguration`: `LicenseHealthIndicator` and `LicenseMetrics` | Spring Boot Actuator, and Micrometer for the metrics, are on the classpath |
 
 The installation gate runs before the license filter: a deployment that is not installed has no license to judge, and its wizard has to stay reachable. `LicenseRuntimeHints` declares the reflection the module needs in a native image, `RuntimeIntegrityChecker` compares the application binary with a known hash to detect patching, `ActivationServerProbe` asks a license server to identify itself before its address is saved and compares the fingerprint of its signing key, and `ActivationFailures` turns the errors of the server into message keys.
+
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `LicenseManager` | `initialize()` | called by the module at start: imports a token that was provisioned by hand when the store holds none, then judges the license |
+| `LicenseManager` | `isFeatureAvailable(feature)` | says whether the current license grants the feature |
+| `LicenseManager` | `availableFeatures()` | returns the modules the current license grants; a deployment that runs above its entitled release is granted none |
+| `LicenseManager` | `isGracePeriodReadOnly()` | is `true` while the license is in its grace period and the grace period mode is `READ_ONLY` |
+| `LicenseManager` | `getPublicKeyFingerprint()`, `verificationKeyFingerprints()` | return the fingerprint of the first verification key, and the fingerprints of every key a token is verified against |
+| `LicenseManager` | `collectedIdentifiers()` | returns what the machine reported about itself, with the source of each value |
+| `ContactIdentity` | `contactEmail()` | the method your bean implements: the address the license was sold to, which the license server compares with the customer record when a seat is claimed |
+| `InstallationDiscriminator` | `installationDiscriminator()` | the method your bean implements: a value read from the running environment that tells two installations on one host apart |
 
 ## Related documents
 

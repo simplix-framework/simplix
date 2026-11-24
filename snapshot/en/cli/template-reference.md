@@ -46,6 +46,10 @@ public class <%= classPrefix %>Service extends SimpliXBaseService<<%= entityName
 | `fields`, `entityFields` | the analysed fields |
 | `idType`, `idFieldName` | the type and the field name of the identifier |
 | `hasEmbeddedId`, `embeddedIdField`, `embeddedIdType`, `embeddedIdFields`, `embeddedIdPropertyNames` | a composite identifier |
+| `embeddedIdPropertyName1`, `embeddedIdPropertyName2`, `propType1`, `propType2` | the names and the types of the first two properties of a composite identifier; the names are `propertyName1` and `propertyName2` when the identifier has no such property |
+| `embeddedFieldCapitalized`, `embeddedField2Capitalized` | the composite identifier field followed by each of those property names with a capital first letter; empty without a composite identifier |
+| `otherEntityField`, `otherFieldCapitalized` | the first field that is neither an identifier nor the composite identifier field (`someField` when there is none), and that name with a capital first letter |
+| `importsArray` | the imports the properties of a composite identifier need |
 | `entitySearchFields`, `embeddedIdSearchFields` | the fields of the search DTO |
 | `ymlConfig` | the whole entity yml |
 | `dtoExcludeFields` | `dto.excludeFields` |

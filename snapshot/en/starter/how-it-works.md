@@ -53,6 +53,23 @@ A controller method that returns a plain object is answered as that object: `Map
 | the `MessageSource` | set `simplix.message-source.enabled: false` and declare your own |
 | a whole auto-configuration | name the class in `spring.autoconfigure.exclude` |
 
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `SimpliXMetaContributor` | `contributeType(type, typeName, extensions)` | default method a contributor overrides to put data of its own into the `extensions` of a type |
+| `SimpliXMetaContributor` | `contributeOperation(handler, operation, extensions)` | default method a contributor overrides to put data of its own into the `extensions` of an operation |
+| `TypeRef` | `string()`, `bool()`, `number(integral)`, `instant()`, `date()`, `time(pattern)`, `file()`, `binary()`, `unknown()`, `enumRef(name)`, `ref(name)`, `ref(name, args)` | create the reference of a type of that kind |
+| `AccessMeta` | `publicAccess()`, `authenticated()`, `permission(group, action)`, `expression(raw)` | create the access description of an operation open to everyone, to signed-in users, to holders of a permission, or guarded by an expression |
+| `OperationMeta` | `withDefaultSort(value)`, `withFigures(counts, figures, axis)` | return the operation with the default order, or with the counts and aggregates of its list, set |
+| `FieldMeta` | `withReference(value)`, `withSearchable(value)`, `withFormat(value)`, `withLabels(value)`, `withTones(value)`, `withDefaultValue(value)`, `withMoney(value)`, `asVerbOnly()` | return the field with that member set; `asVerbOnly()` marks a field whose value changes only through a verb, never through a form |
+| `SearchableMeta` | `withSortAlias(value)`, `withKeyword(value)` | return the search description with the sort aliases or the keyword mark set |
+| `ReferenceMeta` | `withNameField(value)`, `byKind()` | return the reference with its name field set, and say whether the target depends on the value of another field |
+| `I18nMessagesResponse`, `EntityMessages`, `EnumMessages` | `addEntity(entityName, messages)`, `addEnum(enumName, messages)`, `addField(fieldName, localizedString)`, `addValue(valueName, localizedString)` | add the labels of an entity, of an enum, of a field and of an enum value to the response |
+| `LocalizedString` | `addTranslation(locale, value)`, `getTranslation(locale)` | add and read the text of one locale |
+
 ## Related documents
 
 - [Configuration reference](en/starter/configuration-reference.md)
