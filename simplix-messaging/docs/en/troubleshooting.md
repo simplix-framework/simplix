@@ -26,6 +26,8 @@ Symptoms an application meets when it publishes and handles messages, the cause 
 | With Kafka messages of one record arrive out of order | order holds inside a partition only | set the `x-partition-key` header to the id of the record |
 | A replay returns nothing | the messages are older than the retention of the channel, or the broker has no replay | check `max-age` or `max-length`, and `capabilities().replay()` |
 | The health endpoint reports `DOWN` for messaging | the broker is not ready: the server cannot be reached, or the credentials are refused | check the address and the credentials; the log of the connection names the reason |
+| With NATS a publish fails with `Failed to publish message to subject <subject>` | the channel has no stream yet: a stream is created when a handler subscribes | start the application that handles the channel first, or create the stream beforehand |
+| With NATS a request of `RequestReplyTemplate` fails with `Failed to add/update consumer for stream <stream>` | the reply channel has no stream | create the stream of the reply channel beforehand |
 
 ## Related documents
 

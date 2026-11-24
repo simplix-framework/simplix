@@ -77,6 +77,8 @@ public class StockQueryHandler {
 
 Create one `RequestReplyTemplate` per reply channel and keep it for the life of the application; `shutdown()` ends its subscription. Use a request over a broker for a question another service answers within seconds. For a call that has to answer at once, an HTTP call is simpler.
 
+> ⚠ On NATS the template needs the stream of the reply channel to exist before the first request. Without it the request fails with `Failed to add/update consumer for stream <stream>` (`stream not found`). Create the stream `<stream-prefix><reply channel>` on the subject `<subject-prefix><reply channel>` beforehand. On the local and the Redis broker nothing has to be prepared.
+
 ## Delayed delivery
 
 `MessageScheduler` publishes a message after a delay: `publishDelayed(message, delay)` returns an id, and `cancel(id)` withdraws it. The interface and its implementations are deprecated and will be removed in a future major release. They are registered only with `simplix.messaging.local.scheduler.enabled`, `simplix.messaging.redis.scheduler.enabled` or `simplix.messaging.nats.scheduler.enabled` set to `true`.
