@@ -46,7 +46,7 @@ Every property of the module, under `simplix.auth`.
 | `security.enable-web-security` | `true` | registers the web chain and the login page |
 | `security.permit-all-patterns` | none | paths open without a login |
 | `security.prefer-token-over-session` | `true` | authenticates by the token when a request carries a token and a session |
-| `security.enable-cors` | `true` | applies the CORS settings |
+| `security.enable-cors` | `true` | applies the CORS settings to the web chain; the token and API chains always apply them |
 | `security.enable-csrf` | `true` | CSRF protection on the web chain |
 | `security.csrf-ignore-patterns` | `/api/token/**`, `/h2-console/**` | paths of the web chain exempt from CSRF |
 | `security.enable-http-basic` | `false` | accepts HTTP Basic on the web chain |

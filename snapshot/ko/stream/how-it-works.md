@@ -93,6 +93,8 @@
 | `StreamSession` | `touch()`, `markDisconnected()`, `markReconnected()`, `markTerminated()`, `addSubscription(key)`, `removeSubscription(key)`, `clearSubscriptions()` | 세션의 상태와 구독을 변경합니다. 연결 상태가 바뀔 때 모듈이 호출합니다 |
 | `StreamSession` | `addMetadata(key, value)`, `getMetadata(key)`, `addTransientMetadata(key, value)`, `getTransientMetadata(key)` | 세션에 값을 보관합니다. 메타데이터는 영속화할 때 세션과 함께 저장하고, 임시 메타데이터는 인스턴스의 메모리에만 보관합니다 |
 | `StreamMessage` | `subscriptionRemoved(key, reason)`, `sessionTerminated(reason)`, `serialize(objectMapper)` | 구독 해제 메시지와 세션 종료 메시지를 만들고, 메시지를 JSON으로 반환합니다 |
+| `SimpliXStreamDataCollectorRegistry`, `SimpliXStreamEventSourceRegistry` | `register(collector)`, `register(source)` | 빈이 아닌 수집기나 이벤트 소스를 추가합니다. 해당 타입의 빈은 시작할 때 등록됩니다 |
+| `StreamAuthorizationService` | `registerAuthorizer(authorizer)` | 빈이 아닌 `ResourceAuthorizer`를 추가합니다 |
 
 ## 관련 문서
 
