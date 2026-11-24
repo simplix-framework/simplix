@@ -85,6 +85,14 @@ attachment.setChecksum(result.getChecksum());         // 64 hexadecimal characte
 | `STORAGE_WRITE_FAILED` | 저장소가 쓰기를 거부함 |
 | `INVALID_EXTENSION`, `VIRUS_DETECTED`, `STORAGE_QUOTA_EXCEEDED`, `CHECKSUM_MISMATCH`, `MAX_FILES_EXCEEDED` | 모듈에서는 발생시키지 않습니다. 애플리케이션이 추가하는 검증에 사용합니다 |
 
+## `FileProcessingService`의 기타 메서드
+
+| 메서드 | 반환값 |
+|---|---|
+| `determineCategory(file)` | 저장하지 않고, 서비스가 업로드에 지정할 `FileCategory`를 반환합니다 |
+| `shouldOptimizeToWebp(file)` | 이미지 설정에 따라 이 업로드를 WebP로 변환하는지 여부를 반환합니다 |
+| `changeExtensionToWebp(filename)`, `extractExtension(filename)` | 확장자를 WebP로 바꾼 파일 이름과 파일 이름의 확장자를 반환합니다. 정적 메서드는 `StoredFileInfo.extractExtension(filename)`입니다 |
+
 ## 관련 문서
 
 - [이미지 처리](ko/file/processing-images.md)

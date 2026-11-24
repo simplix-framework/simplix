@@ -85,6 +85,14 @@ A refused upload throws `FileUploadException` with a `FileErrorCode`. The except
 | `STORAGE_WRITE_FAILED` | the store refused the write |
 | `INVALID_EXTENSION`, `VIRUS_DETECTED`, `STORAGE_QUOTA_EXCEEDED`, `CHECKSUM_MISMATCH`, `MAX_FILES_EXCEEDED` | not thrown by the module; they are there for checks an application adds |
 
+## Other methods of `FileProcessingService`
+
+| Method | Returns |
+|---|---|
+| `determineCategory(file)` | the `FileCategory` the service would give the upload, without storing it |
+| `shouldOptimizeToWebp(file)` | whether the image settings would convert this upload to WebP |
+| `changeExtensionToWebp(filename)`, `extractExtension(filename)` | the file name with the WebP extension, and the extension of a file name; `StoredFileInfo.extractExtension(filename)` is the static form |
+
 ## Related documents
 
 - [Processing images](en/file/processing-images.md)

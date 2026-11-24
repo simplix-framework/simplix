@@ -147,7 +147,7 @@ simplix:
 
 ## 프로바이더 직접 작성
 
-다른 서비스로 발송하려면 `EmailProvider`를 구현한 빈을 선언하세요. `send(request)`는 `EmailResult`를 반환하고, `getType()`은 `MailProviderType`을, `isAvailable()`은 현재 발송 가능 여부를 반환하며, `getPriority()`로 위 순서의 위치가 결정됩니다. `AbstractEmailProvider`는 요청을 검사하고 발송을 로그에 기록하는 기반 클래스이며, 전달 부분만 직접 구현하면 됩니다.
+다른 서비스로 발송하려면 `EmailProvider`를 구현한 빈을 선언하세요. `send(request)`는 `EmailResult`를 반환하고, `getType()`은 `MailProviderType`을, `isAvailable()`은 현재 발송 가능 여부를 반환하며, `getPriority()`로 위 순서의 위치가 결정됩니다. `AbstractEmailProvider`는 요청을 검사하고 발송을 로그에 기록하는 기반 클래스이며, 전달 부분만 직접 구현하면 됩니다. `supportsBulkSend()`는 프로바이더가 대량 요청을 한 번의 호출로 발송하는지 반환하며, 재정의하지 않으면 `false`입니다. 나중에 성공할 수 있는 실패는 `EmailResult.retryableFailure(message, code, type)`로 보고하고, 메시지 형식은 `EmailRequest.hasAttachments()`로 판단해 선택합니다.
 
 ## 관련 문서
 

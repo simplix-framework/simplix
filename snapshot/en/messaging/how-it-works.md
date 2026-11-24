@@ -36,6 +36,15 @@ Each configuration is active only for its broker value and with its client libra
 
 Declare a bean that implements `BrokerStrategy` to carry messages over something else. It sends bytes with headers to a channel, subscribes a listener for a group, acknowledges, and reports its `BrokerCapabilities` honestly: code that depends on a capability asks for it.
 
+| Method of `BrokerStrategy` | Does |
+|---|---|
+| `send(channel, payload, headers)` | stores the bytes in the channel and returns a `PublishResult` |
+| `ensureConsumerGroup(channel, groupName)` | creates the group of a channel when the broker has groups |
+| `subscribe(request)` | starts delivering the channel to the listener of a `SubscribeRequest` and returns the `Subscription` |
+| `acknowledge(channel, groupName, messageId)` | marks a message as processed |
+| `capabilities()`, `name()`, `isReady()` | describe the broker for callers, the log and the health indicator |
+| `initialize()`, `shutdown()` | open and close connections |
+
 ## Related documents
 
 - [Choosing a broker](en/messaging/choosing-a-broker.md)

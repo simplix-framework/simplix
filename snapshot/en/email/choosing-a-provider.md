@@ -147,7 +147,7 @@ With several providers on, the service tries them in a fixed order and stops at 
 
 ## A provider of your own
 
-Declare a bean that implements `EmailProvider` to send through another service. `send(request)` returns an `EmailResult`, `getType()` names a `MailProviderType`, `isAvailable()` tells whether it can send now, and `getPriority()` places it in the order above. `AbstractEmailProvider` is a base class that checks the request and logs each send, leaving the delivery to you.
+Declare a bean that implements `EmailProvider` to send through another service. `send(request)` returns an `EmailResult`, `getType()` names a `MailProviderType`, `isAvailable()` tells whether it can send now, and `getPriority()` places it in the order above. `AbstractEmailProvider` is a base class that checks the request and logs each send, leaving the delivery to you. `supportsBulkSend()` says whether the provider sends a bulk request in one call; it is `false` unless overridden. A provider reports a failure that may succeed later with `EmailResult.retryableFailure(message, code, type)`, and reads `EmailRequest.hasAttachments()` to choose the form of the message.
 
 ## Related documents
 

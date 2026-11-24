@@ -27,6 +27,16 @@
 
 `SchedulerLoggingStrategy`를 구현한 빈을 등록하면 모드를 추가할 수 있습니다. `supports(mode)`로 어떤 `mode` 값에 사용할지 정합니다.
 
+### `SchedulerLoggingStrategy`의 메서드
+
+| 메서드 | 역할 |
+|---|---|
+| `getName()`, `supports(mode)` | 전략의 이름을 반환하고, 설정된 `mode`를 처리하는지 판정합니다 |
+| `ensureRegistryEntry(metadata)` | 작업의 레지스트리 항목을 조회하거나 생성합니다 |
+| `createExecutionContext(...)` | 실행 한 건의 기록을 시작하고, 결과를 저장할 때 사용할 컨텍스트를 반환합니다 |
+| `saveExecutionResult(context, result)` | 실행 결과를 저장합니다 |
+| `initialize()`, `shutdown()`, `isReady()`, `clearCache()` | 선택 구현. 리소스 준비와 해제, 준비 상태 보고, 전략이 캐시한 값 삭제에 사용합니다 |
+
 ## 관련 문서
 
 - [시작하기](ko/scheduler/getting-started.md)

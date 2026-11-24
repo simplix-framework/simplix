@@ -20,7 +20,7 @@ shelves.mutate("s1", state -> state.setFreeSlots(4));
 boolean applied = shelves.compute("s1", state -> state.applyIfNewer(change));
 ```
 
-`InMemoryStateStore` creates the state of a key on first use with the factory it was given, and runs `mutate` and `compute` for one key one at a time. A handler that receives broadcasts and a request thread that reads the same key do not see a half-applied change.
+`InMemoryStateStore` reads with `get(key)`, `getAll()`, `getAllKeys()` and `size()`, drops a key with `remove(key)`, creates the state of a key on first use with the factory it was given, and runs `mutate` and `compute` for one key one at a time. A handler that receives broadcasts and a request thread that reads the same key do not see a half-applied change.
 
 ## Make messages safe to apply twice
 
