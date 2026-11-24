@@ -70,6 +70,30 @@
 | `SubscriptionLimitExceededException`(`SubscriptionLimitExceededException.LimitDetail` 포함) | `BIZ_QUOTA_EXCEEDED` |
 | `SchedulerException`, `BroadcastException` | `GEN_INTERNAL_SERVER_ERROR` |
 
+## 그 밖의 공개 메서드
+
+가이드에서는 작업에 필요한 메서드를 설명합니다. 가이드에 나온 타입은 아래 공개 메서드도 제공합니다.
+
+| 타입 | 메서드 | 동작 |
+|---|---|---|
+| `SessionRegistry` | `register(session)`, `unregister(sessionId)` | 새 세션을 저장하고 세션을 제거합니다. 직접 작성하는 레지스트리는 이 인터페이스의 모든 메서드를 구현합니다 |
+| `SessionRegistry` | `findById(sessionId)`, `findByUserId(userId)`, `findAll()`, `countByUserId(userId)` | 세션 하나, 사용자의 세션 목록, 전체 세션을 조회하고 사용자의 세션 수를 반환합니다 |
+| `SessionRegistry`, `BroadcastService` | `isAvailable()`, `initialize()`, `shutdown()` | 해당 구성 요소를 사용할 수 있는지 반환하고, 필요한 자원을 준비하고 해제합니다 |
+| `BroadcastService` | `sendToSession(sessionId, message)` | 세션 하나에 메시지를 전송하고 전달 여부를 반환합니다 |
+| `ConnectTicketService` | `redeem(ticket)` | 티켓을 발급 대상 사용자로 교환합니다. 티켓은 한 번만 사용할 수 있으며, 알 수 없거나 이미 사용한 티켓에는 빈 `Optional`을 반환합니다 |
+| `AdminCommandService` | `queueCommand(command)`, `queueTerminateSession(sessionId)`, `queueStopScheduler(subscriptionKey)`, `queueTriggerScheduler(subscriptionKey)` | 대상을 보유한 인스턴스가 처리하도록 명령을 저장합니다 |
+| `AdminCommandService` | `getCommand(commandId)`, `getCommandsForTarget(targetId)`, `getPendingCommands()`, `isEnabled()` | 명령 하나, 대상의 최근 명령, 아직 처리하지 않은 명령을 조회하고 명령 저장 기능의 사용 여부를 반환합니다 |
+| `MessageSender` | `isActive()` | 전송기의 연결이 유지되고 있는지 반환합니다 |
+| `SubscriptionKey` | `fromString(keyString)`, `toKeyString()` | 리소스 이름, `:`, 매개변수 해시로 구성된 문자열에서 키를 만들고, 키를 같은 형식의 문자열로 반환합니다 |
+| `Subscription` | `getIntervalMs()` | 구독의 주기를 밀리초 단위로 반환합니다 |
+| `SessionManager` | `getSession(sessionId)`, `findSession(sessionId)`, `getSessionForUser(sessionId, userId)` | 세션 ID로 세션을 반환합니다. `findSession`은 `Optional`로 반환하고, `getSessionForUser`는 세션이 해당 사용자의 세션인지도 검사합니다 |
+| `SessionManager` | `getSessionsByUser(userId)`, `getAllSessions()`, `getSessionCount()` | 사용자의 세션 목록, 전체 세션, 세션 수를 반환합니다 |
+| `SessionManager` | `terminateSession(sessionId)` | 세션을 즉시 종료하고 세션이 보유했던 구독 키를 반환합니다 |
+| `SessionManager` | `createSession(userId, transportType)`, `markDisconnected(sessionId)`, `restoreSession(sessionId, userId)`, `isRestorationSupported()`, `touch(sessionId)`, `setOnSessionTerminated(callback)` | 전송 계층이 호출하는 메서드입니다. 세션을 열고, 연결이 끊긴 세션의 유예 시간을 시작하고, 다른 인스턴스가 보유했던 세션을 복원하고, 세션 종료 콜백을 등록합니다 |
+| `StreamSession` | `touch()`, `markDisconnected()`, `markReconnected()`, `markTerminated()`, `addSubscription(key)`, `removeSubscription(key)`, `clearSubscriptions()` | 세션의 상태와 구독을 변경합니다. 연결 상태가 바뀔 때 모듈이 호출합니다 |
+| `StreamSession` | `addMetadata(key, value)`, `getMetadata(key)`, `addTransientMetadata(key, value)`, `getTransientMetadata(key)` | 세션에 값을 보관합니다. 메타데이터는 영속화할 때 세션과 함께 저장하고, 임시 메타데이터는 인스턴스의 메모리에만 보관합니다 |
+| `StreamMessage` | `subscriptionRemoved(key, reason)`, `sessionTerminated(reason)`, `serialize(objectMapper)` | 구독 해제 메시지와 세션 종료 메시지를 만들고, 메시지를 JSON으로 반환합니다 |
+
 ## 관련 문서
 
 - [다중 인스턴스 실행](./running-several-instances.md)

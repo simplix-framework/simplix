@@ -33,6 +33,15 @@
 | `isConfigured()` | 프로바이더가 키를 제공할 수 있는지 여부 |
 | `getName()` | 로그에 기록하는 이름 |
 
+## 그 밖의 공개 메서드
+
+가이드에서는 작업에 필요한 메서드를 설명합니다. 가이드에 나온 타입은 아래 공개 메서드도 제공합니다.
+
+| 타입 | 메서드 | 동작 |
+|---|---|---|
+| `ConfigurableKeyProvider` | `isDeprecated(version)` | 지정한 키 버전이 사용 중단으로 표시되어 있는지 반환합니다 |
+| `ConfigurableKeyProvider` | `getAvailableVersions()` | 프로바이더가 보유한 모든 키 버전을 반환합니다 |
+
 ## 관련 문서
 
 - [키 프로바이더 선택](./choosing-a-key-provider.md)

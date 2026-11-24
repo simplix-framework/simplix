@@ -33,6 +33,15 @@ Declare a bean that implements `KeyProvider` to take the keys from a place the m
 | `isConfigured()` | whether the provider can hand out keys |
 | `getName()` | a name for logs |
 
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `ConfigurableKeyProvider` | `isDeprecated(version)` | says whether a key version is marked as deprecated |
+| `ConfigurableKeyProvider` | `getAvailableVersions()` | returns every key version the provider holds |
+
 ## Related documents
 
 - [Choosing a key provider](./choosing-a-key-provider.md)

@@ -41,6 +41,21 @@ When several instances meet a job for the first time at the same moment, each wo
 - It does not close runs that never ended, for example after a crash. `stuck-threshold-minutes` is read by no code; a row left in `RUNNING` stays that way until your own check changes it.
 - It does not schedule or lock jobs. Spring schedules them, and ShedLock keeps instances from running the same job at once.
 
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `SchedulerExecutionResult` | `success(durationMs)`, `success(durationMs, itemsProcessed)`, `timeout(durationMs)` | create the result of a successful run and of a run that timed out |
+| `SchedulerExecutionResult` | `isSuccess()`, `isFailed()`, `isTimeout()` | say how the run ended |
+| `SchedulerLoggingService` | `isEnabled()`, `isExcluded(schedulerName)` | say whether runs are recorded at all, and whether a scheduler is left out |
+| `DefaultSchedulerLoggingService` | `getActiveStrategy()` | returns the `SchedulerLoggingStrategy` in use |
+| `SchedulerRegistryProvider` | `existsBySchedulerName(schedulerName)` | default method: says whether the registry has an entry of that name |
+| `SchedulerRegistryProvider` | `updateMetadata(registryId, metadata)` | default method, called when the class name, the cron expression or the lock name of a registered scheduler changed; returns the number of updated entries |
+| `SchedulerRegistryEntry` | `fromMetadata(metadata)`, `needsMetadataUpdate(metadata)` | create an entry with a new registry id from the metadata, and say whether an entry differs from the metadata |
+| `InMemoryLoggingStrategy` | `getRegistryCount()`, `getExecutionCount()` | return the number of registered schedulers and of runs kept in memory |
+
 ## Related documents
 
 - [Recording runs in a database](./recording-runs-in-a-database.md)

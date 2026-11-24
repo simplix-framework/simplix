@@ -70,6 +70,30 @@ The exceptions of the module extend `StreamException`, a `SimpliXGeneralExceptio
 | `SubscriptionLimitExceededException`, with a `SubscriptionLimitExceededException.LimitDetail` | `BIZ_QUOTA_EXCEEDED` |
 | `SchedulerException`, `BroadcastException` | `GEN_INTERNAL_SERVER_ERROR` |
 
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `SessionRegistry` | `register(session)`, `unregister(sessionId)` | store a new session and remove one; a registry of your own implements every method of this interface |
+| `SessionRegistry` | `findById(sessionId)`, `findByUserId(userId)`, `findAll()`, `countByUserId(userId)` | find one session, the sessions of a user and all sessions, and count the sessions of a user |
+| `SessionRegistry`, `BroadcastService` | `isAvailable()`, `initialize()`, `shutdown()` | say whether the part can be used, and prepare and release what it needs |
+| `BroadcastService` | `sendToSession(sessionId, message)` | sends a message to one session and says whether it was handed over |
+| `ConnectTicketService` | `redeem(ticket)` | exchanges a ticket for the user it was issued to; a ticket can be redeemed once, and an unknown or used one gives an empty `Optional` |
+| `AdminCommandService` | `queueCommand(command)`, `queueTerminateSession(sessionId)`, `queueStopScheduler(subscriptionKey)`, `queueTriggerScheduler(subscriptionKey)` | store a command for the instance that holds the target |
+| `AdminCommandService` | `getCommand(commandId)`, `getCommandsForTarget(targetId)`, `getPendingCommands()`, `isEnabled()` | read one command, the recent commands of a target and the commands not carried out yet, and say whether commands are stored at all |
+| `MessageSender` | `isActive()` | says whether the connection of the sender is still open |
+| `SubscriptionKey` | `fromString(keyString)`, `toKeyString()` | read a key from its text form, the resource followed by `:` and the hash of the parameters, and write it in that form |
+| `Subscription` | `getIntervalMs()` | returns the interval of the subscription in milliseconds |
+| `SessionManager` | `getSession(sessionId)`, `findSession(sessionId)`, `getSessionForUser(sessionId, userId)` | return a session by its id; `findSession` answers with an `Optional`, and `getSessionForUser` also checks that the session belongs to the user |
+| `SessionManager` | `getSessionsByUser(userId)`, `getAllSessions()`, `getSessionCount()` | return the sessions of a user, every session and the number of sessions |
+| `SessionManager` | `terminateSession(sessionId)` | ends a session at once and returns the subscription keys it held |
+| `SessionManager` | `createSession(userId, transportType)`, `markDisconnected(sessionId)`, `restoreSession(sessionId, userId)`, `isRestorationSupported()`, `touch(sessionId)`, `setOnSessionTerminated(callback)` | the calls of the transports: open a session, start the grace period of a lost connection, restore a session that another instance held, and register the callback for ended sessions |
+| `StreamSession` | `touch()`, `markDisconnected()`, `markReconnected()`, `markTerminated()`, `addSubscription(key)`, `removeSubscription(key)`, `clearSubscriptions()` | change the state and the subscriptions of the session; the module calls them as the connection changes |
+| `StreamSession` | `addMetadata(key, value)`, `getMetadata(key)`, `addTransientMetadata(key, value)`, `getTransientMetadata(key)` | keep values with the session; persistence stores the metadata with the session, and the transient metadata stays in the memory of the instance |
+| `StreamMessage` | `subscriptionRemoved(key, reason)`, `sessionTerminated(reason)`, `serialize(objectMapper)` | create the message for a removed subscription and for an ended session, and return the message as JSON |
+
 ## Related documents
 
 - [Running several instances](./running-several-instances.md)

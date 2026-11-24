@@ -47,6 +47,17 @@ A database that admits one writer at a time, such as SQLite, can refuse a transa
 | `CacheEvictionStrategy` | removes the entries from the cache of this instance |
 | `HibernateCacheHolder`, `HibernateCacheInitializer` | keep the reference to Hibernate's cache and set it up at start, together with the `EntityCacheScanner` |
 
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `PendingEvictionCompletedEvent` | `getEvictionCount()` | returns the number of evictions the event carries |
+| `PendingEviction` | `getEntityClass()` | loads the entity class from the class name the record stores |
+| `PendingEviction` | `getEntityClassName()`, `getEntityId()`, `getRegion()`, `getOperation()`, `isEvictQueryCache()`, `getTimestamp()` | the class name of the entity, the id when one record is meant, the region, the operation, whether the query cache is evicted too, and the time the eviction was collected |
+| `PendingEvictionCompletedEvent` | `getPendingEvictions()` | returns the evictions of the transaction |
+
 ## Related documents
 
 - [Publishing entity events](./publishing-entity-events.md)

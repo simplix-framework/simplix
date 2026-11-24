@@ -38,6 +38,16 @@
 - 바이러스 검사를 하지 않으며, 파일 내용을 열어 타입을 검증하지 않습니다.
 - 파일을 자체적으로 삭제하지 않습니다.
 
+## 그 밖의 공개 메서드
+
+가이드에서는 작업에 필요한 메서드를 설명합니다. 가이드에 나온 타입은 아래 공개 메서드도 제공합니다.
+
+| 타입 | 메서드 | 동작 |
+|---|---|---|
+| `FileValidator` | `validate(file, maxSize, allowedMimeTypes)` | 업로드된 파일을 크기 제한과 허용 MIME 타입으로 검사하고, 통과하지 못하면 예외를 던집니다 |
+| `FileValidator` | `validateImage(file, maxWidth, maxHeight)` | 업로드된 이미지를 최대 너비와 최대 높이로 검사합니다 |
+| `FileValidator` | `determineFileCategory(mimeType, extension)` | MIME 타입과 확장자에 해당하는 `FileCategory`를 반환합니다 |
+
 ## 관련 문서
 
 - [파일 업로드](./uploading-files.md)

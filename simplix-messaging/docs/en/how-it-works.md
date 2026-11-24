@@ -45,6 +45,23 @@ Declare a bean that implements `BrokerStrategy` to carry messages over something
 | `capabilities()`, `name()`, `isReady()` | describe the broker for callers, the log and the health indicator |
 | `initialize()`, `shutdown()` | open and close connections |
 
+## Other public methods
+
+The guides show the methods a task needs. The types they name also have these public methods.
+
+| Type | Method | Does |
+|---|---|---|
+| `Message` | `getMessageId()`, `getChannel()`, `getTimestamp()` | the id of the message, the channel it belongs to and the time it was created |
+| `MessageHeaders` | `toMap()`, `isEmpty()` | return every entry as an unmodifiable map, and say whether there is none |
+| `MessageListener` | `onMessage(message, acknowledgment)` | the method a listener implements; it is called for each received message |
+| `Subscription` | `isActive()` | says whether the subscription is active |
+| `MessageHandlerRegistrar` | `getActiveSubscriptions()` | returns the subscriptions of the `@MessageHandler` methods, for lifecycle code and tests |
+| `MessageScheduler` | `stop()` | waits for deliveries in progress and stops the background threads |
+| `JsonCodec` | `getObjectMapper()`, `defaultMapper()` | return the `ObjectMapper` of the codec, and the shared default one |
+| `DeadLetterStrategy` | `dlqChannelFor(channel)` | returns the name of the dead letter channel of a channel |
+| `IdempotencyStore` | `tryAcquire(channel, groupName, messageId)` | the method a store of your own implements: `true` for a message id seen for the first time, `false` for a duplicate |
+| `LocalBrokerStrategy` | `clearPublishedMessages()` | discards the messages the local broker recorded, to reset a test |
+
 ## Related documents
 
 - [Choosing a broker](./choosing-a-broker.md)

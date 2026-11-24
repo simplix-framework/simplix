@@ -41,6 +41,21 @@
 - 비정상 종료 등으로 끝나지 않은 실행 기록을 종료하지 않습니다. `stuck-threshold-minutes`를 읽는 코드가 없으므로, `RUNNING` 상태로 남은 행은 직접 작성한 점검 작업에서 변경해야 합니다.
 - 작업을 예약하거나 잠그지 않습니다. 예약은 Spring이 처리하고, 여러 인스턴스의 동시 실행은 ShedLock으로 방지합니다.
 
+## 그 밖의 공개 메서드
+
+가이드에서는 작업에 필요한 메서드를 설명합니다. 가이드에 나온 타입은 아래 공개 메서드도 제공합니다.
+
+| 타입 | 메서드 | 동작 |
+|---|---|---|
+| `SchedulerExecutionResult` | `success(durationMs)`, `success(durationMs, itemsProcessed)`, `timeout(durationMs)` | 성공한 실행의 결과와 시간이 초과된 실행의 결과를 만듭니다 |
+| `SchedulerExecutionResult` | `isSuccess()`, `isFailed()`, `isTimeout()` | 실행이 성공, 실패, 시간 초과 중 어느 상태로 끝났는지 반환합니다 |
+| `SchedulerLoggingService` | `isEnabled()`, `isExcluded(schedulerName)` | 실행 기록 기능이 활성화되어 있는지, 지정한 스케줄러가 기록 대상에서 제외되어 있는지 반환합니다 |
+| `DefaultSchedulerLoggingService` | `getActiveStrategy()` | 사용 중인 `SchedulerLoggingStrategy`를 반환합니다 |
+| `SchedulerRegistryProvider` | `existsBySchedulerName(schedulerName)` | 기본 메서드입니다. 레지스트리에 해당 이름의 항목이 있는지 반환합니다 |
+| `SchedulerRegistryProvider` | `updateMetadata(registryId, metadata)` | 기본 메서드입니다. 등록된 스케줄러의 클래스 이름, 크론 식, 잠금 이름이 바뀌면 호출되며 갱신한 항목 수를 반환합니다 |
+| `SchedulerRegistryEntry` | `fromMetadata(metadata)`, `needsMetadataUpdate(metadata)` | 메타데이터로 새 레지스트리 ID의 항목을 만들고, 항목이 메타데이터와 다른지 반환합니다 |
+| `InMemoryLoggingStrategy` | `getRegistryCount()`, `getExecutionCount()` | 등록된 스케줄러 수와 메모리에 보관 중인 실행 기록 수를 반환합니다 |
+
 ## 관련 문서
 
 - [데이터베이스에 실행 기록 저장](./recording-runs-in-a-database.md)
