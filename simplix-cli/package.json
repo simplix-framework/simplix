@@ -1,6 +1,6 @@
 {
   "name": "@simplix-boot/cli",
-  "version": "2.0.0-SNAPSHOT",
+  "version": "1.3.0-SNAPSHOT",
   "description": "Command line tool that generates SimpliX Spring Boot code (services, controllers, DTOs, tests) from JPA entities",
   "type": "module",
   "bin": {
@@ -42,6 +42,6 @@
   "license": "SEE LICENSE IN LICENSE",
   "publishConfig": {
     "access": "public",
-    "tag": "latest"
+    "tag": "spring-boot-3x"
   }
 }
