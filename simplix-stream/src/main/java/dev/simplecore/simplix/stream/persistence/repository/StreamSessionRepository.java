@@ -111,7 +111,7 @@ public interface StreamSessionRepository extends JpaRepository<StreamSessionEnti
      * @return the number of updated sessions
      */
     @Modifying
-    @Query("UPDATE StreamSessionEntity s SET s.state = 'TERMINATED', s.terminatedAt = CURRENT_TIMESTAMP WHERE s.instanceId = :instanceId AND s.state != 'TERMINATED'")
+    @Query("UPDATE StreamSessionEntity s SET s.state = 'TERMINATED', s.terminatedAt = current_instant WHERE s.instanceId = :instanceId AND s.state != 'TERMINATED'")
     int terminateSessionsByInstanceId(@Param("instanceId") String instanceId);
 
     /**

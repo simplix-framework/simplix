@@ -94,7 +94,7 @@ public interface StreamSubscriptionRepository extends JpaRepository<StreamSubscr
      * @return the number of updated subscriptions
      */
     @Modifying
-    @Query("UPDATE StreamSubscriptionEntity s SET s.active = false, s.unsubscribedAt = CURRENT_TIMESTAMP WHERE s.sessionId = :sessionId AND s.active = true")
+    @Query("UPDATE StreamSubscriptionEntity s SET s.active = false, s.unsubscribedAt = current_instant WHERE s.sessionId = :sessionId AND s.active = true")
     int deactivateBySessionId(@Param("sessionId") String sessionId);
 
     /**
@@ -105,7 +105,7 @@ public interface StreamSubscriptionRepository extends JpaRepository<StreamSubscr
      * @return the number of updated subscriptions
      */
     @Modifying
-    @Query("UPDATE StreamSubscriptionEntity s SET s.active = false, s.unsubscribedAt = CURRENT_TIMESTAMP WHERE s.sessionId = :sessionId AND s.subscriptionKey = :subscriptionKey AND s.active = true")
+    @Query("UPDATE StreamSubscriptionEntity s SET s.active = false, s.unsubscribedAt = current_instant WHERE s.sessionId = :sessionId AND s.subscriptionKey = :subscriptionKey AND s.active = true")
     int deactivateBySessionIdAndSubscriptionKey(
             @Param("sessionId") String sessionId,
             @Param("subscriptionKey") String subscriptionKey);
