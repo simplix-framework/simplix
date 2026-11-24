@@ -218,6 +218,51 @@ result.failed.forEach((failure) => console.warn(failure.resource, failure.reason
 - The client keeps the last list and sends it again after a reconnection, because a new session starts without subscriptions.
 - In a React application, create the client once, for example in a context provider, and call `on` and `subscribe` from an effect that calls `close` on cleanup.
 
+## Types for TypeScript
+
+```typescript
+type StreamMessageType =
+  | 'CONNECTED' | 'RECONNECTED' | 'DATA' | 'HEARTBEAT'
+  | 'ERROR' | 'SUBSCRIPTION_REMOVED' | 'SESSION_TERMINATED';
+
+interface StreamMessage<T = unknown> {
+  type: { type: 'MessageType'; value: StreamMessageType };
+  timestamp: string;
+  subscriptionKey?: string;
+  resource?: string;
+  payload?: T;
+  errorCode?: string;
+  message?: string;
+}
+
+interface SubscriptionItem {
+  resource: string;
+  params?: Record<string, unknown>;
+}
+
+interface SubscribedResource {
+  resource: string;
+  params: Record<string, unknown>;
+  subscriptionKey: string;
+  intervalMs: number;
+}
+
+interface FailedSubscription {
+  resource: string;
+  params: Record<string, unknown>;
+  reason: string;
+}
+
+interface SubscriptionResponse {
+  success: boolean;
+  subscribed: SubscribedResource[];
+  failed: FailedSubscription[];
+  totalCount: number;
+}
+```
+
+Fields without a value are left out of a message: a heartbeat carries `type` and `timestamp` only.
+
 ## Related documents
 
 - [Securing streams](./securing-streams.md)

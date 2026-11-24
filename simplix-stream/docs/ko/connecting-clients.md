@@ -218,6 +218,51 @@ result.failed.forEach((failure) => console.warn(failure.resource, failure.reason
 - 새 세션은 구독 없이 시작되므로, 클라이언트는 마지막 목록을 보관했다가 재연결 후 다시 전송합니다.
 - React 애플리케이션에서는 컨텍스트 프로바이더 등에서 클라이언트를 한 번만 생성하고, effect에서 `on`과 `subscribe`를 호출한 뒤 정리 함수에서 `close`를 호출하세요.
 
+## TypeScript 타입
+
+```typescript
+type StreamMessageType =
+  | 'CONNECTED' | 'RECONNECTED' | 'DATA' | 'HEARTBEAT'
+  | 'ERROR' | 'SUBSCRIPTION_REMOVED' | 'SESSION_TERMINATED';
+
+interface StreamMessage<T = unknown> {
+  type: { type: 'MessageType'; value: StreamMessageType };
+  timestamp: string;
+  subscriptionKey?: string;
+  resource?: string;
+  payload?: T;
+  errorCode?: string;
+  message?: string;
+}
+
+interface SubscriptionItem {
+  resource: string;
+  params?: Record<string, unknown>;
+}
+
+interface SubscribedResource {
+  resource: string;
+  params: Record<string, unknown>;
+  subscriptionKey: string;
+  intervalMs: number;
+}
+
+interface FailedSubscription {
+  resource: string;
+  params: Record<string, unknown>;
+  reason: string;
+}
+
+interface SubscriptionResponse {
+  success: boolean;
+  subscribed: SubscribedResource[];
+  failed: FailedSubscription[];
+  totalCount: number;
+}
+```
+
+값이 없는 필드는 메시지에 포함되지 않습니다. 하트비트에는 `type`과 `timestamp`만 포함됩니다.
+
 ## 관련 문서
 
 - [스트림 보안](./securing-streams.md)
