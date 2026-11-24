@@ -146,7 +146,7 @@ public class DatabaseJweKeyStore implements JweKeyStore {
 | `initializationMarker` | a marker that keeps several instances from creating the first key at once; give its column a unique constraint |
 
 - `findExpired` returns the keys that may be deleted. Return only keys that are no longer active and past `expiresAt`, as the repository method above does.
-- `deleteByVersion` and `findExpired` have default implementations that delete nothing. A store that leaves them out keeps every key for ever.
+- `deleteByVersion` and `findExpired` have default implementations that delete nothing. A store that leaves them out keeps every key for ever. `deleteExpired()`, which `cleanupExpiredKeys()` calls, has a default implementation as well: it deletes each key `findExpired()` returns with `deleteByVersion` and returns how many were deleted. Override it when the store can delete them with one statement.
 - The unique constraint on `initialization_marker` lets only one instance insert the first key when several start together; the others read the key that was stored.
 
 ## Step 2. Switch key rolling on

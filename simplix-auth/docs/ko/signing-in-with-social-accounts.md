@@ -56,7 +56,7 @@ Google은 클라이언트 ID와 시크릿만 지정하면 됩니다. Kakao, Nave
 | `apple` | OpenID Connect | `AppleUserInfoExtractor` | `sub` |
 | 그 밖의 OpenID Connect 프로바이더 | OpenID Connect | `StandardOidcUserInfoExtractor` | `sub`와 표준 클레임 |
 
-각 추출기는 `OAuth2UserInfoExtractorStrategy`입니다. `OAuth2UserInfoExtractor`가 `getProviderType()`이 등록 정보와 일치하는 추출기를 선택합니다. 등록 ID는 `OAuth2ProviderType` 이름의 소문자 형태입니다.
+각 추출기는 `OAuth2UserInfoExtractorStrategy`입니다. `OAuth2UserInfoExtractor`가 `getProviderType()`이 등록 정보와 일치하는 추출기를 선택합니다. 등록 ID는 `OAuth2ProviderType` 이름의 소문자 형태입니다. 애플리케이션 코드에서 `OAuth2ProviderType.fromRegistrationId(id)`를 호출하면 대소문자를 구분하지 않고 ID에 해당하는 상수를 반환하며, 열거형에 없는 ID에는 `IllegalArgumentException`을 던집니다. `OAuth2ProviderType.resolve(id)`는 열거형에 없는 ID에 `OIDC`를 반환합니다.
 
 ## 2단계. 사용자 조회 구현
 

@@ -54,7 +54,7 @@ cacheManager.contains(Branch.class, branchId);      // whether the record is cac
 
 ### Which entities are cached
 
-`EntityCacheScanner` knows the entities marked `@Cache` in the packages under `simplix.hibernate.cache.scan-packages`. Use it to evict by a name that arrives from outside, such as the table a batch job touched.
+`EntityCacheScanner` knows the entities marked `@Cache` in the packages under `simplix.hibernate.cache.scan-packages`. The module fills it at start by calling `scanForCachedEntities(packages...)`; an application may call the method again with further packages, and the entities found there are added. Use it to evict by a name that arrives from outside, such as the table a batch job touched.
 
 ```java
 Class<?> entity = entityCacheScanner.findBySimpleName("Branch");

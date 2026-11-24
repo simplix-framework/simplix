@@ -102,6 +102,17 @@ data:}
 - 검사는 전용 스레드 풀에서 실행되며 `session.validation-timeout`(기본 5초) 안에 끝나야 합니다. 이 시간을 초과한 검사는 해당 하트비트를 건너뛰며 세션을 종료하지 않습니다.
 - 연결 요청의 액세스 토큰은 `bearerToken`이라는 임시 메타데이터로 세션에 보관되므로, 검증기에서 토큰의 폐기 여부를 확인할 수 있습니다. 이 값은 데이터베이스에 저장되지 않습니다.
 
+검증기가 받는 `StreamSession`은 다음 메서드를 제공합니다.
+
+| 메서드 | 반환값 |
+|---|---|
+| `getId()` | 클라이언트가 받은 세션 ID |
+| `getUserId()` | 세션의 사용자. 익명 세션에는 사용자가 없습니다 |
+| `getTransportType()` | `TransportType.SSE` 또는 `TransportType.WEBSOCKET` |
+| `getConnectedAt()` | 세션을 연 시각 |
+| `getState()`, `isConnected()`, `isTerminated()` | `SessionState` 값인 `CONNECTED`, `DISCONNECTED`, `TERMINATED` |
+| `getSubscriptions()`, `getSubscriptionCount()`, `hasSubscription(key)` | 세션이 보유한 `SubscriptionKey` 목록과 개수, 특정 키의 보유 여부 |
+
 ## 제한
 
 | 속성 | 기본값 | 의미 |

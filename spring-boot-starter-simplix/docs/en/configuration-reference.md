@@ -76,6 +76,17 @@ spring:
       - dev.simplecore.simplix.springboot.autoconfigure.SimpliXThymeleafAutoConfiguration
 ```
 
+### Thymeleaf beans
+
+`SimpliXThymeleafAutoConfiguration` is active when Thymeleaf and its layout dialect are on the classpath. It registers each bean below only when the application has no bean of the same name, and its `SpringTemplateEngine`, which adds the `LayoutDialect`, only when the application has no bean of that type.
+
+| Bean name | Type | What the module registers |
+|---|---|---|
+| `defaultTemplateResolver` | `SpringResourceTemplateResolver` | reads templates with `spring.thymeleaf.prefix`, `suffix`, `mode`, `encoding` and `cache` |
+| `errorTemplateResolver` | `SpringResourceTemplateResolver` | reads the templates whose name starts with `error` from `classpath:/templates/`, without caching, before the default resolver |
+| `thymeleafViewResolver` | `ViewResolver` | renders every view name except `redirect:*`, ahead of the other view resolvers |
+| `jspViewResolver` | `ViewResolver` | an `InternalResourceViewResolver` with `spring.mvc.view.prefix` and `suffix`, after the Thymeleaf resolver |
+
 ## Related documents
 
 - [Getting started](../../../docs/en/getting-started.md)
