@@ -104,9 +104,9 @@ Book.yml uses statusCounts or aggregates, which needs supportClasses.searchFigur
 
 ## The generated DTO does not compile on keyword
 
-**Cause**: a field of the yml sets `searchKeyword: true`, which generates `@SearchableField(keyword = true)`. The searchable-jpa release the project depends on has no `keyword` attribute.
+**Cause**: a field of the yml sets `searchKeyword: true`, which generates `@SearchableField(keyword = true)`. The project resolves a searchable-jpa release without the `keyword` attribute: it pins an older searchable-jpa version, or it uses a SimpliX release older than the CLI.
 
-**Fix**: remove `searchKeyword` from the yml and generate again, or build against a searchable-jpa version that has the attribute.
+**Fix**: `./gradlew dependencies --configuration compileClasspath` shows the resolved searchable-jpa version. Remove the pinned version or move SimpliX to the release of the CLI, or remove `searchKeyword` from the yml and generate again.
 
 ## The command is not found
 
