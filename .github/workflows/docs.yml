@@ -6,7 +6,11 @@ on:
     paths:
       - 'docs/**'
       - '**/docs/ko/**'
+      - '**/docs/en/**'
+      - '**/README.md'
+      - '**/README.ko.md'
       - 'scripts/build-docs.sh'
+      - 'scripts/build-docs.mjs'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
     inputs:
