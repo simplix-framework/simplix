@@ -1,161 +1,41 @@
-# SimpliX Encryption Module
+**English** | [한국어](./README.ko.md)
 
-Spring Boot 애플리케이션을 위한 AES-256 기반 데이터 암호화 모듈입니다.
+# simplix-encryption
 
-## Features
+Encryption of data at rest. Mark a column and its value is encrypted with AES-256-GCM on the way into the database and decrypted on the way out; every stored value names the key version that encrypted it, so keys can be replaced without losing old data.
 
-- ✔ **AES-256-GCM 암호화** - 업계 표준 대칭키 암호화
-- ✔ **다중 KeyProvider** - Simple, Configurable, Managed, Vault
-- ✔ **JPA 자동 암호화** - AttributeConverter 기반 투명한 암호화
-- ✔ **키 로테이션** - 자동/수동 키 교체 지원
-- ✔ **버전 관리** - 암호화 키 버전 추적 및 하위 호환성
-- ✔ **레거시 데이터 처리** - 기존 평문 데이터 자동 인식
+![An entity value passes the converter and the encryption service on its way to the column, where it is stored as the key version, the IV and the ciphertext.](../docs/assets/figures/encryption-readme-column-flow.en.svg)
 
-## Quick Start
+## Install
 
-### 1. Dependency
+The [starter](../spring-boot-starter-simplix/README.md) includes the module. Without the starter:
 
-```gradle
+```groovy
 dependencies {
-    implementation 'dev.simplecore:simplix-encryption:${version}'
-
-    // Optional: HashiCorp Vault 사용 시
-    implementation 'org.springframework.cloud:spring-cloud-starter-vault-config'
+    implementation "dev.simplecore.simplix:simplix-encryption:${version}"
 }
 ```
 
-### 2. Configuration
+## Documents
 
-```yaml
-simplix:
-  encryption:
-    enabled: true
-    provider: simple
-    static-key: my-dev-key-at-least-16-chars
-```
+| To | Read |
+|---|---|
+| encrypt a first column | [Getting started](docs/en/getting-started.md) |
+| encrypt values in code | [Encrypting values in code](docs/en/encrypting-values-in-code.md) |
+| decide where the keys come from | [Choosing a key provider](docs/en/choosing-a-key-provider.md) |
+| replace a key | [Rotating keys](docs/en/rotating-keys.md) |
+| look a property up | [Configuration reference](docs/en/configuration-reference.md) |
+| size, search and migrate an encrypted column | [Encrypting columns](docs/en/encrypting-columns.md) |
+| see how a value is encrypted and which provider is chosen | [How simplix-encryption works](docs/en/how-it-works.md) |
+| find the cause of a problem | [Troubleshooting](docs/en/troubleshooting.md) |
 
-### 3. Usage
+## Requirements
 
-**JPA Entity 필드 암호화:**
-
-```java
-@Entity
-@Table(name = "users")
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private String username;  // 암호화하지 않음
-
-    @Convert(converter = AesEncryptionConverter.class)
-    @Column(name = "email", length = 500)
-    private String email;
-
-    @Convert(converter = AesEncryptionConverter.class)
-    @Column(name = "phone_number", length = 500)
-    private String phoneNumber;
-}
-```
-
-**지울 수 있어야 하는 비밀 값(서명 키 등):**
-
-`String`은 덮어쓸 수 없어 힙에 오래 남습니다. 필드를 `byte[]`로 두고 `AesEncryptionBytesConverter`를 지정하면 사용 직후 `AesEncryptionBytesConverter.erase(bytes)`로 지울 수 있습니다. 컬럼에는 `AesEncryptionConverter`와 같은 암호문 텍스트를 저장하므로, 기존 `String` 필드를 스키마 변경 없이 전환할 수 있습니다.
-
-```java
-@Convert(converter = AesEncryptionBytesConverter.class)
-@Column(name = "signing_key", length = 1000)
-private byte[] signingKey;
-```
-
-**Service에서 직접 사용:**
-
-```java
-@Service
-@RequiredArgsConstructor
-public class SecureDataService {
-
-    private final EncryptionService encryptionService;
-
-    public String encrypt(String plainText) {
-        return encryptionService.encrypt(plainText).getData();
-    }
-
-    public String decrypt(String encryptedData) {
-        return encryptionService.decrypt(encryptedData);
-    }
-
-    public boolean isEncrypted(String data) {
-        return encryptionService.isEncrypted(data);
-    }
-}
-```
-
-## KeyProviders
-
-| Provider | 용도 | 키 저장소 | 로테이션 |
-|----------|------|----------|----------|
-| SimpleKeyProvider | 개발/테스트 | 메모리 | 불가 |
-| ConfigurableKeyProvider | 설정 기반 | YAML | 수동 (재시작) |
-| ManagedKeyProvider | 파일 기반 | 로컬 파일 | 자동/수동 |
-| VaultKeyProvider | 운영 환경 | HashiCorp Vault | 자동/수동 |
-
-## Configuration
-
-```yaml
-simplix:
-  encryption:
-    enabled: true
-    provider: simple              # simple, configurable, managed, vault
-
-    # SimpleKeyProvider (개발용)
-    static-key: my-dev-key
-
-    # ConfigurableKeyProvider (다중 키)
-    configurable:
-      current-version: v2
-      keys:
-        v1:
-          key: "Base64EncodedKey=="
-          deprecated: true
-        v2:
-          key: "AnotherBase64Key=="
-          deprecated: false
-
-    # ManagedKeyProvider (파일 기반)
-    key-store-path: /var/simplix/encryption/keys
-    master-key: ${ENCRYPTION_MASTER_KEY}
-    salt: ${ENCRYPTION_SALT}
-
-    # VaultKeyProvider (운영)
-    vault:
-      enabled: true
-      path: secret/encryption
-
-    # 키 로테이션
-    rotation:
-      enabled: true
-      days: 90
-    auto-rotation: true
-```
-
-## Encrypted Data Format
-
-```
-{version}:{iv}:{ciphertext}
-
-예시: v1734567890123:dGVzdGl2ZGF0YTE=:ZW5jcnlwdGVkY29udGVudA==
-```
-
-## Documentation
-
-- [Overview (아키텍처 상세)](docs/ko/overview.md)
-- [KeyProvider Guide (환경별 설정)](docs/ko/key-providers.md)
-- [JPA Converter (Entity 암호화)](docs/ko/jpa-converter.md)
-- [Key Rotation (키 교체)](docs/ko/key-rotation.md)
-- [Security Best Practices (보안 권장사항)](docs/ko/security-best-practices.md)
+| Your project | SimpliX line | Version to declare |
+|---|---|---|
+| Spring Boot 4 | 2.x | a `2.x` release |
+| Spring Boot 3 | 1.x | a `1.x` release |
 
 ## License
 
-SimpleCORE License 1.0 (SCL-1.0)
+[SimpleCORE License 1.0 (SCL-1.0)](../docs/en/license.md)
