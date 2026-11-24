@@ -38,7 +38,7 @@
 
 ## 스타터가 처리하지 않는 범위
 
-컨트롤러 메서드가 일반 객체를 반환하면 그 객체를 그대로 응답합니다. `Map.of("hello", "world")`는 `SimpliXApiResponse`로 감싸지 않고 `{"hello": "world"}`로 전송됩니다. 기반 컨트롤러처럼 직접 작성한 컨트롤러에서도 `SimpliXApiResponse.success(...)`를 반환하세요. 이런 값을 감싸는 `SimpliXResponseBodyAdvice`가 모듈에 있지만 등록되어 있지 않습니다.
+컨트롤러 메서드가 일반 객체를 반환하면 그 객체를 그대로 응답 본문으로 전송합니다. `Map.of("hello", "world")`는 `SimpliXApiResponse`로 감싸지 않고 `{"hello": "world"}`로 전송됩니다. 기반 컨트롤러처럼 직접 작성한 컨트롤러에서도 `SimpliXApiResponse.success(...)`를 반환하세요. 이런 값을 감싸는 `SimpliXResponseBodyAdvice`가 모듈에 있지만 등록되어 있지 않습니다.
 
 > ⚠ `simplix.swagger.customizers.generic-response.auto-wrap`의 기본값이 `true`이므로, API 문서에는 일반 반환 타입도 감싼 형태로 기술됩니다. 컨트롤러가 일반 객체를 반환한다면 문서와 응답이 일치하도록 이 값을 `false`로 지정하세요.
 

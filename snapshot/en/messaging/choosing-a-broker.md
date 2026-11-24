@@ -40,6 +40,7 @@ simplix:
 ```
 
 - A channel becomes a stream named `<stream-prefix><channel>` with the subject `<subject-prefix><channel>`. Use prefixes of your own, so that applications on one server do not share streams.
+- The stream of a channel is created when a handler subscribes to it. Publishing to a channel that has no stream fails with `Failed to publish message to subject <subject>`: start the application that handles the channel first, or create the stream beforehand.
 - Consumers pull messages in batches and acknowledge each one. A message whose handler throws is delivered again at once, and one that is not acknowledged within `ack-wait` after that time, up to `max-deliver` times in all.
 - A message id that repeats within `duplicate-window` is dropped by the server, and the publish answers with `duplicate` true.
 - Credentials go into `username` and `password`, `token`, or `creds-file`. `nkey-file` is not supported yet: setting it logs a warning.

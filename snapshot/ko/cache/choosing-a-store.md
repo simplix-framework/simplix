@@ -31,7 +31,7 @@ simplix:
       key-prefix: "library:cache:"
 ```
 
-키는 접두어, 캐시 이름, 키 순서로 기록하며, 항목은 호출에서 지정한 `ttl`에 따라 만료됩니다. Redis 서버를 공유하는 애플리케이션에는 서로 다른 접두어를 지정하세요.
+`CacheService`는 접두어, 캐시 이름, `::`, 키 순서로 키를 기록하며(`library:cache:authors::a1`), 항목은 호출할 때 지정한 `ttl`에 따라 만료됩니다. Spring 캐시 어노테이션은 접두어 없이 `authors::a1`로 기록하며, 항목은 `cache-configs.<name>.ttl-seconds` 또는 `default-ttl-seconds`에 따라 만료됩니다. `redis.key-prefix`는 `CacheService`에만 적용됩니다. 같은 캐시 이름을 양쪽에서 사용하면 키 집합이 따로 생깁니다. Redis 서버를 공유하는 애플리케이션은 서로 다른 접두어를 지정하고, 어노테이션으로 캐시하는 경우에는 캐시 이름도 다르게 지정하세요.
 
 ## NATS
 
@@ -48,7 +48,7 @@ simplix:
       replicas: 3
 ```
 
-캐시 이름마다 접두어와 캐시 이름으로 된 키-값 버킷이 처음 사용할 때 만들어집니다. 버킷의 모든 항목에는 같은 보관 시간이 적용됩니다. `cache-configs.<name>.ttl-seconds`를 사용하고, 없으면 `default-ttl-seconds`를 사용합니다. 호출에 전달한 `ttl`은 무시되며, 이미 있는 버킷의 보관 시간은 바뀌지 않습니다.
+캐시 이름마다 접두어와 캐시 이름으로 된 키-값 버킷이 처음 사용할 때 만들어집니다. 버킷의 모든 항목에는 같은 보관 시간이 적용됩니다. `cache-configs.<name>.ttl-seconds`를 사용하고, 없으면 `default-ttl-seconds`를 사용합니다. 호출에 전달한 `ttl`은 무시되며, 이미 있는 버킷의 보관 시간은 바뀌지 않습니다. 키는 NATS에서 허용하지 않는 문자를 `_`로 바꿔 저장하며, `getKeys`는 저장된 형식을 반환합니다. 예를 들어 키 `ko:b1`은 `ko_b1`로 조회됩니다.
 
 ## 직접 구현하는 저장소
 

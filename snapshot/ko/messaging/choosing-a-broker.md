@@ -40,6 +40,7 @@ simplix:
 ```
 
 - 채널은 `<stream-prefix><channel>` 이름의 스트림과 `<subject-prefix><channel>` 서브젝트로 구성됩니다. 같은 서버를 사용하는 애플리케이션이 스트림을 공유하지 않도록 접두어를 직접 지정하세요.
+- 채널의 스트림은 핸들러가 채널을 구독할 때 생성됩니다. 스트림이 없는 채널로 발행하면 `Failed to publish message to subject <subject>` 오류로 실패합니다. 채널을 처리하는 애플리케이션을 먼저 시작하거나 스트림을 미리 생성하세요.
 - 컨슈머는 메시지를 배치로 가져와 건별로 확인 응답을 보냅니다. 핸들러에서 예외가 발생한 메시지는 즉시, `ack-wait` 안에 확인 응답을 받지 못한 메시지는 해당 시간이 지난 뒤 다시 전달합니다. 전달 횟수는 합쳐서 최대 `max-deliver`회입니다.
 - `duplicate-window` 안에 반복된 메시지 ID는 서버에서 제거하고, 발행 결과의 `duplicate`가 true로 반환됩니다.
 - 인증 정보는 `username`과 `password`, `token`, `creds-file` 중 하나로 지정합니다. `nkey-file`은 아직 지원하지 않으며 지정하면 경고를 로그에 기록합니다.

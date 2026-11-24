@@ -25,7 +25,7 @@
 ## S3 저장소의 내부 구조
 
 - `S3ClientFactory`(기본 구현은 `DefaultS3ClientFactory`)가 설정으로 클라이언트와 프리사이너를 생성합니다. 생성할 때는 엔드포인트에 접속하지 않습니다.
-- `S3ClientHolder`는 한 리비전의 클라이언트, 프리사이너, 설정을 보관합니다. 모든 연산은 시작할 때의 홀더를 사용하며, 교체된 홀더는 마지막 연산이 끝나면 닫습니다.
+- `S3ClientHolder`는 한 리비전의 클라이언트, 프리사이너, 설정을 보관합니다. 모든 연산은 시작할 때의 홀더를 사용하며, 교체된 홀더는 마지막 연산이 끝난 뒤 종료됩니다.
 - `Digests`는 바이트를 버킷으로 스트리밍하는 동안 SHA-256을 계산합니다. `DownloadFileNames`는 서명된 내려받기 링크의 `Content-Disposition` 값을 구성하며, 구형 클라이언트용 일반 이름과 ASCII 범위를 벗어난 이름을 위한 인코딩된 이름을 함께 포함합니다.
 - `PresignedUpload`는 직접 업로드의 티켓이고, `StoredObjectInfo`는 `describe`가 버킷에서 읽은 정보입니다.
 

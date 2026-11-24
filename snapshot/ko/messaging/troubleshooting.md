@@ -26,6 +26,8 @@
 | Kafka에서 같은 레코드의 메시지 순서가 바뀜 | 순서는 파티션 안에서만 보장됩니다 | `x-partition-key` 헤더에 레코드의 ID를 지정하세요 |
 | 재생 결과가 비어 있음 | 메시지가 채널의 보존 기간보다 오래되었거나 브로커가 재생을 지원하지 않습니다 | `max-age`나 `max-length`와 `capabilities().replay()`를 확인하세요 |
 | 헬스 엔드포인트에서 메시징이 `DOWN`으로 보고됨 | 브로커가 준비 상태가 아닙니다. 서버에 접속할 수 없거나 인증이 거부되었습니다 | 주소와 인증 정보를 확인하세요. 연결 로그에 사유가 기록됩니다 |
+| NATS에서 발행이 `Failed to publish message to subject <subject>`로 실패함 | 채널에 아직 스트림이 없습니다. 스트림은 핸들러가 구독할 때 생성됩니다 | 채널을 처리하는 애플리케이션을 먼저 시작하거나 스트림을 미리 생성하세요 |
+| NATS에서 `RequestReplyTemplate` 요청이 `Failed to add/update consumer for stream <stream>`으로 실패함 | 응답 채널에 스트림이 없습니다 | 응답 채널의 스트림을 미리 생성하세요 |
 
 ## 관련 문서
 
