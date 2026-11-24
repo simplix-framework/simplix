@@ -64,6 +64,48 @@ simplix:
 - 이름과 설명에는 springdoc의 `@Tag`, `@Operation`, `@Schema`를 사용하세요. CLI는 생성하는 컨트롤러와 DTO에 이 어노테이션을 작성합니다.
 - 구체적인 `T`를 지정해 `SimpliXApiResponse<T>`를 반환하세요. 응답 스키마가 이 타입으로 만들어집니다.
 
+## Swagger UI에서 인증
+
+[simplix-auth](../../../simplix-auth/README.ko.md)를 사용하면 API 문서에 보안 스킴 `Bearer`(액세스 토큰)와 `Basic`(사용자 이름과 비밀번호)이 포함됩니다. 별도 설정 없이 Swagger UI에 Authorize 버튼이 표시됩니다.
+
+## 엔드포인트 숨기기
+
+```java
+@Hidden
+@GetMapping("/internal")
+public String internal() {
+    return "internal";
+}
+```
+
+메서드나 컨트롤러 클래스에 springdoc의 `@Hidden`을 지정하면 API 문서에서 제외됩니다. 엔드포인트 자체는 그대로 동작합니다.
+
+## 문서를 그룹으로 분리
+
+```yaml
+springdoc:
+  group-configs:
+    - group: plain
+      paths-to-match: /api/plain/**
+```
+
+그룹마다 `/v3/api-docs/<group>`(이 예시에서는 `/v3/api-docs/plain`)으로 문서가 제공되며 Swagger UI에서 선택할 수 있습니다. `/v3/api-docs`는 전체 문서를 그대로 제공합니다.
+
+## 운영 환경에서 문서 비활성화
+
+```yaml
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+scalar:
+  enabled: false
+```
+
+앞의 두 속성을 지정하면 `/v3/api-docs`와 Swagger UI가 404를 반환합니다. Scalar 페이지는 별도의 속성으로 비활성화하며, 지정하지 않으면 계속 접근할 수 있습니다.
+
 ## 관련 문서
 
 - [서비스와 컨트롤러 작성](./writing-services-and-controllers.md)

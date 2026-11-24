@@ -64,6 +64,48 @@ simplix:
 - Use springdoc's `@Tag`, `@Operation` and `@Schema` for names and descriptions. The CLI writes them on generated controllers and DTOs.
 - Return `SimpliXApiResponse<T>` with a concrete `T`: the response schema is built from it.
 
+## Sign in from Swagger UI
+
+With [simplix-auth](../../../simplix-auth/README.md) the document carries the security schemes `Bearer` (an access token) and `Basic` (user name and password), so Swagger UI shows its Authorize button without a configuration of your own.
+
+## Hide an endpoint
+
+```java
+@Hidden
+@GetMapping("/internal")
+public String internal() {
+    return "internal";
+}
+```
+
+`@Hidden` of springdoc on a method or a controller class leaves it out of the document. The endpoint itself keeps working.
+
+## Split the document into groups
+
+```yaml
+springdoc:
+  group-configs:
+    - group: plain
+      paths-to-match: /api/plain/**
+```
+
+Each group is served at `/v3/api-docs/<group>` (here `/v3/api-docs/plain`) and can be chosen in Swagger UI. `/v3/api-docs` keeps the whole document.
+
+## Switch the documents off in production
+
+```yaml
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+scalar:
+  enabled: false
+```
+
+The first two properties make `/v3/api-docs` and Swagger UI answer 404. The Scalar page has a switch of its own and stays reachable without it.
+
 ## Related documents
 
 - [Writing services and controllers](./writing-services-and-controllers.md)
