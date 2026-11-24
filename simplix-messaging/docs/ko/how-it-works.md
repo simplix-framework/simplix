@@ -61,6 +61,8 @@
 | `DeadLetterStrategy` | `dlqChannelFor(channel)` | 채널에 대응하는 데드 레터 채널 이름을 반환합니다 |
 | `IdempotencyStore` | `tryAcquire(channel, groupName, messageId)` | 직접 작성하는 저장소에서 구현하는 메서드입니다. 처음 받은 메시지 ID이면 `true`, 중복이면 `false`를 반환합니다 |
 | `LocalBrokerStrategy` | `clearPublishedMessages()` | 로컬 브로커에 기록된 메시지를 비웁니다. 테스트를 초기화할 때 사용합니다 |
+| `SubscribeRequest.Builder` | `consumerName(name)`, `batchSize(size)`, `pollTimeout(timeout)` | 컨슈머 이름, 한 번에 읽는 메시지 수, 읽기 한 번의 대기 시간을 지정합니다. 요청의 `consumerName()`으로 이름을 조회합니다 |
+| `RetryPolicy` | `maxRetries()`, `initialBackoff()`, `backoffMultiplier()`, `maxBackoff()` | 재시도 횟수, 첫 대기 시간, 시도마다 대기 시간에 곱하는 배수, 최대 대기 시간을 반환합니다. `defaults()`는 재시도 3회, 1초, 배수 2, 30초로 구성합니다 |
 
 ## 관련 문서
 

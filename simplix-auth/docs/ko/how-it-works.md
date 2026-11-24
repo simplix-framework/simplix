@@ -83,6 +83,8 @@
 | `OAuth2UserInfoExtractorStrategy` | `getString(map, key)`, `getBoolean(map, key)`, `getMap(map, key)` | 속성 맵에서 문자열, 불리언, 중첩 맵을 읽는 기본 메서드입니다 |
 | `PendingSocialRegistration` | `getProviderName()` | 제공자 이름을 문자열로 반환합니다. 제공자가 없으면 `null`입니다 |
 | `BlacklistProbe` | `probe()` | 직접 작성한 토큰 저장소의 상태 검사를 블랙리스트 헬스 인디케이터에 제공할 때 구현하는 메서드입니다. 저장소가 응답하면 정상 반환하고, 응답하지 않으면 런타임 예외를 던집니다 |
+| `TokenAuditEvent` | `tokenType()`, `additionalDetails()` | 토큰 종류(`access` 또는 `refresh`)와 이벤트의 추가 정보를 반환합니다 |
+| `OAuth2ProviderType` | `getRegistrationId()`, `getDisplayName()`, `isSupportsOidc()` | 제공자의 등록 ID, 표시 이름, OpenID Connect 지원 여부를 반환합니다 |
 
 ## 관련 문서
 

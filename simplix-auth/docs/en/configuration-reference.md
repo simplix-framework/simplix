@@ -37,6 +37,9 @@ Every property of the module, under `simplix.auth`.
 | `token.blacklist-nats-bucket` | `simplix-auth-blacklist` | the NATS key-value bucket |
 | `token.blacklist-nats-max-retention` | 7 days | the longest an entry stays in the NATS bucket |
 | `token.blacklist-failure-mode` | `FAIL_CLOSED` | `FAIL_CLOSED` or `FAIL_OPEN` when the store cannot be reached |
+| `token.access-token-expiration-minutes` | `30` | no effect: the module registers the default, and no class binds the property |
+| `token.refresh-token-expiration-days` | `7` | no effect: the module registers the default, and no class binds the property |
+| `token.blacklist-type` | `auto` | no effect: the module registers the default, and no class binds the property |
 
 ## Security
 
@@ -61,6 +64,7 @@ Every property of the module, under `simplix.auth`.
 | `security.frame-options` | `SAMEORIGIN` | `SAMEORIGIN` or `DENY` |
 | `security.referrer-policy` | not sent | the `Referrer-Policy` header |
 | `security.permissions-policy` | not sent | the `Permissions-Policy` header |
+| `security.enable-xss-protection` | `true` | no effect: the module registers the default, and no class binds the property |
 
 ## CORS
 

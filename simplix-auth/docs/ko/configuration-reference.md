@@ -37,6 +37,9 @@
 | `token.blacklist-nats-bucket` | `simplix-auth-blacklist` | NATS 키-값 버킷 |
 | `token.blacklist-nats-max-retention` | 7일 | NATS 버킷에 항목을 보관하는 최대 기간 |
 | `token.blacklist-failure-mode` | `FAIL_CLOSED` | 저장소에 연결할 수 없을 때의 동작: `FAIL_CLOSED` 또는 `FAIL_OPEN` |
+| `token.access-token-expiration-minutes` | `30` | 효과 없음: 모듈이 기본값을 등록하지만 이 속성을 바인딩하는 클래스가 없습니다 |
+| `token.refresh-token-expiration-days` | `7` | 효과 없음: 모듈이 기본값을 등록하지만 이 속성을 바인딩하는 클래스가 없습니다 |
+| `token.blacklist-type` | `auto` | 효과 없음: 모듈이 기본값을 등록하지만 이 속성을 바인딩하는 클래스가 없습니다 |
 
 ## 보안
 
@@ -61,6 +64,7 @@
 | `security.frame-options` | `SAMEORIGIN` | `SAMEORIGIN` 또는 `DENY` |
 | `security.referrer-policy` | 전송하지 않음 | `Referrer-Policy` 헤더 |
 | `security.permissions-policy` | 전송하지 않음 | `Permissions-Policy` 헤더 |
+| `security.enable-xss-protection` | `true` | 효과 없음: 모듈이 기본값을 등록하지만 이 속성을 바인딩하는 클래스가 없습니다 |
 
 ## CORS
 

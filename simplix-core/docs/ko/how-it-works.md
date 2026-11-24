@@ -71,6 +71,7 @@
 | `InputSanitizer` | `isValidEmail(email)`, `isValidUrl(url)`, `isAlphanumericWithSpace(input)` | 이메일 주소와 URL의 형식을 검사하고, 문자열이 영문자, 숫자, 공백으로만 구성되어 있는지 검사합니다 |
 | `SqlInjectionValidator` | `matchesSafePattern(input)` | 문자열이 허용 문자 패턴과 일치하는지 반환합니다 |
 | `EntityEventPayloadProvider` | `getEventPayloadData()` | 엔티티에서 구현하는 메서드입니다. 엔티티 수명 주기 이벤트의 페이로드에 엔티티 ID와 클래스 이름 외의 값을 추가합니다 |
+| `EventMessage` | `changedProperties()` | 수정으로 변경된 속성 이름을 반환합니다 |
 
 ## 관련 문서
 
