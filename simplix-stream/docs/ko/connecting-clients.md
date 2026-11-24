@@ -218,6 +218,74 @@ result.failed.forEach((failure) => console.warn(failure.resource, failure.reason
 - 새 세션은 구독 없이 시작되므로, 클라이언트는 마지막 목록을 보관했다가 재연결 후 다시 전송합니다.
 - React 애플리케이션에서는 컨텍스트 프로바이더 등에서 클라이언트를 한 번만 생성하고, effect에서 `on`과 `subscribe`를 호출한 뒤 정리 함수에서 `close`를 호출하세요.
 
+## 클라이언트가 처리해야 하는 상황
+
+| 클라이언트에서 관찰되는 현상 | 의미 | 처리 |
+|---|---|---|
+| `/tickets` 또는 세션 호출의 401 | 액세스 토큰이 없거나 만료되었습니다 | 토큰을 갱신한 뒤 다시 호출합니다 |
+| 세션 호출의 404 `Stream session not found` | 세션이 종료되었습니다. 원인은 타임아웃, 서버 재시작, 관리자 종료입니다 | 다시 연결하고 구독을 다시 전송합니다 |
+| 구독 응답의 `failed` 항목 | 리소스가 없거나 사용자에게 구독 권한이 없습니다 | `reason`을 표시하거나 기록합니다. 나머지 항목은 구독됩니다 |
+| `errorCode`가 `SCHEDULER_ERROR`인 `error` 이벤트 | 해당 구독의 수집기가 이번 주기에 실패했습니다 | 화면의 마지막 데이터를 유지합니다. 다음 주기에 다시 시도됩니다 |
+| `session_terminated` 이벤트 | 서버가 세션을 종료했으며 사유는 `message`에 있습니다 | 재연결을 중단하고 사용자에게 알립니다 |
+| `EventSource`의 `error` 이벤트 | 연결이 종료되었습니다. 원인은 `session.timeout`, 네트워크, 배포입니다 | 새 티켓으로 새 연결을 열고 다시 구독합니다 |
+
+## React에서 사용
+
+```javascript
+import { createContext, createElement, useContext, useEffect, useState } from 'react';
+import { StreamClient } from './stream-client.mjs';
+
+const StreamContext = createContext(null);
+
+export function StreamProvider({ baseUrl, getAccessToken, subscriptions, children }) {
+  const [client, setClient] = useState(null);
+
+  useEffect(() => {
+    const created = new StreamClient(baseUrl, getAccessToken);
+    let active = true;
+    created.connect()
+      .then(() => created.subscribe(subscriptions))
+      .then(() => { if (active) setClient(created); });
+    return () => {
+      active = false;
+      created.close();
+    };
+  }, [baseUrl]);
+
+  return createElement(StreamContext.Provider, { value: client }, children);
+}
+
+export function useStreamData(resource) {
+  const client = useContext(StreamContext);
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    if (client) {
+      client.on(resource, setData);
+    }
+  }, [client, resource]);
+
+  return data;
+}
+```
+
+```javascript
+function ShelfBadge() {
+  const data = useStreamData('shelf-occupancy');
+  return createElement('span', null, data ? 'free: ' + data.free : 'waiting');
+}
+
+createElement(StreamProvider, {
+  baseUrl: '/api/stream',
+  getAccessToken: () => auth.accessToken(),
+  subscriptions: [{ resource: 'shelf-occupancy', params: { shelfId: 's1' } }],
+}, createElement(ShelfBadge));
+```
+
+- 프로바이더는 하위 애플리케이션 영역에 연결 하나를 열고 전체 구독 목록을 한 번 지정합니다. 구독 호출이 목록을 교체하기 때문입니다. 컴포넌트는 훅으로 리소스를 읽으며, 해당 리소스의 첫 메시지가 도착할 때까지 `waiting`을 렌더링합니다.
+- 프로바이더가 언마운트되면 세션을 닫습니다.
+- 같은 핸들러 등록 방식으로 다른 스토어에 전달할 수 있습니다: `client.on(resource, payload => store.dispatch(received(resource, payload)))`.
+
 ## TypeScript 타입
 
 ```typescript
