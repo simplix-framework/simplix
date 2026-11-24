@@ -77,6 +77,8 @@ public class StockQueryHandler {
 
 `RequestReplyTemplate`은 응답 채널마다 하나씩 생성해 애플리케이션이 실행되는 동안 유지하세요. `shutdown()`을 호출하면 구독이 종료됩니다. 브로커를 사용한 요청은 다른 서비스가 수 초 안에 응답하는 질의에 사용하세요. 즉시 응답이 필요한 호출에는 HTTP 호출이 더 단순합니다.
 
+> ⚠ NATS에서는 첫 요청 전에 응답 채널의 스트림이 있어야 합니다. 스트림이 없으면 요청은 `Failed to add/update consumer for stream <stream>`(`stream not found`) 오류로 실패합니다. 서브젝트 `<subject-prefix><reply channel>`에 스트림 `<stream-prefix><reply channel>`을 미리 생성하세요. 로컬과 Redis 브로커에서는 준비할 것이 없습니다.
+
 ## 지연 전달
 
 `MessageScheduler`는 지정한 시간이 지난 뒤 메시지를 발행합니다. `publishDelayed(message, delay)`는 ID를 반환하고 `cancel(id)`로 취소합니다. 이 인터페이스와 구현은 사용 중단(deprecated) 상태이며 이후 메이저 릴리스에서 제거됩니다. `simplix.messaging.local.scheduler.enabled`, `simplix.messaging.redis.scheduler.enabled`, `simplix.messaging.nats.scheduler.enabled`를 `true`로 지정한 경우에만 등록됩니다.
