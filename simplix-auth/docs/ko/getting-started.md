@@ -1,83 +1,38 @@
-# SimpliX Auth 시작하기
+# simplix-auth 시작하기
 
-SimpliX Auth는 Spring Boot 기반 애플리케이션을 위한 인증/인가 스타터 라이브러리입니다. JWE(JSON Web Encryption) 토큰 기반 인증, OAuth2 소셜 로그인, 세션 관리 등을 제공합니다.
+모듈이 보호를 시작하기 전에 애플리케이션이 제공해야 하는 내용을 정리합니다. [애플리케이션 보안 적용](../../../docs/ko/securing-an-application.md)에서 같은 단계를 실행 예제로 안내합니다.
 
-## 목차
+## 애플리케이션이 제공하는 내용
 
-- [의존성 추가](#의존성-추가)
-- [기본 설정](#기본-설정)
-- [UserDetailsService 구현](#userdetailsservice-구현)
-- [JWE 키 설정](#jwe-키-설정)
-- [빠른 시작 예제](#빠른-시작-예제)
-- [다음 단계](#다음-단계)
+| 제공하는 내용 | 이유 | 없을 때 |
+|---|---|---|
+| `SimpliXUserDetailsService` 빈 | 모듈이 이 빈으로 사용자와 비밀번호 해시를 조회 | 보안 구성, 토큰 필터, 토큰 엔드포인트가 등록되지 않음 |
+| 암호화 키 또는 키 교체 설정 | 토큰을 이 키로 암호화 | 애플리케이션이 시작되지 않음 |
+| `PermissionEvaluator` 빈 | 생성된 컨트롤러가 `hasPermission(group, action)`으로 검사 | 해당 엔드포인트가 403으로 응답 |
+| `/api` 아래의 API 경로 | 토큰 필터가 `/api/**`를 보호 | 토큰으로 호출해도 로그인 페이지로 이동 |
 
-## 의존성 추가
-
-### Gradle
-
-```groovy
-dependencies {
-    implementation 'dev.simplecore:simplix-auth:${version}'
-}
-```
-
-### Maven
-
-```xml
-<dependency>
-    <groupId>dev.simplecore</groupId>
-    <artifactId>simplix-auth</artifactId>
-    <version>${version}</version>
-</dependency>
-```
-
-## 기본 설정
-
-`application.yml`에 기본 설정을 추가합니다:
+## 최소 설정
 
 ```yaml
 simplix:
   auth:
-    enabled: true
-
-    # JWE 토큰 설정
     jwe:
-      algorithm: RSA-OAEP-256
-      encryption-method: A256GCM
-      # 개발용 - 프로덕션에서는 key-rolling 사용 권장
       encryption-key-location: classpath:keys/jwe-key.json
-
-    # 토큰 수명 설정
-    token:
-      access-token-lifetime: 1800    # 30분 (초)
-      refresh-token-lifetime: 604800  # 7일 (초)
-
-    # 보안 설정
-    security:
-      enable-token-endpoints: true
-      enable-web-security: true
-      login-page-template: /login
-      permit-all-patterns:
-        - /api/public/**
-        - /swagger-ui/**
-        - /v3/api-docs/**
 ```
 
-## UserDetailsService 구현
+키는 JSON Web Key 형식의 RSA 키입니다. 키를 만드는 명령은 [시작하기](../../../docs/ko/getting-started.md)에 있습니다.
 
-SimpliX Auth를 사용하려면 `SimpliXUserDetailsService`를 구현해야 합니다:
+## 사용자 정보 서비스 작성
+
+모듈은 사용자를 저장하지 않습니다. 이 서비스에 이름으로 사용자를 요청하고, 애플리케이션의 `PasswordEncoder`로 요청의 비밀번호를 서비스가 반환한 해시와 비교합니다.
 
 ```java
 @Service
-public class CustomUserDetailsService implements SimpliXUserDetailsService {
+@RequiredArgsConstructor
+public class LibraryUserDetailsService implements SimpliXUserDetailsService {
 
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
     private final MessageSource messageSource;
-
-    public CustomUserDetailsService(UserRepository userRepository, MessageSource messageSource) {
-        this.userRepository = userRepository;
-        this.messageSource = messageSource;
-    }
 
     @Override
     public MessageSource getMessageSource() {
@@ -85,121 +40,75 @@ public class CustomUserDetailsService implements SimpliXUserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username)
-            .map(this::toUserDetails)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-    }
-
-    private UserDetails toUserDetails(User user) {
-        return org.springframework.security.core.userdetails.User.builder()
-            .username(user.getUsername())
-            .password(user.getPassword())
-            .authorities(user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .toList())
-            .accountExpired(false)
-            .accountLocked(user.isLocked())
-            .credentialsExpired(false)
-            .disabled(!user.isActive())
+    public UserDetails loadUserByUsername(String username) {
+        Member member = memberRepository.findByUsername(username)
+            .orElseThrow(() -> new UsernameNotFoundException(username));
+        return User.withUsername(member.getUsername())
+            .password(member.getPasswordHash())
+            .roles(member.getRole())
             .build();
     }
 }
-```
 
-## JWE 키 설정
+@Configuration
+public class PasswordConfig {
 
-### 개발 환경 - 정적 키 사용
-
-RSA 키 쌍을 생성하여 `src/main/resources/keys/jwe-key.json`에 저장합니다:
-
-```bash
-# OpenSSL로 RSA 키 쌍 생성
-openssl genrsa -out private.pem 2048
-openssl rsa -in private.pem -pubout -out public.pem
-```
-
-JWK(JSON Web Key) 형식으로 변환하거나, 프로그래밍 방식으로 생성할 수 있습니다:
-
-```java
-// 키 생성 유틸리티
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
-
-RSAKey rsaKey = new RSAKeyGenerator(2048)
-    .keyID("my-key-id")
-    .generate();
-
-String jwkJson = rsaKey.toJSONString();
-// 이 JSON을 jwe-key.json 파일에 저장
-```
-
-### 프로덕션 환경 - 키 롤링 사용
-
-프로덕션 환경에서는 데이터베이스 기반 키 롤링을 권장합니다:
-
-```yaml
-simplix:
-  auth:
-    jwe:
-      key-rolling:
-        enabled: true
-        key-size: 2048
-        auto-initialize: true
-        retention:
-          buffer-seconds: 86400  # 1일
-          auto-cleanup: false
-```
-
-키 롤링 사용 시 `JweKeyStore` 인터페이스를 구현해야 합니다. 자세한 내용은 [JWE 키 롤링 문서](./jwe-key-rolling.md)를 참조하세요.
-
-## 빠른 시작 예제
-
-### 1. 토큰 발급
-
-```bash
-# Basic 인증을 사용하여 토큰 발급
-curl -X GET "http://localhost:8080/auth/token/issue" \
-  -H "Authorization: Basic $(echo -n 'username:password' | base64)"
-```
-
-응답:
-```json
-{
-  "accessToken": "eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoidjEifQ...",
-  "refreshToken": "eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoidjEifQ...",
-  "accessTokenExpiry": "2024-01-15T10:30:00+09:00",
-  "refreshTokenExpiry": "2024-01-22T10:00:00+09:00"
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }
 ```
 
-### 2. API 요청 시 토큰 사용
+| `SimpliXUserDetailsService`의 메서드 | 작성 여부 | 동작 |
+|---|---|---|
+| `loadUserByUsername(username)` | 필수 | 비밀번호 해시와 권한이 포함된 사용자를 반환하거나 `UsernameNotFoundException`을 발생시킵니다 |
+| `getMessageSource()` | 필수 | 모듈이 오류 응답에 사용하는 메시지 소스를 반환합니다 |
+| `exists(username)` | 선택 | 사용자의 존재 여부를 반환합니다. 기본 구현은 사용자를 불러와 확인합니다 |
+| `loadCurrentUser(authentication)` | 선택 | 인증 정보에 해당하는 사용자를 불러옵니다 |
+| `isAccountLocked`, `isAccountExpired`, `isCredentialsExpired` | 선택 | `UserDetails`의 상태 값을 읽습니다 |
+| `getUserAuthorities(username)` | 선택 | 사용자의 권한 이름 목록 |
+
+## 전체 흐름 확인
 
 ```bash
-curl -X GET "http://localhost:8080/api/users/me" \
-  -H "Authorization: Bearer eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoidjEifQ..."
+# 1. Sign in: the answer carries accessToken and refreshToken
+curl -X POST -u alice:secret http://localhost:8080/auth/token/issue
+
+# 2. Call the API
+curl -H "Authorization: Bearer <access token>" http://localhost:8080/api/catalog/author/search
+
+# 3. Renew the pair before the access token expires
+curl -X POST -H "X-Refresh-Token: <refresh token>" http://localhost:8080/auth/token/refresh
+
+# 4. Sign out
+curl -X POST -H "Authorization: Bearer <access token>" -H "X-Refresh-Token: <refresh token>" http://localhost:8080/auth/token/revoke
 ```
 
-### 3. 토큰 갱신
-
-```bash
-curl -X GET "http://localhost:8080/auth/token/refresh" \
-  -H "X-Refresh-Token: eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoidjEifQ..."
+```json
+{
+  "accessToken" : "<token>",
+  "refreshToken" : "<token>",
+  "accessTokenExpiry" : "<time with zone>",
+  "refreshTokenExpiry" : "<time with zone>"
+}
 ```
 
-### 4. 토큰 폐기 (로그아웃)
+수명을 변경하지 않으면 액세스 토큰은 30분, 리프레시 토큰은 7일 동안 유효합니다. 폐기는 블랙리스트를 켠 경우에만 적용됩니다. [토큰 폐기](./revoking-tokens.md)를 참고하세요.
 
-```bash
-curl -X POST "http://localhost:8080/auth/token/revoke" \
-  -H "Authorization: Bearer {access_token}" \
-  -H "X-Refresh-Token: {refresh_token}"
-```
+## 상황별 다음 문서
+
+| 목적 | 문서 |
+|---|---|
+| 일부 경로를 공개하거나 로그인이 필요한 경로를 변경 | [경로 보호](./securing-paths.md) |
+| 로그아웃을 즉시 적용 | [토큰 폐기](./revoking-tokens.md) |
+| 사용자를 로그아웃시키지 않고 암호화 키 교체 | [키 교체](./rotating-keys.md) |
+| Google, Kakao 등 프로바이더 계정으로 로그인 | [소셜 계정 로그인](./signing-in-with-social-accounts.md) |
+| 다른 시스템이 발급한 토큰 수용 | [외부 토큰 수용](./accepting-external-tokens.md) |
+| 요청에 응답하는 구성 요소 확인 | [simplix-auth 동작 방식](./how-it-works.md) |
 
 ## 다음 단계
 
-- [JWE 토큰 인증](./jwe-token.md) - JWE 토큰 상세 사용법
-- [토큰 블랙리스트](./token-blacklist.md) - 토큰 폐기 기능 설정
-- [OAuth2 소셜 로그인](./oauth2.md) - 소셜 로그인 구현
-- [보안 설정](./security-configuration.md) - 상세 보안 설정
-- [설정 레퍼런스](./configuration-reference.md) - 전체 설정 속성 목록
-- [JWE 키 롤링](./jwe-key-rolling.md) - 프로덕션 키 관리
+- [토큰 발급과 갱신](./issuing-and-refreshing-tokens.md)
+- [경로 보호](./securing-paths.md)
+- [문제 해결](./troubleshooting.md)
