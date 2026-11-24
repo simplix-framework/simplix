@@ -69,6 +69,30 @@ public class PasswordConfig {
 | `isAccountLocked`, `isAccountExpired`, `isCredentialsExpired` | 선택 | `UserDetails`의 상태 값을 읽습니다 |
 | `getUserAuthorities(username)` | 선택 | 사용자의 권한 이름 목록 |
 
+### 사용자 정보 확장
+
+`loadUserByUsername`은 Spring Security의 `User` 대신 애플리케이션의 클래스를 반환할 수 있습니다. 표시 이름처럼 추가 정보를 담을 때 사용합니다. 토큰으로 인증한 요청의 principal은 이 메서드가 반환한 객체입니다.
+
+```java
+@Getter
+public class LibraryUser extends User {
+
+    private final String displayName;
+
+    public LibraryUser(String username, String passwordHash, Collection<? extends GrantedAuthority> authorities, String displayName) {
+        super(username, passwordHash, authorities);
+        this.displayName = displayName;
+    }
+}
+```
+
+```java
+@GetMapping("/whoami")
+public String whoAmI(@AuthenticationPrincipal LibraryUser user) {
+    return user.getDisplayName();
+}
+```
+
 ## 전체 흐름 확인
 
 ```bash
