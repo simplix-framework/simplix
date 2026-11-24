@@ -7,7 +7,7 @@
 | `local` | 단일 프로세스의 메모리 | 없음 | 테스트와 개발 |
 | `nats` | NATS JetStream | `io.nats:jnats` | 권장 기본값. 서버에서 중복을 제거하며 모든 기능을 사용할 수 있습니다 |
 | `redis` | Redis Streams | `spring-boot-starter-data-redis` | 이미 운영 중인 Redis 서버 |
-| `kafka` | Kafka 토픽 | `org.springframework.kafka:spring-kafka` | 대용량과 장기 보존 |
+| `kafka` | Kafka 토픽 | 사용하는 라인의 Kafka 스타터(아래 참고) | 대용량과 장기 보존 |
 | `rabbit` | RabbitMQ | `spring-boot-starter-amqp` | 이미 운영 중인 RabbitMQ |
 
 ## 브로커별 기능
@@ -77,11 +77,22 @@ simplix:
 spring:
   kafka:
     bootstrap-servers: kafka:9092
+    producer:
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+    consumer:
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
 
 simplix:
   messaging:
     broker: kafka
 ```
+
+| SimpliX 라인 | 의존성 |
+|---|---|
+| 2.x | `org.springframework.boot:spring-boot-starter-kafka` |
+| 1.x | `org.springframework.kafka:spring-kafka` |
+
+모듈은 바이트를 송수신하므로 프로듀서와 컨슈머에 위의 바이트 배열 직렬화 설정을 지정합니다. 기본 직렬화 설정에서는 발행이 `Failed to send Kafka message to topic: <topic>` 오류로 실패합니다.
 
 채널은 토픽이고 그룹은 Kafka 컨슈머 그룹입니다. 순서는 파티션 안에서만 보장되므로, 같은 키의 메시지를 한 파티션에 모으려면 `x-partition-key` 헤더를 지정하세요. Kafka에는 지연 전달이 없고 브로커에서 중복을 제거하지 않습니다. 반복되면 안 되는 핸들러는 직접 구현한 저장소와 함께 `idempotent = true`를 사용하거나 작업을 멱등하게 구현하세요.
 

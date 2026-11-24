@@ -7,7 +7,7 @@ Which broker carries the messages, what each can do, and how to configure it. Pu
 | `local` | memory, inside one process | nothing | tests and development |
 | `nats` | NATS JetStream | `io.nats:jnats` | the recommended default: duplicates are dropped by the server, and every feature is available |
 | `redis` | Redis Streams | `spring-boot-starter-data-redis` | a Redis server that is already there |
-| `kafka` | Kafka topics | `org.springframework.kafka:spring-kafka` | very large volumes and long retention |
+| `kafka` | Kafka topics | the Kafka starter of your line (below) | very large volumes and long retention |
 | `rabbit` | RabbitMQ | `spring-boot-starter-amqp` | a RabbitMQ installation that is already there |
 
 ## What each broker can do
@@ -77,11 +77,22 @@ simplix:
 spring:
   kafka:
     bootstrap-servers: kafka:9092
+    producer:
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+    consumer:
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
 
 simplix:
   messaging:
     broker: kafka
 ```
+
+| SimpliX line | Dependency |
+|---|---|
+| 2.x | `org.springframework.boot:spring-boot-starter-kafka` |
+| 1.x | `org.springframework.kafka:spring-kafka` |
+
+The module sends and receives bytes, so the producer and the consumer are configured with the byte array serializers above. With the default serializers a publish fails with `Failed to send Kafka message to topic: <topic>`.
 
 A channel is a topic and a group is a Kafka consumer group. Order holds inside a partition: set the `x-partition-key` header to keep the messages of one key together. Kafka has no delayed delivery, and duplicates are not dropped by the broker, so handlers that must not repeat use `idempotent = true` with a store of your own, or idempotent work.
 

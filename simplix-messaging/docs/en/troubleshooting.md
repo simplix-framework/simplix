@@ -28,6 +28,8 @@ Symptoms an application meets when it publishes and handles messages, the cause 
 | The health endpoint reports `DOWN` for messaging | the broker is not ready: the server cannot be reached, or the credentials are refused | check the address and the credentials; the log of the connection names the reason |
 | With NATS a publish fails with `Failed to publish message to subject <subject>` | the channel has no stream yet: a stream is created when a handler subscribes | start the application that handles the channel first, or create the stream beforehand |
 | With NATS a request of `RequestReplyTemplate` fails with `Failed to add/update consumer for stream <stream>` | the reply channel has no stream | create the stream of the reply channel beforehand |
+| With Kafka the application does not start: a bean of type `KafkaTemplate` could not be found | on the 2.x line `spring-kafka` alone brings no auto-configuration | add `org.springframework.boot:spring-boot-starter-kafka` |
+| With Kafka a publish fails with `Failed to send Kafka message to topic` | the producer uses the default serializer, and the module sends bytes | set the byte array serializer and deserializer of `spring.kafka` |
 
 ## Related documents
 
