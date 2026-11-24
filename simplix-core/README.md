@@ -1,116 +1,54 @@
-# SimpliX Core Module
+**English** | [한국어](./README.ko.md)
 
-SimpliX 프레임워크의 핵심 모듈입니다. 다른 모든 SimpliX 모듈의 기반이 됩니다.
+# simplix-core
 
-## Features
+The base library of SimpliX. Every other module builds on it: base classes for entities and repositories, tree structures, the API response and error model, validators, data protection utilities, type converters and field translation.
 
-- ✔ **베이스 엔티티/저장소** - SimpliXBaseEntity, SimpliXBaseRepository
-- ✔ **계층 구조(트리) 지원** - TreeEntity, SimpliXTreeService (40+ 메서드), SoftDeletable 자동 필터링
-- ✔ **타입 변환 시스템** - Boolean, Enum, DateTime 변환기
-- ✔ **XSS/SQL Injection 방지** - OWASP 기반 HtmlSanitizer, SqlInjectionValidator
-- ✔ **민감 데이터 마스킹** - DataMaskingUtils, LogMasker, IpAddressMaskingUtils
-- ✔ **표준화된 예외 처리** - ErrorCode (30+ 에러 코드), SimpliXGeneralException
-- ✔ **표준화된 API 응답** - SimpliXApiResponse (SUCCESS/FAILURE/ERROR)
-- ✔ **캐시 추상화** - SPI 기반 CacheManager
-- ✔ **유니크 검증** - @Unique (필드 레벨), @UniqueFields (클래스 레벨) DB 기반 유니크 검증, soft delete 지원
-- ✔ **I18n 번역** - @I18nTrans JSON 필드 다국어 번역, 로케일 fallback 지원
+![simplix-core groups its classes by what an application does with them: model data, answer requests, check input, protect data, and convert and translate values.](../docs/assets/figures/core-readme-building-blocks.en.svg)
 
-## Quick Start
+## Install
 
-### 1. Dependency
+The [starter](../spring-boot-starter-simplix/README.md) brings `simplix-core`, so an application set up as [Getting started](../docs/en/getting-started.md) describes already has it. A library that needs the core classes alone declares it directly.
 
-```gradle
+```groovy
 dependencies {
-    implementation 'dev.simplecore:simplix-core:${version}'
+    implementation "dev.simplecore.simplix:simplix-core:${version}"
 }
 ```
 
-### 2. Base Entity
+## What it provides
 
-```java
-@Entity
-@Table(name = "users")
-public class User extends SimpliXBaseEntity<Long> {
+| To | Use | Document |
+|---|---|---|
+| model entities and repositories | `SimpliXBaseEntity`, `SimpliXBaseRepository`, `SimpliXCompositeKey`, `@UuidV7Generator` | [Entities and repositories](docs/en/entities-and-repositories.md) |
+| keep records in a hierarchy | `TreeEntity`, `SimpliXTreeRepository`, `SimpliXTreeBaseService` | [Tree structures](docs/en/tree-structures.md) |
+| answer requests in one shape | `SimpliXApiResponse`, `ErrorCode`, `SimpliXGeneralException` | [API responses and errors](docs/en/api-responses-and-errors.md) |
+| check input | `@Unique`, `@UniqueFields`, `@ValidateWith`, `@SafeHtml` | [Validating input](docs/en/validating-input.md) |
+| protect personal data | `HtmlSanitizer`, `DataMaskingUtils`, `LogMasker`, `HashingUtils`, `@MaskSensitive` | [Protecting sensitive data](docs/en/protecting-sensitive-data.md) |
+| convert values | `BooleanConverter`, `EnumConverter`, `DateTimeConverter`, `SimpliXLabeledEnum` | [Converting types](docs/en/converting-types.md) |
+| serve text in the reader's language | `@I18nTrans` | [Translating fields](docs/en/translating-fields.md) |
+| describe fields for screens | `@NameField`, `@Tone`, `@MoneyValue`, `@References` | [Describing entities for screens](docs/en/describing-entities-for-screens.md) |
+| publish events | `EventManager`, `GenericEvent`, `@EntityEventConfig` | [Publishing events](docs/en/publishing-events.md) |
+| cache values | `CacheManager`, `CacheProvider` | [Caching](docs/en/caching.md) |
+| limit load and failures | `CircuitBreaker`, `RateLimiter`, `BackpressureGuard` | [Resilience utilities](docs/en/resilience-utilities.md) |
+| see what the module does alone and what the starter adds | `SimpliXRepositoryFactoryBean`, `SimpliXRuntimeHints` | [How simplix-core works](docs/en/how-it-works.md) |
+| find the cause of a problem |  | [Troubleshooting](docs/en/troubleshooting.md) |
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+Error codes are listed in the [error code reference](docs/en/error-code-reference.md).
 
-    private String username;
-    private String email;
+## Start here
 
-    @Override
-    public Long getId() { return id; }
-
-    @Override
-    public void setId(Long id) { this.id = id; }
-}
-```
-
-### 3. Base Repository
-
-```java
-public interface UserRepository extends SimpliXBaseRepository<User, Long> {
-    Optional<User> findByUsername(String username);
-}
-```
-
-### 4. API Response
-
-```java
-@GetMapping("/{id}")
-public ResponseEntity<SimpliXApiResponse<User>> getUser(@PathVariable Long id) {
-    User user = userService.findById(id);
-    return ResponseEntity.ok(SimpliXApiResponse.success(user));
-}
-```
-
-### 5. Exception Handling
-
-```java
-throw new SimpliXGeneralException(
-    ErrorCode.GEN_NOT_FOUND,
-    "User not found",
-    Map.of("userId", id)
-);
-```
-
-## Module Architecture
-
-```
-simplix-core (base)
-    │
-    ├── spring-boot-starter-simplix
-    ├── spring-boot-starter-simplix-auth
-    ├── spring-boot-starter-simplix-event
-    ├── spring-boot-starter-simplix-excel
-    └── spring-boot-starter-simplix-mybatis
-```
-
-## 설정
-
-simplix-core는 Auto-Configuration이 없는 순수 라이브러리 모듈입니다:
-
-- Spring Boot starter가 아닌 일반 라이브러리
-- 별도의 설정 속성 없음 (의존성 추가만으로 사용 가능)
-- 다른 모듈에서 공통 기능 제공
-
-## Documentation
-
-- [Overview (아키텍처 상세)](docs/ko/overview.md)
-- [Entity & Repository Guide (엔티티/저장소)](docs/ko/entity-repository.md)
-- [Tree Structure Guide (트리 구조)](docs/ko/tree-structure.md)
-- [Type Converters Guide (타입 변환)](docs/ko/type-converters.md)
-- [Security Guide (보안)](docs/ko/security.md)
-- [Exception & API Guide (예외/API)](docs/ko/exception-api.md)
-- [Cache Guide (캐시)](docs/ko/cache.md)
+[Getting started](docs/en/getting-started.md) writes a first entity and reports an error with a standard code. [Building a CRUD API](../docs/en/building-a-crud-api.md) takes the entity to a complete API.
 
 ## Requirements
 
-- Java 17+
-- Spring Boot 4.1+
-- Spring Data JPA
+| Your project | SimpliX line | Version to declare |
+|---|---|---|
+| Spring Boot 4 | 2.x | a `2.x` release |
+| Spring Boot 3 | 1.x | a `1.x` release |
+
+Java 17 or later, and Spring Data JPA for the entity, repository and tree classes.
 
 ## License
 
-SimpleCORE License 1.0 (SCL-1.0)
+[SimpleCORE License 1.0 (SCL-1.0)](../docs/en/license.md)
