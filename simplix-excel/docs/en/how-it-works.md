@@ -23,6 +23,18 @@ The exporters extend `AbstractExporter`, which reads the annotated fields of the
 
 `Converter<T>` is the interface of the two date converters. `ConverterRegistry` and `StringUtil` are helpers an application may call for its own conversions; the exporters and the importer do not consult the registry.
 
+`ExcelConverter` and `ExcelStyleManager` may be called as well, by code that writes a sheet with POI itself. The results below are those of a row class with a `Title` column and a `Price` column whose `format` is `#,##0.00`.
+
+| Call | Result |
+|---|---|
+| `ExcelConverter.extractColumnTitles(BookRow.class)` | the `name` of each `@ExcelColumn` field, sorted by `order`: `[Title, Price]` |
+| `ExcelConverter.convertToRowData(rows, BookRow.class)` | each row as texts, the `toString()` of every column value and an empty text for `null`: `[[Dune, 12.5], [Emma, ]]`. The `format` of a column is not applied |
+| `ExcelConverter.prepareDataModel(rows, BookRow.class)` | a map that holds both, under `headers` and `rows`, for a template of your own |
+| `ExcelConverter.clearCaches()` | discards the fields and titles read so far |
+| `new ExcelStyleManager(workbook).createHeaderStyle()` | the header style of the exporter: centred, bold, with thin borders and a grey background |
+| `createDataStyle(value, column)` | the style of a data cell from the attributes of its `@ExcelColumn`. The `format` is set when the value is a number or a date, so `12.5` in the `Price` column receives `#,##0.00` and a text receives `General` |
+| `clearCache()` | discards the styles created so far; the same attributes otherwise return the same style object |
+
 ## What the module registers
 
 `SimplixExcelAutoConfiguration` binds `simplix.excel` to `SimplixExcelProperties` and applies it at start: the formats to `ValueFormatter`, the cache switches to the template and field caches, and the template settings to the `ExcelTemplateGenerator.TemplateOptions` bean. It also registers:

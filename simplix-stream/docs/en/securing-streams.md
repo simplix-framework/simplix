@@ -102,6 +102,17 @@ data:}
 - The check runs on a thread pool of its own and is given `session.validation-timeout`, 5 seconds by default. A check that takes longer skips that heartbeat and does not end the session.
 - The access token of the connect request is kept with the session as transient metadata under `bearerToken`, so a validator can check whether it was revoked. It is not stored in a database.
 
+The `StreamSession` a validator receives offers these methods:
+
+| Method | Returns |
+|---|---|
+| `getId()` | the session id the client received |
+| `getUserId()` | the user of the session; an anonymous session has none |
+| `getTransportType()` | `TransportType.SSE` or `TransportType.WEBSOCKET` |
+| `getConnectedAt()` | the time the session was opened |
+| `getState()`, `isConnected()`, `isTerminated()` | the `SessionState`: `CONNECTED`, `DISCONNECTED` or `TERMINATED` |
+| `getSubscriptions()`, `getSubscriptionCount()`, `hasSubscription(key)` | the `SubscriptionKey` values the session holds, their number, and whether one of them is held |
+
 ## Limits
 
 | Property | Default | Meaning |

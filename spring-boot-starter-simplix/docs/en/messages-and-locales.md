@@ -32,6 +32,8 @@ The language follows the `Accept-Language` header of the request. The same error
 
 The validator reads its messages from the same `MessageSource`, and fills the placeholders of a constraint, such as `{min}` and `{max}`. `@Size(max = 200)` is answered as `Size must be between 0 and 200`.
 
+Write the placeholders of a message of your own by name. Numbered placeholders are filled as well, but they receive `max` before `min`: `@Size(min = 2, max = 5, message = "Between {0} and {1} characters")` is answered as `Between 5 and 2 characters`, and `message = "From {min} to {max} characters"` as `From 2 to 5 characters`.
+
 ## Properties
 
 | Property | Default | Meaning |

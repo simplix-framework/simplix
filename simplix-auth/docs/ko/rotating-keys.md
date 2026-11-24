@@ -146,7 +146,7 @@ public class DatabaseJweKeyStore implements JweKeyStore {
 | `initializationMarker` | 여러 인스턴스가 동시에 첫 키를 만들지 않도록 하는 표시. 이 컬럼에 유니크 제약을 지정하세요 |
 
 - `findExpired`는 삭제할 수 있는 키를 반환합니다. 위 저장소 메서드처럼 활성 상태가 아니면서 `expiresAt`이 지난 키만 반환하세요.
-- `deleteByVersion`과 `findExpired`의 기본 구현은 아무것도 삭제하지 않습니다. 이 메서드를 구현하지 않은 저장소는 모든 키를 계속 보관합니다.
+- `deleteByVersion`과 `findExpired`의 기본 구현은 아무것도 삭제하지 않습니다. 이 메서드를 구현하지 않은 저장소는 모든 키를 계속 보관합니다. `cleanupExpiredKeys()`가 호출하는 `deleteExpired()`에도 기본 구현이 있습니다. 기본 구현은 `findExpired()`가 반환한 키를 `deleteByVersion`으로 하나씩 삭제하고 삭제한 키의 수를 반환합니다. 저장소에서 SQL 문 하나로 삭제할 수 있으면 이 메서드를 재정의하세요.
 - `initialization_marker`에 유일 제약을 지정하면 여러 인스턴스가 동시에 시작해도 한 인스턴스만 첫 키를 저장합니다. 나머지 인스턴스는 저장된 키를 읽습니다.
 
 ## 2단계. 키 교체 모드 설정

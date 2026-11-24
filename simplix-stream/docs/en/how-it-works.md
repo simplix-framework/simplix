@@ -39,6 +39,17 @@ The parts between a subscription and a message on the wire, what the module regi
 
 > ℹ A ticket is redeemed by the instance that issued it. Behind a load balancer the ticket request and the connect request have to reach the same instance, which sticky sessions provide.
 
+The module registers the beans below only when the application has no bean of the same name, so a bean you declare with that name takes its place.
+
+| Bean name | Type | What the module registers |
+|---|---|---|
+| `streamScheduledExecutor` | `ScheduledExecutorService` | a pool of `scheduler.thread-pool-size` threads named `stream-scheduler` |
+| `streamSendExecutor` | `ExecutorService` | the writer pool of `send.writer-threads` threads |
+| `sessionValidationExecutor` | `ExecutorService` | a cached pool of threads named `session-validator` |
+| `streamInstanceId` | `String` | the value of `simplix.stream.instance-id`, or a generated UUID; registered in distributed mode |
+| `persistenceInstanceId` | `String` | the value of `simplix.stream.server.instance-id`, or the first eight characters of a generated UUID; registered with persistence |
+| `streamHealthIndicator` | `HealthIndicator` | `StreamHealthIndicator`, the source of `/actuator/health/stream` |
+
 ## Threads
 
 | Pool | Size | Runs |

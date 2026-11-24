@@ -27,7 +27,7 @@ Before any of this, `SimpliXAuthEnvironmentPostProcessor` adds defaults to the e
 | a call the user may not make | `SimpliXAccessDeniedHandler`, or the exception handler of the starter for method security | a 403 JSON answer with an `AUTHZ_` code |
 | any other path | the web chain with form login; `SimpliXAuthLoginController` serves the login page | a redirect to the login page, or the page for a signed-in session |
 
-The token endpoints call `SimpliXTokenAuthenticationSuccessHandler` and `SimpliXTokenAuthenticationFailureHandler`, which pass the result to the handlers of your application without writing to the response. Every chain takes its CORS rules from `SimpliXCorsConfigurations`, built from `simplix.auth.cors`.
+After a login attempt, the issue endpoint calls the beans named `tokenAuthenticationSuccessHandler` and `tokenAuthenticationFailureHandler`. The defaults, `SimpliXTokenAuthenticationSuccessHandler` and `SimpliXTokenAuthenticationFailureHandler`, write a log entry; [Issuing and refreshing tokens](./issuing-and-refreshing-tokens.md) shows how to replace them. Every chain takes its CORS rules from `SimpliXCorsConfigurations`, built from `simplix.auth.cors`.
 
 ## Where revoked tokens are kept
 

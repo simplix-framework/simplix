@@ -55,6 +55,10 @@ public class LibraryJwtConverter implements SimpliXJwtAuthenticationConverter {
 }
 ```
 
+## 리소스 서버의 CORS 규칙
+
+리소스 서버 체인은 `corsConfigurationSource`라는 이름의 빈에서 CORS 규칙을 읽습니다. 같은 이름의 빈이 없으면 모듈이 `simplix.auth.cors` 설정으로 빈을 구성합니다. 규칙을 직접 정의하려면 같은 이름으로 `CorsConfigurationSource` 빈을 선언하세요.
+
 ## 관련 문서
 
 - [경로 보호](./securing-paths.md)

@@ -67,6 +67,35 @@ curl -H "Authorization: Bearer <access token>" http://localhost:8080/api/catalog
 | `simplix.auth.token.create-session-on-token-issue` | `true` | 토큰을 발급할 때 HTTP 세션을 시작합니다. 같은 브라우저에서 웹 페이지도 열 수 있습니다 |
 | `simplix.auth.security.prefer-token-over-session` | `true` | 요청에 토큰과 세션이 모두 있으면 토큰으로 인증 |
 
+## 로그인 시도 후속 처리
+
+발급 엔드포인트는 자격 증명을 검사한 뒤 `tokenAuthenticationSuccessHandler` 또는 `tokenAuthenticationFailureHandler`라는 이름의 빈을 호출합니다. 회원의 마지막 로그인 시각을 기록하거나 실패 횟수를 집계하려면 같은 이름의 빈을 선언하세요.
+
+```java
+@Configuration
+@Slf4j
+public class LoginAuditConfig {
+
+    @Bean(name = "tokenAuthenticationSuccessHandler")
+    public AuthenticationSuccessHandler tokenAuthenticationSuccessHandler() {
+        return (request, response, authentication) ->
+                log.info("token issued to {} from {}", authentication.getName(), request.getRemoteAddr());
+    }
+
+    @Bean(name = "tokenAuthenticationFailureHandler")
+    public AuthenticationFailureHandler tokenAuthenticationFailureHandler() {
+        return (request, response, exception) ->
+                log.warn("token refused: {}", exception.getMessage());
+    }
+}
+```
+
+- `response` 인자는 `null`입니다. 응답은 컨트롤러가 작성하므로 핸들러에서는 기록만 수행하세요.
+- 실패 핸들러는 해당 시도의 `AuthenticationException`을 받습니다. 비밀번호가 틀린 요청과 Basic 헤더가 없는 요청에는 `BadCredentialsException`이 전달됩니다.
+- 이 빈은 발급 엔드포인트에서만 호출됩니다. 갱신 엔드포인트와 폐기 엔드포인트는 호출하지 않습니다.
+- 애플리케이션에서 빈을 선언하지 않으면 `SimpliXTokenAuthenticationSuccessHandler`와 `SimpliXTokenAuthenticationFailureHandler`가 해당 시도의 사용자 이름, 주소, 사용자 에이전트를 로그에 기록합니다.
+- 웹 체인의 폼 로그인은 `authenticationSuccessHandler`와 `authenticationFailureHandler`라는 이름의 다른 빈을 사용합니다. [경로 보호](./securing-paths.md)를 참고하세요.
+
 ## 코드에서 토큰 다루기
 
 `SimpliXJweTokenProvider`는 빈으로 등록되어 있습니다. `createTokenPair(username, clientIp, userAgent)`, `refreshTokens(refreshToken, remoteAddr, userAgent)`, `validateToken(token, remoteAddr, userAgent)`, `parseToken(token)`, `revokeToken(token)`을 제공합니다. 직접 구현한 로그인 흐름에서 토큰을 발급할 때 사용하세요.
