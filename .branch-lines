@@ -1,7 +1,16 @@
-# Release lines that must carry each other's patches.
-# mainline receives new work; maintenance receives the patches marked for it.
+# Release lines that carry each other's changes.
+# Both lines receive features and patches; they differ in the Spring Boot generation they build on.
 mainline=main
 maintenance=spring-boot-3x
 remote=origin
-# Commit types that must declare where the patch goes (conventional commit type, regex alternation).
-patch_types=fix|perf|security|revert
+# Commit types that must declare where the change goes (conventional commit type, regex alternation).
+patch_types=feat|fix|perf|security|revert
+# Paths both lines keep the same: a commit of any type that touches one declares where it goes
+# (space separated pathspecs).
+sync_paths=simplix-cli
+# Subjects of commits that belong to their own line, such as the release workflow's version
+# commits (extended regex).
+exempt_subjects=^(release: v[0-9]|chore: prepare for next development version )
+# Commits that belong to one line and were made before their type had to declare it
+# (space separated).
+exempt_commits=de7fcb3
