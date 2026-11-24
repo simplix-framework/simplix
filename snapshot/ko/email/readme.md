@@ -1,169 +1,66 @@
-# SimpliX Email Module
+[English](en/email/readme.md) | **한국어**
 
-Spring Boot 애플리케이션을 위한 유연한 다중 Provider 이메일 발송 모듈입니다.
+# simplix-email
 
-## Features
+애플리케이션에서 서비스 하나로 메일을 발송하는 모듈입니다. SMTP 서버, AWS SES, SendGrid, Resend 중 어느 프로바이더로 전달하든 같은 방식으로 호출합니다. 단건 메시지, 수신자의 언어에 맞는 템플릿 메시지, 여러 수신자를 대상으로 한 템플릿 발송을 지원하며, 예외를 발생시키지 않고 결과를 반환합니다.
 
-- ✔ **다중 Provider 지원** - SMTP, AWS SES, SendGrid, Resend
-- ✔ **자동 Failover** - Provider 장애 시 자동 전환
-- ✔ **템플릿 엔진** - Thymeleaf 기반 이메일 템플릿
-- ✔ **비동기 발송** - CompletableFuture 기반 비동기 처리
-- ✔ **대량 발송** - 수신자별 개별 변수 지원
-- ✔ **다국어 지원** - 로케일 기반 템플릿 선택
-- ✔ **첨부 파일** - 일반 첨부 및 인라인 이미지
+![요청은 이메일 서비스로 전달되고, 서비스는 활성화된 프로바이더를 우선순위 순서로 시도해 메시지를 접수한 프로바이더의 결과를 반환합니다. 결과에는 상태, 메시지 ID, 프로바이더가 포함됩니다.](../../assets/figures/email-readme-send-path.ko.svg)
 
-## Quick Start
+## 설치
 
-### 1. Dependency
+이 모듈은 [스타터](ko/starter/readme.md)에 포함되어 있습니다. 단독으로 사용하려면 의존성을 추가하세요.
 
-```gradle
+```groovy
 dependencies {
-    implementation 'dev.simplecore:simplix-email:${version}'
-
-    // Optional: Provider별 의존성
-    implementation 'software.amazon.awssdk:ses:2.x.x'      // AWS SES
-    implementation 'com.sendgrid:sendgrid-java:4.x.x'      // SendGrid
-    implementation 'com.resend:resend-java:4.x.x'          // Resend
+    implementation "dev.simplecore.simplix:simplix-email:${version}"
 }
 ```
 
-### 2. Configuration
-
-```yaml
-simplix:
-  email:
-    enabled: true
-    provider: SMTP
-    from:
-      address: noreply@example.com
-      name: My Application
-    smtp:
-      enabled: true
-      host: smtp.example.com
-      port: 587
-      username: user@example.com
-      password: ${SMTP_PASSWORD}
-      starttls: true
-```
-
-### 3. Usage
+## 첫 메시지
 
 ```java
 @Service
 @RequiredArgsConstructor
-public class NotificationService {
+@Slf4j
+public class WelcomeMailer {
 
     private final EmailService emailService;
 
-    // 간단한 이메일 발송
-    public void sendSimpleEmail(String to, String subject, String content) {
+    public void welcome(String address, String name) {
         EmailResult result = emailService.send(
-            EmailRequest.simple(to, subject, content)
-        );
+            EmailRequest.simple(address, "Welcome to the library", "<p>Hello " + name + "</p>"));
 
-        if (result.isSuccess()) {
-            log.info("Email sent: {}", result.getMessageId());
+        if (!result.isSuccess()) {
+            log.warn("welcome mail failed: {}", result.getErrorMessage());
         }
-    }
-
-    // 템플릿 이메일 발송
-    public void sendWelcomeEmail(User user) {
-        emailService.sendTemplate(
-            TemplateEmailRequest.builder()
-                .templateCode("welcome")
-                .to(List.of(EmailAddress.of(user.getName(), user.getEmail())))
-                .variables(Map.of("userName", user.getName()))
-                .locale(Locale.KOREAN)
-                .build()
-        );
-    }
-
-    // 비동기 발송
-    public void sendAsyncEmail(EmailRequest request) {
-        emailService.sendAsync(request)
-            .thenAccept(result -> log.info("Sent: {}", result.getMessageId()))
-            .exceptionally(ex -> {
-                log.error("Failed", ex);
-                return null;
-            });
     }
 }
 ```
 
-## Providers
+설정하지 않으면 메일은 외부로 발송되지 않습니다. 콘솔 프로바이더가 메시지를 로그에 출력하므로 개발 환경에서 그대로 사용할 수 있습니다. 실제 프로바이더 연결은 [시작하기](ko/email/getting-started.md)에서 설명합니다.
 
-| Provider | Priority | 용도 | 설정 |
-|----------|----------|------|------|
-| AWS SES | 100 | Production (AWS) | `aws-ses.enabled: true` |
-| Resend | 55 | Production | `resend.enabled: true` |
-| SendGrid | 50 | Production | `sendgrid.enabled: true` |
-| SMTP | 10 | Self-hosted | `smtp.enabled: true` |
-| Console | -100 | Development | `provider: CONSOLE` |
+## 문서
 
-## Template
+| 목적 | 문서 |
+|---|---|
+| 첫 메시지 발송과 프로바이더 연결 | [시작하기](ko/email/getting-started.md) |
+| 수신자, 본문, 첨부 파일, 인라인 이미지 지정과 백그라운드 발송 | [메일 발송](ko/email/sending-mail.md) |
+| 언어별로 메시지를 작성하고 값을 채워 발송 | [템플릿 사용](ko/email/using-templates.md) |
+| 여러 수신자에게 템플릿 발송 | [여러 수신자에게 발송](ko/email/sending-to-many-recipients.md) |
+| SMTP, AWS SES, SendGrid, Resend 선택과 설정, 프로바이더 간 장애 전환 | [프로바이더 선택](ko/email/choosing-a-provider.md) |
+| 클래스별 역할 확인 | [simplix-email 동작 방식](ko/email/how-it-works.md) |
+| 속성 조회 | [설정 레퍼런스](ko/email/configuration-reference.md) |
+| 문제의 원인 확인 | [문제 해결](ko/email/troubleshooting.md) |
 
-```
-templates/email/
-└── welcome/
-    ├── en/
-    │   ├── subject.txt
-    │   └── body.html
-    └── ko/
-        ├── subject.txt
-        └── body.html
-```
+## 요구 사항
 
-**subject.txt:**
-```
-[(${userName})]님, 환영합니다!
-```
+| 프로젝트 | SimpliX 라인 | 선언할 버전 |
+|---|---|---|
+| Spring Boot 4 | 2.x | `2.x` 릴리스 |
+| Spring Boot 3 | 1.x | `1.x` 릴리스 |
 
-**body.html:**
-```html
-<h1>Welcome!</h1>
-<p th:text="'Hello, ' + ${userName}">Hello, User</p>
-```
+SMTP는 모듈에 포함된 의존성만으로 동작합니다. AWS SES는 `software.amazon.awssdk:sesv2`, SendGrid는 `com.sendgrid:sendgrid-java`, Resend는 `com.resend:resend-java`를 애플리케이션의 의존성에 추가해야 합니다.
 
-## Configuration
+## 라이선스
 
-```yaml
-simplix:
-  email:
-    enabled: true
-    provider: SMTP                    # CONSOLE, SMTP, AWS_SES, SENDGRID, RESEND
-    from:
-      address: noreply@example.com
-      name: My Application
-    smtp:
-      enabled: true
-      host: smtp.example.com
-      port: 587
-      username: user
-      password: secret
-    aws-ses:
-      enabled: false
-      region: us-east-1
-    sendgrid:
-      enabled: false
-      api-key: SG.xxxx
-    resend:
-      enabled: false
-      api-key: re_xxxx
-    template:
-      base-path: templates/email
-    async:
-      core-pool-size: 2
-      max-pool-size: 10
-```
-
-## Documentation
-
-- [Overview (아키텍처 상세)](ko/email/overview.md)
-- [Sending Guide (이메일 발송)](ko/email/sending-guide.md)
-- [Template Guide (템플릿 사용)](ko/email/template-guide.md)
-- [Provider Guide (Provider 설정)](ko/email/provider-guide.md)
-- [Advanced Guide (고급 기능)](ko/email/advanced-guide.md)
-
-## License
-
-SimpleCORE License 1.0 (SCL-1.0)
+[SimpleCORE License 1.0 (SCL-1.0)](ko/license.md)

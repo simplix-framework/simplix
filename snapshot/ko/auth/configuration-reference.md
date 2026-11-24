@@ -1,430 +1,125 @@
 # 설정 레퍼런스
 
-SimpliX Auth의 전체 설정 속성을 정리합니다. 모든 속성은 `simplix.auth` 프리픽스 아래에 위치합니다.
+`simplix.auth` 아래에 있는 모듈의 모든 속성을 정리합니다.
 
-## 목차
+## 모듈
 
-- [기본 설정](#기본-설정)
-- [JWE 설정](#jwe-설정)
-- [키 롤링 설정](#키-롤링-설정)
-- [토큰 설정](#토큰-설정)
-- [보안 설정](#보안-설정)
-- [CORS 설정](#cors-설정)
-- [OAuth2 설정](#oauth2-설정)
-- [전체 예제](#전체-예제)
+| 속성 | 기본값 | 의미 |
+|---|---|---|
+| `enabled` | `true` | 모듈의 보안 구성 사용 |
 
-## 기본 설정
+## 암호화 키
 
-| 속성 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| `simplix.auth.enabled` | boolean | `true` | SimpliX Auth 모듈 활성화 |
+| 속성 | 기본값 | 의미 |
+|---|---|---|
+| `jwe.encryption-key-location` | 없음 | `classpath:keys/jwe-key.json`처럼 지정하는 JSON Web Key 형식 RSA 키의 위치 |
+| `jwe.encryption-key` | 없음 | 같은 키를 값으로 직접 지정 |
+| `jwe.algorithm` | `RSA-OAEP-256` | 키 암호화 알고리즘 |
+| `jwe.encryption-method` | `A256GCM` | 콘텐츠 암호화 방식 |
+| `jwe.key-rolling.enabled` | `false` | 키를 `JweKeyStore`에 보관하고 교체 |
+| `jwe.key-rolling.key-size` | `2048` | 생성하는 RSA 키의 크기(비트) |
+| `jwe.key-rolling.auto-initialize` | `true` | 저장소가 비어 있으면 첫 키 생성 |
+| `jwe.key-rolling.retention.buffer-seconds` | `86400` | 키 만료 시각을 정할 때 리프레시 토큰 유효 시간에 더하는 값 |
+| `jwe.key-rolling.retention.auto-cleanup` | `false` | 교체할 때 만료된 키 삭제 |
 
-```yaml
-simplix:
-  auth:
-    enabled: true
-```
+## 토큰
 
-## JWE 설정
+| 속성 | 기본값 | 의미 |
+|---|---|---|
+| `token.access-token-lifetime` | `1800` | 액세스 토큰의 유효 시간(초) |
+| `token.refresh-token-lifetime` | `604800` | 리프레시 토큰의 유효 시간(초) |
+| `token.enable-token-rotation` | `true` | 갱신할 때마다 새 리프레시 토큰 발급 |
+| `token.enable-ip-validation` | `false` | 다른 IP 주소에서 보낸 토큰 거부 |
+| `token.enable-user-agent-validation` | `false` | 다른 사용자 에이전트가 보낸 토큰 거부 |
+| `token.create-session-on-token-issue` | `true` | 토큰을 발급할 때 HTTP 세션 시작 |
+| `token.enable-blacklist` | `false` | 폐기한 토큰 거부 |
+| `token.blacklist-store` | `AUTO` | `AUTO`, `REDIS`, `NATS`, `CAFFEINE`, `MEMORY` 중 하나 |
+| `token.blacklist-nats-bucket` | `simplix-auth-blacklist` | NATS 키-값 버킷 |
+| `token.blacklist-nats-max-retention` | 7일 | NATS 버킷에 항목을 보관하는 최대 기간 |
+| `token.blacklist-failure-mode` | `FAIL_CLOSED` | 저장소에 연결할 수 없을 때의 동작: `FAIL_CLOSED` 또는 `FAIL_OPEN` |
 
-`simplix.auth.jwe.*`
+## 보안
 
-| 속성 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| `encryption-key` | String | - | JWE 암호화 키 (JWK JSON 형식) |
-| `encryption-key-location` | String | - | JWE 키 파일 경로 (classpath:, file:) |
-| `algorithm` | String | `RSA-OAEP-256` | 키 암호화 알고리즘 |
-| `encryption-method` | String | `A256GCM` | 콘텐츠 암호화 방법 |
+| 속성 | 기본값 | 의미 |
+|---|---|---|
+| `security.enable-token-endpoints` | `true` | 토큰 엔드포인트, 토큰 필터, 토큰 프로바이더 등록 |
+| `security.enable-web-security` | `true` | 웹 체인과 로그인 페이지 등록 |
+| `security.permit-all-patterns` | 없음 | 로그인 없이 접근할 수 있는 경로 |
+| `security.prefer-token-over-session` | `true` | 요청에 토큰과 세션이 모두 있으면 토큰으로 인증 |
+| `security.enable-cors` | `true` | CORS 설정 적용 |
+| `security.enable-csrf` | `true` | 웹 체인의 CSRF 보호 |
+| `security.csrf-ignore-patterns` | `/api/token/**`, `/h2-console/**` | CSRF에서 제외할 웹 체인 경로 |
+| `security.enable-http-basic` | `false` | 웹 체인에서 HTTP Basic 허용 |
+| `security.require-https` | `false` | 웹 체인을 HTTPS로 리다이렉트 |
+| `security.enable-hsts` | `true` | `Strict-Transport-Security` 전송 |
+| `security.hsts-max-age-seconds` | `31536000` | 해당 헤더의 `max-age` |
+| `security.login-page-template` | `login` | 로그인 페이지의 Thymeleaf 템플릿 |
+| `security.login-page-path` | `/login` | 로그인 페이지 경로 |
+| `security.login-processing-url` | `/login` | 로그인 폼을 전송하는 주소 |
+| `security.logout-url` | `/logout` | 로그아웃 경로 |
+| `security.content-security-policy` | 허용 범위가 넓은 정책 | `Content-Security-Policy` 헤더 |
+| `security.frame-options` | `SAMEORIGIN` | `SAMEORIGIN` 또는 `DENY` |
+| `security.referrer-policy` | 전송하지 않음 | `Referrer-Policy` 헤더 |
+| `security.permissions-policy` | 전송하지 않음 | `Permissions-Policy` 헤더 |
 
-### 지원 알고리즘
+## CORS
 
-**키 암호화 알고리즘 (alg):**
-- `RSA-OAEP-256` (권장)
-- `RSA-OAEP`
-- `RSA1_5`
+| 속성 | 기본값 | 의미 |
+|---|---|---|
+| `cors.allowed-origins` | 없음 | 브라우저의 호출을 허용할 정확한 출처 |
+| `cors.allowed-origin-patterns` | 없음 | `https://*.example.com` 같은 출처 패턴. `allowed-origins`보다 우선합니다 |
+| `cors.allowed-methods` | 없음 | 허용하는 HTTP 메서드 |
+| `cors.allowed-headers` | 없음 | 허용하는 요청 헤더 |
+| `cors.exposed-headers` | 없음 | 스크립트가 읽을 수 있는 응답 헤더 |
+| `cors.allow-credentials` | 없음 | 쿠키와 인증 헤더 허용 여부 |
+| `cors.max-age` | 없음 | 브라우저가 사전 요청 응답을 캐시하는 시간(초) |
 
-**콘텐츠 암호화 방법 (enc):**
-- `A256GCM` (권장)
-- `A192GCM`
-- `A128GCM`
-- `A256CBC-HS512`
-- `A192CBC-HS384`
-- `A128CBC-HS256`
+## 소셜 로그인
 
-```yaml
-simplix:
-  auth:
-    jwe:
-      algorithm: RSA-OAEP-256
-      encryption-method: A256GCM
-      # 개발 환경: 파일에서 키 로드
-      encryption-key-location: classpath:keys/jwe-key.json
-      # 또는 직접 키 지정 (권장하지 않음)
-      # encryption-key: |
-      #   {"kty":"RSA","n":"...","e":"...","d":"..."}
-```
+| 속성 | 기본값 | 의미 |
+|---|---|---|
+| `oauth2.enabled` | `true` | `OAuth2AuthenticationService` 빈이 있을 때 소셜 로그인 사용 |
+| `oauth2.success-url` | `/` | 로그인 성공 후 이동할 주소 |
+| `oauth2.failure-url` | `/login?error=social` | 로그인 실패 후 이동할 주소 |
+| `oauth2.link-success-url` | `/settings/social?linked=true` | 연동 성공 후 이동할 주소 |
+| `oauth2.link-failure-url` | `/settings/social?error=link_failed` | 연동 실패 후 이동할 주소 |
+| `oauth2.authorization-base-url` | `/oauth2/authorize` | 로그인 링크의 기본 경로 |
+| `oauth2.login-base-url` | `/oauth2/login` | 로그인 전용 링크의 기본 경로 |
+| `oauth2.register-base-url` | `/oauth2/register` | 가입 전용 링크의 기본 경로 |
+| `oauth2.link-base-url` | `/oauth2/link` | 계정 연동 링크의 기본 경로 |
+| `oauth2.callback-base-url` | `/oauth2/callback` | 콜백의 기본 경로 |
+| `oauth2.email-conflict-policy` | `REJECT` | `REJECT` 또는 `AUTO_LINK` |
+| `oauth2.token-delivery-method` | `COOKIE` | `COOKIE`, `POST_MESSAGE`, `REDIRECT` 중 하나 |
+| `oauth2.allowed-origins` | 없음 | `postMessage`로 토큰을 받을 수 있는 출처 |
+| `oauth2.pending-registration-ttl-seconds` | `600` | 대기 중인 가입 정보를 보관하는 시간 |
+| `oauth2.cookie.access-token-name` | `access_token` | 액세스 토큰 쿠키 이름 |
+| `oauth2.cookie.refresh-token-name` | `refresh_token` | 리프레시 토큰 쿠키 이름 |
+| `oauth2.cookie.path` | `/` | 쿠키 경로 |
+| `oauth2.cookie.http-only` | `true` | 스크립트에서 쿠키에 접근하지 못하도록 설정 |
+| `oauth2.cookie.secure` | `true` | HTTPS에서만 쿠키 전송 |
+| `oauth2.cookie.same-site` | `Lax` | `SameSite` 속성 |
 
-## 키 롤링 설정
+## 리소스 서버
 
-`simplix.auth.jwe.key-rolling.*`
+| 속성 | 기본값 | 의미 |
+|---|---|---|
+| `resource-server.enabled` | `false` | 외부 발급자의 Bearer JWT 수용 |
+| `resource-server.path-patterns` | `/api/**` | 토큰이 필요한 경로 |
+| `resource-server.issuers[].name` | 필수 | 발급자의 이름 |
+| `resource-server.issuers[].issuer-uri` | 필수 | 토큰의 `iss` 값 |
+| `resource-server.issuers[].jwk-set-uri` | 자동 조회 | 서명 키의 위치 |
+| `resource-server.issuers[].audiences` | 없음 | 허용하는 `aud` 값 |
 
-| 속성 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| `enabled` | boolean | `false` | 키 롤링 활성화 |
-| `key-size` | int | `2048` | RSA 키 크기 (비트) |
-| `auto-initialize` | boolean | `true` | 키가 없을 때 자동 생성 |
-| `retention.buffer-seconds` | int | `86400` | 키 만료 버퍼 시간 (초) |
-| `retention.auto-cleanup` | boolean | `false` | 만료된 키 자동 삭제 |
+## 서명기
 
-```yaml
-simplix:
-  auth:
-    jwe:
-      key-rolling:
-        enabled: true
-        key-size: 2048
-        auto-initialize: true
-        retention:
-          buffer-seconds: 86400  # 1일
-          auto-cleanup: false
-```
-
-**키 크기 권장사항:**
-- `2048`: 최소 보안 수준 (2030년까지 권장)
-- `3072`: 중간 보안 수준
-- `4096`: 높은 보안 수준 (성능 영향)
-
-## 토큰 설정
-
-`simplix.auth.token.*`
-
-| 속성 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| `access-token-lifetime` | int | `1800` | Access 토큰 수명 (초, 30분) |
-| `refresh-token-lifetime` | int | `604800` | Refresh 토큰 수명 (초, 7일) |
-| `enable-ip-validation` | boolean | `false` | IP 주소 검증 활성화 |
-| `enable-user-agent-validation` | boolean | `false` | User-Agent 검증 활성화 |
-| `enable-token-rotation` | boolean | `true` | 토큰 로테이션 활성화 |
-| `enable-blacklist` | boolean | `false` | 토큰 블랙리스트 활성화 |
-| `create-session-on-token-issue` | boolean | `true` | 토큰 발급 시 세션 생성 |
-
-```yaml
-simplix:
-  auth:
-    token:
-      access-token-lifetime: 1800      # 30분
-      refresh-token-lifetime: 604800   # 7일
-      enable-ip-validation: false
-      enable-user-agent-validation: false
-      enable-token-rotation: true
-      enable-blacklist: true
-      create-session-on-token-issue: true
-```
-
-**토큰 수명 권장값:**
-
-| 환경 | Access Token | Refresh Token |
-|------|--------------|---------------|
-| 높은 보안 | 5-15분 | 1-7일 |
-| 일반 | 30분-1시간 | 7-30일 |
-| 편의 중심 | 1-24시간 | 30-90일 |
-
-## 보안 설정
-
-`simplix.auth.security.*`
-
-| 속성 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| `enable-token-endpoints` | boolean | `true` | 토큰 엔드포인트 활성화 |
-| `enable-web-security` | boolean | `true` | 웹 보안 (폼 로그인) 활성화 |
-| `enable-cors` | boolean | `true` | CORS 활성화 |
-| `enable-csrf` | boolean | `true` | CSRF 보호 활성화 |
-| `enable-http-basic` | boolean | `false` | HTTP Basic 인증 활성화 |
-| `require-https` | boolean | `false` | HTTPS 강제 |
-| `prefer-token-over-session` | boolean | `true` | 토큰 인증 우선 |
-| `csrf-ignore-patterns` | String[] | `/api/token/**`, `/h2-console/**` | CSRF 제외 경로 |
-| `login-page-template` | String | `login` | 로그인 페이지 경로 |
-| `login-processing-url` | String | `/login` | 로그인 처리 URL |
-| `logout-url` | String | `/logout` | 로그아웃 URL |
-| `permit-all-patterns` | String[] | - | 인증 불필요 경로 |
-
-```yaml
-simplix:
-  auth:
-    security:
-      enable-token-endpoints: true
-      enable-web-security: true
-      enable-cors: true
-      enable-csrf: true
-      enable-http-basic: false
-      require-https: false
-      prefer-token-over-session: true
-      csrf-ignore-patterns:
-        - /api/token/**
-        - /h2-console/**
-        - /api/webhook/**
-      login-page-template: /login
-      login-processing-url: /login
-      logout-url: /logout
-      permit-all-patterns:
-        - /api/public/**
-        - /swagger-ui/**
-        - /v3/api-docs/**
-        - /actuator/health
-```
-
-## CORS 설정
-
-`simplix.auth.cors.*`
-
-| 속성 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| `allowed-origins` | String[] | - | 허용 오리진 |
-| `allowed-methods` | String[] | - | 허용 HTTP 메서드 |
-| `allowed-headers` | String[] | - | 허용 요청 헤더 |
-| `exposed-headers` | String[] | - | 노출 응답 헤더 |
-| `allow-credentials` | Boolean | - | 인증 정보 허용 |
-| `max-age` | Long | - | Preflight 캐시 시간 (초) |
-
-```yaml
-simplix:
-  auth:
-    cors:
-      allowed-origins:
-        - http://localhost:3000
-        - https://your-frontend.com
-      allowed-methods:
-        - GET
-        - POST
-        - PUT
-        - DELETE
-        - PATCH
-        - OPTIONS
-      allowed-headers:
-        - Authorization
-        - Content-Type
-        - X-Refresh-Token
-        - X-Requested-With
-      exposed-headers:
-        - X-Total-Count
-        - X-Page-Number
-      allow-credentials: true
-      max-age: 3600
-```
-
-## OAuth2 설정
-
-`simplix.auth.oauth2.*`
-
-| 속성 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| `enabled` | boolean | `true` | OAuth2 활성화 |
-| `success-url` | String | `/` | 로그인 성공 리다이렉트 |
-| `failure-url` | String | `/login?error=social` | 로그인 실패 리다이렉트 |
-| `link-success-url` | String | `/settings/social?linked=true` | 연동 성공 리다이렉트 |
-| `link-failure-url` | String | `/settings/social?error=link_failed` | 연동 실패 리다이렉트 |
-| `link-base-url` | String | `/oauth2/link` | 계정 연동 기본 URL |
-| `authorization-base-url` | String | `/oauth2/authorize` | 인증 시작 기본 URL |
-| `callback-base-url` | String | `/oauth2/callback` | 콜백 기본 URL |
-| `login-base-url` | String | `/oauth2/login` | 로그인 전용 기본 URL |
-| `register-base-url` | String | `/oauth2/register` | 회원가입 전용 기본 URL |
-| `email-conflict-policy` | Enum | `REJECT` | 이메일 충돌 정책 |
-| `token-delivery-method` | Enum | `COOKIE` | 토큰 전달 방식 |
-| `allowed-origins` | List | - | postMessage 허용 오리진 |
-| `pending-registration-ttl-seconds` | long | `600` | 대기 중 등록 정보 TTL |
-
-### 이메일 충돌 정책 (EmailConflictPolicy)
-
-| 값 | 설명 |
-|----|------|
-| `REJECT` | 충돌 시 거부 (권장) |
-| `AUTO_LINK` | 자동 계정 연동 |
-
-### 토큰 전달 방식 (TokenDeliveryMethod)
-
-| 값 | 설명 |
-|----|------|
-| `REDIRECT` | URL 쿼리 매개변수 |
-| `COOKIE` | HttpOnly 쿠키 (권장) |
-| `POST_MESSAGE` | window.postMessage (SPA) |
-
-### OAuth2 쿠키 설정
-
-`simplix.auth.oauth2.cookie.*`
-
-| 속성 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| `access-token-name` | String | `access_token` | Access 토큰 쿠키명 |
-| `refresh-token-name` | String | `refresh_token` | Refresh 토큰 쿠키명 |
-| `path` | String | `/` | 쿠키 경로 |
-| `http-only` | boolean | `true` | HttpOnly 플래그 |
-| `secure` | boolean | `true` | Secure 플래그 |
-| `same-site` | String | `Lax` | SameSite 속성 |
-
-```yaml
-simplix:
-  auth:
-    oauth2:
-      enabled: true
-      success-url: /dashboard
-      failure-url: /login?error=social
-      token-delivery-method: COOKIE
-      email-conflict-policy: REJECT
-      cookie:
-        access-token-name: access_token
-        refresh-token-name: refresh_token
-        path: /
-        http-only: true
-        secure: true
-        same-site: Lax
-      allowed-origins:
-        - http://localhost:3000
-        - https://your-spa.com
-```
-
-## 전체 예제
-
-### 개발 환경
-
-```yaml
-simplix:
-  auth:
-    enabled: true
-
-    jwe:
-      algorithm: RSA-OAEP-256
-      encryption-method: A256GCM
-      encryption-key-location: classpath:keys/dev-jwe-key.json
-
-    token:
-      access-token-lifetime: 3600      # 1시간
-      refresh-token-lifetime: 604800   # 7일
-      enable-blacklist: false
-      create-session-on-token-issue: true
-
-    security:
-      enable-token-endpoints: true
-      enable-web-security: true
-      enable-cors: true
-      enable-csrf: false    # 개발 시 편의를 위해
-      require-https: false
-      permit-all-patterns:
-        - /api/public/**
-        - /swagger-ui/**
-        - /v3/api-docs/**
-        - /h2-console/**
-
-    cors:
-      allowed-origins:
-        - http://localhost:3000
-        - http://localhost:5173
-      allow-credentials: true
-
-    oauth2:
-      enabled: true
-      token-delivery-method: POST_MESSAGE
-      allowed-origins:
-        - http://localhost:3000
-```
-
-### 프로덕션 환경
-
-```yaml
-simplix:
-  auth:
-    enabled: true
-
-    jwe:
-      algorithm: RSA-OAEP-256
-      encryption-method: A256GCM
-      key-rolling:
-        enabled: true
-        key-size: 2048
-        auto-initialize: true
-        retention:
-          buffer-seconds: 86400
-          auto-cleanup: true
-
-    token:
-      access-token-lifetime: 900       # 15분
-      refresh-token-lifetime: 604800   # 7일
-      enable-ip-validation: false
-      enable-user-agent-validation: false
-      enable-token-rotation: true
-      enable-blacklist: true
-      create-session-on-token-issue: true
-
-    security:
-      enable-token-endpoints: true
-      enable-web-security: true
-      enable-cors: true
-      enable-csrf: true
-      require-https: true
-      prefer-token-over-session: true
-      csrf-ignore-patterns:
-        - /api/**
-      permit-all-patterns:
-        - /api/public/**
-        - /api/health
-        - /actuator/health
-
-    cors:
-      allowed-origins:
-        - https://your-frontend.com
-        - https://admin.your-domain.com
-      allowed-methods:
-        - GET
-        - POST
-        - PUT
-        - DELETE
-        - PATCH
-      allowed-headers:
-        - Authorization
-        - Content-Type
-        - X-Refresh-Token
-      allow-credentials: true
-      max-age: 3600
-
-    oauth2:
-      enabled: true
-      success-url: /dashboard
-      failure-url: /login?error=social
-      token-delivery-method: COOKIE
-      email-conflict-policy: REJECT
-      cookie:
-        http-only: true
-        secure: true
-        same-site: Strict
-```
-
-## 환경 변수 사용
-
-민감한 설정은 환경 변수로 관리하세요:
-
-```yaml
-simplix:
-  auth:
-    jwe:
-      encryption-key-location: ${JWE_KEY_LOCATION:classpath:keys/jwe-key.json}
-
-spring:
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
-          kakao:
-            client-id: ${KAKAO_CLIENT_ID}
-            client-secret: ${KAKAO_CLIENT_SECRET}
-```
+| 속성 | 기본값 | 의미 |
+|---|---|---|
+| `stateless-token.secret` | 시작할 때마다 임의의 키 | `SimpliXStatelessTokenSigner`의 HMAC 시크릿 |
+| `asymmetric-token.key-file` | 없음 | `SimpliXAsymmetricTokenSigner`의 키 파일 |
+| `asymmetric-token.private-key`, `asymmetric-token.public-key` | 없음 | base64 DER 형식의 Ed25519 키 쌍 |
+| `asymmetric-token.key-id` | `default` | 토큰에 기록하는 키 ID |
 
 ## 관련 문서
 
-- [시작하기](ko/auth/getting-started.md)
-- [JWE 토큰 인증](ko/auth/jwe-token.md)
-- [토큰 블랙리스트](ko/auth/token-blacklist.md)
-- [OAuth2 소셜 로그인](ko/auth/oauth2.md)
-- [보안 설정](ko/auth/security-configuration.md)
-- [JWE 키 롤링](ko/auth/jwe-key-rolling.md)
+- [경로 보호](ko/auth/securing-paths.md)
+- [토큰 발급과 갱신](ko/auth/issuing-and-refreshing-tokens.md)

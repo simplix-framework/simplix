@@ -1,94 +1,31 @@
-# SimpliX MyBatis Module
+[English](en/mybatis/readme.md) | **한국어**
 
-Spring Boot 애플리케이션을 위한 MyBatis 자동 구성 모듈입니다.
+# simplix-mybatis
 
-## Features
+SimpliX 애플리케이션에서 MyBatis를 사용하기 위한 모듈입니다. MyBatis Spring Boot 스타터와 트랜잭션 관리를 함께 가져오므로, 매퍼 인터페이스를 JPA 저장소와 같은 데이터 소스, 같은 트랜잭션에서 사용할 수 있습니다.
 
-- ✔ **자동 구성** - SqlSessionFactory, SqlSessionTemplate 자동 생성
-- ✔ **기본 설정 적용** - snake_case → camelCase 자동 변환
-- ✔ **Mapper 자동 스캔** - @MapperScan 자동 적용
-- ✔ **트랜잭션 관리** - @EnableTransactionManagement 포함
+## 설치
 
-## Quick Start
+[스타터](ko/starter/readme.md)에 이 모듈이 포함되어 있습니다. 스타터 없이 사용할 때는 다음과 같이 추가합니다.
 
-### 1. Dependency
-
-```gradle
+```groovy
 dependencies {
-    implementation 'dev.simplecore:simplix-mybatis:${version}'
+    implementation "dev.simplecore.simplix:simplix-mybatis:${version}"
 }
 ```
 
-### 2. Configuration
+## 문서
 
-```yaml
-mybatis:
-  mapper-locations: classpath*:mapper/**/*.xml
-  type-aliases-package: com.example.domain
-```
+- [시작하기](ko/mybatis/getting-started.md): 매퍼를 작성하고 호출
+- [설정 레퍼런스](ko/mybatis/configuration-reference.md)
 
-### 3. Mapper Interface
+## 요구 사항
 
-```java
-@Mapper
-public interface UserMapper {
-    List<User> findAll();
-    User findById(@Param("id") Long id);
-    void insert(User user);
-}
-```
+| 프로젝트 | SimpliX 라인 | 선언할 버전 |
+|---|---|---|
+| Spring Boot 4 | 2.x | `2.x` 릴리스 |
+| Spring Boot 3 | 1.x | `1.x` 릴리스 |
 
-### 4. Mapper XML
+## 라이선스
 
-**위치:** `src/main/resources/mapper/UserMapper.xml`
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
-<mapper namespace="com.example.mapper.UserMapper">
-    <select id="findAll" resultType="User">
-        SELECT id, user_name, email FROM users
-    </select>
-</mapper>
-```
-
-## 기본 설정
-
-SimpliX MyBatis는 다음 설정을 자동으로 적용합니다:
-
-| 설정 | 값 | 설명 |
-|------|-----|------|
-| `mapUnderscoreToCamelCase` | `true` | snake_case → camelCase 자동 변환 |
-| `callSettersOnNulls` | `true` | NULL 값도 setter 호출 |
-
-## Configuration
-
-```yaml
-mybatis:
-  enabled: true                              # 모듈 활성화 (기본: true)
-  mapper-locations: classpath*:mapper/**/*.xml  # Mapper XML 위치
-  type-aliases-package: com.example.domain   # Type Aliases 패키지
-  config-location: classpath:mybatis-config.xml  # 설정 파일 (선택)
-```
-
-## 비활성화
-
-```yaml
-mybatis:
-  enabled: false
-```
-
-## Documentation
-
-- [Overview (상세 가이드)](ko/mybatis/overview.md)
-
-## Requirements
-
-- Spring Boot 4.1+
-- Java 17+
-
-## License
-
-SimpleCORE License 1.0 (SCL-1.0)
+[SimpleCORE License 1.0 (SCL-1.0)](ko/license.md)

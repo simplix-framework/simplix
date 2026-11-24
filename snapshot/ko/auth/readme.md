@@ -1,166 +1,49 @@
-# SimpliX Auth
+[English](en/auth/readme.md) | **한국어**
 
-Spring Boot 기반 애플리케이션을 위한 인증/인가 스타터 라이브러리입니다.
+# simplix-auth
 
-## 주요 기능
+SimpliX 애플리케이션의 인증 모듈입니다. 클라이언트는 사용자 이름과 비밀번호 또는 소셜 계정으로 로그인해 암호화된 토큰을 받습니다. 모듈은 API 호출마다 토큰을 검사하고, 갱신과 폐기를 처리하며, 이에 맞게 Spring Security를 구성합니다.
 
-- **JWE 토큰 인증**: JWT 대신 암호화된 JWE 토큰을 사용하여 클레임 정보 보호
-- **OAuth2 소셜 로그인**: Google, Kakao, Naver, GitHub, Facebook, Apple 지원
-- **토큰 블랙리스트**: 토큰 즉시 무효화 (InMemory, Caffeine, Redis)
-- **키 롤링**: 데이터베이스 기반 JWE 키 로테이션
-- **세션-토큰 하이브리드**: 세션 인증과 토큰 인증 동시 지원
+![요청은 보안 체인 중 하나에서 처리됩니다. 토큰 엔드포인트는 자격 증명을 직접 검사하고, /api 아래의 경로는 Bearer 토큰을 받으며, 그 밖의 경로는 로그인 폼으로 보호하는 웹 페이지입니다.](../../assets/figures/auth-readme-filter-chains.ko.svg)
 
-## 빠른 시작
+## 설치
 
-### 의존성 추가
+[스타터](ko/starter/readme.md)에 이 모듈이 포함되어 있습니다. 스타터 없이 사용할 때는 Spring Security와 함께 추가합니다.
 
 ```groovy
 dependencies {
-    implementation 'dev.simplecore:simplix-auth:${version}'
+    implementation "dev.simplecore.simplix:simplix-auth:${version}"
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 }
 ```
 
-### 기본 설정
+## 시작
 
-```yaml
-simplix:
-  auth:
-    enabled: true
-    jwe:
-      encryption-key-location: classpath:keys/jwe-key.json
-    token:
-      access-token-lifetime: 1800
-      refresh-token-lifetime: 604800
-```
+[애플리케이션 보안 적용](ko/securing-an-application.md)에서 로그인이 없는 애플리케이션에 토큰과 권한을 적용합니다. [시작하기](ko/auth/getting-started.md)에는 모듈이 애플리케이션에 요구하는 내용이 정리되어 있습니다.
 
-### UserDetailsService 구현
+## 제공하는 기능
 
-```java
-@Service
-public class CustomUserDetailsService implements SimpliXUserDetailsService {
+| 하려는 일 | 문서 |
+|---|---|
+| 토큰 발급, 사용, 갱신 | [토큰 발급과 갱신](ko/auth/issuing-and-refreshing-tokens.md) |
+| 로그아웃을 즉시 적용 | [토큰 폐기](ko/auth/revoking-tokens.md) |
+| 경로 공개, CORS · CSRF · 보안 헤더 설정 | [경로 보호](ko/auth/securing-paths.md) |
+| 암호화 키를 주기적으로 교체 | [키 교체](ko/auth/rotating-keys.md) |
+| Google, Kakao, Naver 등의 계정으로 로그인 | [소셜 계정 로그인](ko/auth/signing-in-with-social-accounts.md) |
+| 다른 인증 제공자가 발급한 토큰 수용 | [외부 토큰 수용](ko/auth/accepting-external-tokens.md) |
+| 다운로드 링크 같은 단기 토큰 서명 | [자체 토큰 서명](ko/auth/signing-your-own-tokens.md) |
+| 인증 로그, 지표, 상태 확인 | [인증 모니터링](ko/auth/monitoring-authentication.md) |
+| 요청에 응답하는 구성 요소와 등록 조건 확인 | [simplix-auth 동작 방식](ko/auth/how-it-works.md) |
+| 속성 조회 | [설정 레퍼런스](ko/auth/configuration-reference.md) |
+| 로그인 실패 해결 | [문제 해결](ko/auth/troubleshooting.md) |
 
-    @Override
-    public UserDetails loadUserByUsername(String username) {
-        // 사용자 조회 로직 구현
-    }
-}
-```
+## 요구 사항
 
-## 문서
-
-### 한국어
-
-| 문서 | 설명 |
-|------|------|
-| [시작하기](ko/auth/getting-started.md) | 빠른 시작 가이드 |
-| [JWE 토큰 인증](ko/auth/jwe-token.md) | JWE 토큰 생성, 검증, 갱신, 폐기 |
-| [토큰 블랙리스트](ko/auth/token-blacklist.md) | InMemory, Caffeine, Redis 구현체 |
-| [OAuth2 소셜 로그인](ko/auth/oauth2.md) | 소셜 로그인 설정 및 구현 |
-| [보안 설정](ko/auth/security-configuration.md) | Security Filter Chain, CORS, CSRF |
-| [설정 레퍼런스](ko/auth/configuration-reference.md) | 전체 설정 속성 목록 |
-| [JWE 키 롤링](ko/auth/jwe-key-rolling.md) | 키 로테이션 개념 |
-| [JWE 키 롤링 구현](ko/auth/jwe-key-rolling-implementation.md) | 키 로테이션 구현 가이드 |
-
-## 아키텍처
-
-```
-simplix-auth/
-├── autoconfigure/          # Spring Boot 자동 설정
-│   ├── SimpliXAuthAutoConfiguration
-│   ├── SimpliXAuthSecurityConfiguration
-│   └── SimpliXJweKeyAutoConfiguration
-├── security/               # 보안 컴포넌트
-│   ├── SimpliXJweTokenProvider       # JWE 토큰 생성/검증
-│   ├── SimpliXTokenAuthenticationFilter
-│   └── SimpliXUserDetailsService     # 구현 필요
-├── service/                # 서비스
-│   └── TokenBlacklistService         # 토큰 블랙리스트
-├── oauth2/                 # OAuth2 소셜 로그인
-│   ├── OAuth2AuthenticationService   # 구현 필요
-│   └── extractor/                    # 제공자별 사용자 정보 추출
-├── jwe/                    # JWE 키 관리
-│   ├── provider/                     # 키 제공자
-│   └── store/                        # 키 저장소 (구현 필요)
-├── web/                    # REST 컨트롤러
-│   └── SimpliXAuthTokenController
-└── properties/             # 설정 속성
-    └── SimpliXAuthProperties
-```
-
-## API 엔드포인트
-
-| 엔드포인트 | 메서드 | 설명 |
-|-----------|--------|------|
-| `/auth/token/issue` | GET | 토큰 발급 (Basic Auth) |
-| `/auth/token/refresh` | GET | 토큰 갱신 (X-Refresh-Token) |
-| `/auth/token/revoke` | POST | 토큰 폐기 |
-| `/oauth2/authorize/{provider}` | GET | OAuth2 인증 시작 |
-| `/oauth2/callback/{provider}` | GET | OAuth2 콜백 |
-| `/oauth2/link/{provider}` | GET | 소셜 계정 연동 |
-
-## 필수 구현 인터페이스
-
-### SimpliXUserDetailsService
-
-사용자 인증에 필수입니다.
-
-```java
-public interface SimpliXUserDetailsService extends UserDetailsService {
-    MessageSource getMessageSource();
-    UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
-}
-```
-
-### OAuth2AuthenticationService (OAuth2 사용 시)
-
-소셜 로그인 시 사용자 처리 로직을 구현합니다.
-
-```java
-public interface OAuth2AuthenticationService {
-    UserDetails authenticateOAuth2User(OAuth2UserInfo userInfo);
-    void linkSocialAccount(String userId, OAuth2UserInfo userInfo);
-    void unlinkSocialAccount(String userId, OAuth2ProviderType provider);
-    Set<OAuth2ProviderType> getLinkedProviders(String userId);
-}
-```
-
-### JweKeyStore (키 롤링 사용 시)
-
-JWE 키 저장/조회 로직을 구현합니다.
-
-```java
-public interface JweKeyStore {
-    JweKeyData save(JweKeyData keyData);
-    Optional<JweKeyData> findByVersion(String version);
-    Optional<JweKeyData> findCurrent();
-    List<JweKeyData> findAll();
-    void deactivateAllExcept(String exceptVersion);
-}
-```
-
-## 설정 요약
-
-| 속성 | 기본값 | 설명 |
-|------|--------|------|
-| `simplix.auth.enabled` | `true` | 모듈 활성화 |
-| `simplix.auth.token.access-token-lifetime` | `1800` | Access 토큰 수명 (초) |
-| `simplix.auth.token.refresh-token-lifetime` | `604800` | Refresh 토큰 수명 (초) |
-| `simplix.auth.token.enable-blacklist` | `false` | 블랙리스트 활성화 |
-| `simplix.auth.jwe.key-rolling.enabled` | `false` | 키 롤링 활성화 |
-| `simplix.auth.oauth2.enabled` | `true` | OAuth2 활성화 |
-| `simplix.auth.stateless-token.secret` | (부팅마다 임의 생성) | `SimpliXStatelessTokenSigner`의 HMAC-SHA256 키. 서명 링크처럼 저장하지 않는 짧은 토큰을 `sign` · `verify`로 발급하고 검증합니다. 비워 두면 재시작할 때 이전 토큰이 무효가 됩니다 |
-| `simplix.auth.asymmetric-token.private-key` · `public-key` | (부팅마다 임의 생성) | `SimpliXAsymmetricTokenSigner`의 Ed25519 키 쌍(base64 DER, PKCS#8 · X.509). 공개 키만 가진 클라이언트가 서버를 호출하지 않고 검증하는 토큰을 compact JWS(`EdDSA`)로 발급하고, `publicJwk()`로 공개 키를 JWK로 내보냅니다. 비워 두면 재시작할 때 이전 토큰이 무효가 됩니다 |
-| `simplix.auth.asymmetric-token.key-id` | `default` | 토큰 헤더와 공개 키의 `kid` |
-| `simplix.auth.asymmetric-token.key-file` | (없음) | 키 쌍을 담은 properties 파일(`private-key` · `public-key`). 파일이 없으면 첫 시작 때 새 키 쌍을 소유자만 읽을 수 있게 기록하고, 지정하면 인라인 키보다 우선합니다. 개발 서버가 소스 저장소에 비공개 키를 두지 않고 재시작 뒤에도 같은 키 쌍을 쓰게 합니다 |
-
-전체 설정은 [설정 레퍼런스](ko/auth/configuration-reference.md)를 참조하세요.
-
-## 요구사항
-
-- Java 17+
-- Spring Boot 4.1+
-- Spring Security 6+
+| 프로젝트 | SimpliX 라인 | 선언할 버전 |
+|---|---|---|
+| Spring Boot 4 | 2.x | `2.x` 릴리스 |
+| Spring Boot 3 | 1.x | `1.x` 릴리스 |
 
 ## 라이선스
 
-SimpleCORE License 1.0 (SCL-1.0)
+[SimpleCORE License 1.0 (SCL-1.0)](ko/license.md)

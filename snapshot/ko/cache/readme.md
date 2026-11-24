@@ -1,146 +1,44 @@
-# SimpliX Cache Module
+[English](en/cache/readme.md) | **한국어**
 
-Spring Boot 애플리케이션을 위한 유연한 전략 기반 캐싱 모듈입니다.
+# simplix-cache
 
-## Features
+SimpliX 애플리케이션의 캐시 모듈입니다. 캐시를 직접 호출하는 서비스, Spring의 캐시 어노테이션, 설정으로 선택하는 저장소를 제공합니다. 이 모듈로 작성한 코드는 개발 환경의 로컬 Caffeine 캐시와 클러스터의 Redis나 NATS에서 변경 없이 동작합니다.
 
-- ✔ **다중 캐시 전략** - Local (Caffeine), Redis 지원
-- ✔ **전략 패턴** - 설정만으로 캐시 구현체 전환
-- ✔ **Spring Boot 통합** - 자동 구성 및 @Cacheable 지원
-- ✔ **모니터링** - Health Check 및 메트릭 수집
-- ✔ **유연한 설정** - 캐시별 TTL 설정
-- ✔ **분산 캐싱** - Redis를 통한 다중 인스턴스 지원
+![애플리케이션 코드는 CacheService나 캐시 어노테이션으로 캐시를 사용하며, 설정한 모드에 따라 값이 Caffeine, Redis, NATS 중 한 곳에 저장됩니다.](../../assets/figures/cache-readme-entry-points.ko.svg)
 
-## Quick Start
+## 설치
 
-### 1. Dependency
+[스타터](ko/starter/readme.md)에 이 모듈이 포함되어 있습니다. 스타터 없이 사용할 때는 다음과 같이 추가합니다.
 
-```gradle
+```groovy
 dependencies {
-    implementation 'dev.simplecore:simplix-cache:${version}'
-
-    // Optional: Redis 지원
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation "dev.simplecore.simplix:simplix-cache:${version}"
 }
 ```
 
-### 2. Configuration
+## 문서
 
-```yaml
-simplix:
-  cache:
-    mode: local  # local 또는 redis
-    default-ttl-seconds: 3600
-```
+| 하려는 일 | 문서 |
+|---|---|
+| 첫 값 캐싱 | [시작하기](ko/cache/getting-started.md) |
+| 코드에서 조회, 저장, 제거 | [캐시 서비스 사용](ko/cache/using-the-cache-service.md) |
+| 메서드 결과 캐싱 | [메서드 결과 캐싱](ko/cache/caching-method-results.md) |
+| 인스턴스 간 캐시 공유 | [저장소 선택](ko/cache/choosing-a-store.md) |
+| 적중률과 상태 확인 | [캐시 모니터링](ko/cache/monitoring-the-cache.md) |
+| 속성 조회 | [설정 레퍼런스](ko/cache/configuration-reference.md) |
+| 캐시 대상, 키, 유효 시간 결정 | [캐시 설계](ko/cache/designing-caches.md) |
+| 빈별 역할과 저장 위치 확인 | [simplix-cache 동작 방식](ko/cache/how-it-works.md) |
+| 문제의 원인 확인 | [문제 해결](ko/cache/troubleshooting.md) |
 
-### 3. Usage
+## 요구 사항
 
-```java
-@Service
-@RequiredArgsConstructor
-public class UserService {
+| 프로젝트 | SimpliX 라인 | 선언할 버전 |
+|---|---|---|
+| Spring Boot 4 | 2.x | `2.x` 릴리스 |
+| Spring Boot 3 | 1.x | `1.x` 릴리스 |
 
-    private final CacheService cacheService;
+Redis 모드에는 `spring-boot-starter-data-redis`가 필요하고, NATS 모드에는 NATS 클라이언트 `io.nats:jnats`와 `Connection` 빈이 필요합니다.
 
-    public User getUser(String userId) {
-        return cacheService.getOrCompute(
-            "users",              // 캐시 이름
-            userId,               // 캐시 키
-            () -> loadUser(userId),  // 값 로더
-            User.class,           // 반환 타입
-            Duration.ofHours(1)   // TTL
-        );
-    }
+## 라이선스
 
-    public void updateUser(User user) {
-        saveUser(user);
-        cacheService.evict("users", user.getId());
-    }
-}
-```
-
-## Cache Strategies
-
-| 모드 | 구현체 | 용도 |
-|------|--------|------|
-| `local` | Caffeine | 단일 인스턴스, 개발 환경 |
-| `redis` | Redis | 다중 인스턴스, 운영 환경 |
-
-## Configuration
-
-### 기본 설정
-
-```yaml
-simplix:
-  cache:
-    mode: local
-    default-ttl-seconds: 3600
-    cache-null-values: false
-```
-
-### 캐시별 설정
-
-```yaml
-simplix:
-  cache:
-    cache-configs:
-      users:
-        ttl-seconds: 900      # 15분
-      configs:
-        ttl-seconds: 86400    # 24시간
-```
-
-### Redis 설정
-
-```yaml
-simplix:
-  cache:
-    mode: redis
-    redis:
-      key-prefix: "app:cache:"
-
-spring:
-  data:
-    redis:
-      host: localhost
-      port: 6379
-```
-
-## Spring @Cacheable
-
-```java
-@Service
-public class ProductService {
-
-    @Cacheable(value = "products", key = "#productId")
-    public Product getProduct(String productId) {
-        return productRepository.findById(productId).orElse(null);
-    }
-
-    @CacheEvict(value = "products", key = "#productId")
-    public void deleteProduct(String productId) {
-        productRepository.deleteById(productId);
-    }
-}
-```
-
-## Monitoring
-
-```bash
-# Health Check
-curl http://localhost:8080/actuator/health/cache
-
-# Metrics
-curl http://localhost:8080/actuator/metrics/cache.hits
-```
-
-## Documentation
-
-- [Overview (상세 문서)](ko/cache/overview.md)
-- [CacheService Guide (CacheService 사용법)](ko/cache/cacheservice-guide.md)
-- [Spring Cache Guide (@Cacheable 통합)](ko/cache/spring-cache-guide.md)
-- [Advanced Guide (고급 사용법)](ko/cache/advanced-guide.md)
-
-## License
-
-SimpleCORE License 1.0 (SCL-1.0)
+[SimpleCORE License 1.0 (SCL-1.0)](ko/license.md)

@@ -1,175 +1,39 @@
-# SimpliX Scheduler Module
+[English](en/scheduler/readme.md) | **한국어**
 
-Spring `@Scheduled` 메서드의 실행을 자동으로 추적하고 로깅하는 AOP 기반 모니터링 모듈입니다.
+# simplix-scheduler
 
-## Features
+예약 작업의 실행 기록을 남기는 모듈입니다. 애플리케이션의 `@Scheduled` 메서드를 감시해 어떤 작업이 있는지와 실행 결과를 기록합니다. 시작 시각, 소요 시간, 실패 여부를 남기며, 작업 코드는 바꿀 필요가 없습니다.
 
-- ✔ **AOP 자동 추적** - `@Scheduled` 메서드를 자동 인터셉트하여 실행 정보 기록
-- ✔ **전략 패턴** - In-Memory / Database 저장 전략 자유 선택
-- ✔ **ShedLock 통합** - 분산 환경 레지스트리 생성 시 락 보장
-- ✔ **Provider 인터페이스** - 사용자 프로젝트의 엔티티/저장소 유연 연동
-- ✔ **커스텀 네이밍** - `@SchedulerName`으로 스케줄러 이름 지정
-- ✔ **Placeholder Resolution** - Spring `${...}` 표현식을 실제 값으로 치환 후 저장
-- ✔ **Auto-Configuration** - Spring Boot 자동 구성
+![예약 메서드는 실행될 때 가로채집니다. 모듈은 작업을 한 번 등록하고 모든 실행을 메모리나 애플리케이션의 테이블에 기록합니다.](../../assets/figures/scheduler-readme-recording.ko.svg)
 
-## Quick Start
+## 설치
 
-### 1. Dependency
+[스타터](ko/starter/readme.md)에 이 모듈이 포함되어 있습니다. 스타터 없이 사용할 때는 다음과 같이 추가합니다.
 
-```gradle
+```groovy
 dependencies {
-    implementation 'dev.simplecore:simplix-scheduler'
-
-    // Optional: Database 전략 사용 시
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-
-    // Optional: 분산 환경 (ShedLock)
-    implementation 'net.javacrumbs.shedlock:shedlock-spring'
-    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template'
+    implementation "dev.simplecore.simplix:simplix-scheduler:${version}"
 }
 ```
 
-### 2. Configuration
+## 문서
 
-```yaml
-simplix:
-  scheduler:
-    enabled: true
-    mode: database   # database 또는 in-memory
-    retention-days: 90
-```
+| 하려는 일 | 문서 |
+|---|---|
+| 첫 실행 기록 확인 | [시작하기](ko/scheduler/getting-started.md) |
+| 데이터베이스에 기록 보관 | [데이터베이스에 실행 기록 저장](ko/scheduler/recording-runs-in-a-database.md) |
+| 작업을 한 번에 한 인스턴스에서만 실행 | [여러 인스턴스에서 실행](ko/scheduler/running-on-several-instances.md) |
+| 속성 조회 | [설정 레퍼런스](ko/scheduler/configuration-reference.md) |
+| 실행 전후의 처리와 직접 처리해야 하는 범위 확인 | [simplix-scheduler 동작 방식](ko/scheduler/how-it-works.md) |
+| 문제의 원인 확인 | [문제 해결](ko/scheduler/troubleshooting.md) |
 
-### 3. Usage
+## 요구 사항
 
-```java
-@Component
-@RequiredArgsConstructor
-public class ReportScheduler {
+| 프로젝트 | SimpliX 라인 | 선언할 버전 |
+|---|---|---|
+| Spring Boot 4 | 2.x | `2.x` 릴리스 |
+| Spring Boot 3 | 1.x | `1.x` 릴리스 |
 
-    private final ReportService reportService;
+## 라이선스
 
-    @Scheduled(cron = "0 0 3 * * ?")
-    @SchedulerName("daily-report-generation")
-    public void generateDailyReport() {
-        reportService.generate();
-        // 실행 시작/종료, 소요 시간, 성공/실패 결과가 자동 기록
-    }
-}
-```
-
-## Configuration Summary
-
-| Property | Default | Description |
-|----------|---------|-------------|
-| `simplix.scheduler.enabled` | `true` | 모듈 활성화 |
-| `simplix.scheduler.aspect-enabled` | `true` | AOP Aspect 활성화 |
-| `simplix.scheduler.mode` | `database` | 저장 전략 (database/in-memory) |
-| `simplix.scheduler.retention-days` | `90` | 실행 로그 보관 기간 (일) |
-| `simplix.scheduler.cleanup-cron` | `0 0 3 * * ?` | 로그 정리 cron |
-| `simplix.scheduler.stuck-threshold-minutes` | `30` | stuck 실행 감지 임계값 |
-| `simplix.scheduler.excluded-schedulers` | `[]` | 로깅 제외 스케줄러 패턴 |
-| `simplix.scheduler.lock.lock-at-most` | `60s` | 레지스트리 생성 락 최대 시간 |
-| `simplix.scheduler.lock.lock-at-least` | `1s` | 최소 락 유지 시간 |
-| `simplix.scheduler.lock.max-retries` | `3` | 락 재시도 횟수 |
-
-## Architecture
-
-```
-simplix-scheduler/
-+-- annotation/
-|   +-- SchedulerName              # Custom scheduler name annotation
-+-- aspect/
-|   +-- SchedulerExecutionAspect   # AOP interceptor for @Scheduled
-+-- config/
-|   +-- SchedulerAutoConfiguration # Auto-configuration entry point
-|   +-- SchedulerProperties        # Configuration properties
-+-- core/
-|   +-- SchedulerLoggingService            # Main logging service
-|   +-- SchedulerLoggingStrategy           # Strategy interface
-|   +-- SchedulerMetadata                  # Scheduler metadata
-|   +-- SchedulerRegistryProvider          # Registry SPI
-|   +-- SchedulerExecutionLogProvider      # Execution log SPI
-+-- model/
-|   +-- SchedulerExecutionContext  # Per-execution context
-|   +-- SchedulerExecutionResult   # Success/failure result
-|   +-- SchedulerRegistryEntry     # Registry DTO
-|   +-- ExecutionStatus            # RUNNING/SUCCESS/FAILED/TIMEOUT
-+-- service/
-|   +-- DefaultSchedulerLoggingService  # Default service implementation
-+-- strategy/
-    +-- InMemoryLoggingStrategy    # In-memory strategy
-    +-- DatabaseLoggingStrategy    # Database strategy (requires Provider beans)
-```
-
-## Storage Strategies
-
-| 전략 | 용도 | 외부 의존성 | Provider 구현 |
-|------|------|-------------|----------------|
-| `in-memory` | 개발/테스트 | 없음 | 불필요 |
-| `database` | 운영 환경 | JPA / DataSource | 필요 |
-
-### In-Memory
-
-```yaml
-simplix:
-  scheduler:
-    mode: in-memory
-```
-
-ConcurrentHashMap 기반 저장. 애플리케이션 재시작 시 데이터 손실.
-
-### Database
-
-```yaml
-simplix:
-  scheduler:
-    mode: database
-```
-
-`SchedulerRegistryProvider`와 `SchedulerExecutionLogProvider` 빈이 등록되어 있어야 활성화됩니다. 분산 환경에서는 ShedLock으로 레지스트리 중복 생성을 방지합니다.
-
-## Required Implementations
-
-### SchedulerRegistryProvider (Database 전략)
-
-```java
-public interface SchedulerRegistryProvider<T> {
-    Optional<T> findBySchedulerName(String schedulerName);
-    T save(SchedulerRegistryEntry entry);
-    int updateLastExecution(String registryId, Instant executionAt, Long durationMs);
-    SchedulerRegistryEntry toRegistryEntry(T entity);
-    String getRegistryId(T entity);
-}
-```
-
-### SchedulerExecutionLogProvider (Database 전략)
-
-```java
-public interface SchedulerExecutionLogProvider<T> {
-    T createFromContext(SchedulerExecutionContext context);
-    void applyResult(T entity, SchedulerExecutionResult result);
-    T save(T entity);
-}
-```
-
-상세한 구현 예시는 [Usage Guide](ko/scheduler/usage-guide.md)를 참고하세요.
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [Overview](ko/scheduler/overview.md) | 모듈 개요 및 아키텍처 상세 |
-| [Usage Guide](ko/scheduler/usage-guide.md) | 빠른 시작과 사용 패턴 |
-| [Configuration Reference](ko/scheduler/configuration.md) | 설정 옵션 전체 목록 |
-
-## Requirements
-
-- Java 17+
-- Spring Boot 4.1+
-- Spring AOP
-- (Optional) Spring Data JPA - Database 전략 사용 시
-- (Optional) ShedLock - 분산 환경 락 통합 시
-
-## License
-
-SimpleCORE License 1.0 (SCL-1.0)
+[SimpleCORE License 1.0 (SCL-1.0)](ko/license.md)

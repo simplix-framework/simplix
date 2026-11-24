@@ -1,188 +1,40 @@
-# SimpliX Hibernate Cache Module
+[English](en/hibernate/readme.md) | **한국어**
 
-Spring Boot 애플리케이션을 위한 Hibernate 2nd-level 캐시 관리 확장 모듈입니다.
+# simplix-hibernate
 
-## Features
+JPA 애플리케이션에 필요하지만 Hibernate가 기본으로 제공하지 않는 기능을 제공합니다. 일괄 수정 후에도 정확한 2차 캐시, 트랜잭션 안에서 전달되는 엔티티 변경 이벤트, 이 기능을 안정적으로 동작하게 하는 트랜잭션 매니저입니다.
 
-- **@Modifying 쿼리 캐시 관리** - @EvictCache 어노테이션으로 bulk 연산 시 캐시 무효화
-- **수동 캐시 제거 API** - HibernateCacheManager를 통한 프로그래밍 방식 캐시 관리
-- **트랜잭션 인식** - 커밋 후에만 캐시 제거 (롤백 시 캐시 유지)
+![커밋할 때 트랜잭션 매니저가 먼저 플러시하므로, 엔티티 이벤트가 발행되고 커밋 전 리스너가 트랜잭션 안에서 실행됩니다. 캐시 제거와 커밋 후 리스너는 커밋 뒤에 실행됩니다.](../../assets/figures/hibernate-readme-commit-sequence.ko.svg)
 
-## Hibernate Native Cache Management
+## 설치
 
-Hibernate 2nd-level 캐시는 `save()`, `delete()` 등의 기본 EntityManager 작업에 대해 **자동으로 캐시를 관리**합니다. SimpliX Hibernate 모듈은 이러한 네이티브 기능을 대체하지 않고, **@Modifying 쿼리에 대한 보완적 지원**을 제공합니다.
+[스타터](ko/starter/readme.md)에 이 모듈이 포함되어 있습니다. 스타터 없이 사용할 때는 다음과 같이 추가합니다.
 
-### Hibernate가 자동으로 처리하는 것
-- `entityManager.persist()` / `repository.save()` - 캐시 자동 업데이트
-- `entityManager.remove()` / `repository.delete()` - 캐시 자동 제거
-- 엔티티 수정 후 flush - 캐시 자동 동기화
-
-### SimpliX가 필요한 경우
-- `@Modifying` 쿼리 - Hibernate 엔티티 이벤트를 우회하므로 명시적 캐시 무효화 필요
-- 수동 캐시 제어 - 특정 시점에 캐시를 명시적으로 제거해야 할 때
-
-## Quick Start
-
-### 1. Dependency
-
-```gradle
+```groovy
 dependencies {
-    implementation 'dev.simplecore:simplix-hibernate'
-
-    // EhCache (권장)
-    implementation 'org.hibernate.orm:hibernate-jcache'
-    implementation 'org.ehcache:ehcache'
+    implementation "dev.simplecore.simplix:simplix-hibernate:${version}"
 }
 ```
 
-### 2. Entity 설정
+## 문서
 
-```java
-@Entity
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class User {
-    @Id
-    private Long id;
-    private String name;
-    private String email;
-}
-```
+| 하려는 일 | 문서 |
+|---|---|
+| 엔티티 캐싱 | [시작하기](ko/hibernate/getting-started.md) |
+| 일괄 쿼리 후에도 정확한 캐시 유지 | [엔티티 캐시 제거](ko/hibernate/evicting-the-entity-cache.md) |
+| 엔티티 변경에 대응 | [엔티티 이벤트 발행](ko/hibernate/publishing-entity-events.md) |
+| 커밋 시점의 동작 이해 | [트랜잭션 커밋 방식](ko/hibernate/how-it-works.md) |
+| 속성 조회 | [설정 레퍼런스](ko/hibernate/configuration-reference.md) |
+| 엔티티와 쿼리 결과 캐싱, 캐시 크기 지정 | [엔티티 캐싱](ko/hibernate/caching-entities.md) |
+| 문제의 원인 확인 | [문제 해결](ko/hibernate/troubleshooting.md) |
 
-### 3. @Modifying 쿼리에 @EvictCache 적용
+## 요구 사항
 
-```java
-public interface UserRepository extends JpaRepository<User, Long> {
+| 프로젝트 | SimpliX 라인 | 선언할 버전 |
+|---|---|---|
+| Spring Boot 4 | 2.x | `2.x` 릴리스 |
+| Spring Boot 3 | 1.x | `1.x` 릴리스 |
 
-    // @Modifying 쿼리는 Hibernate 캐시 이벤트를 발생시키지 않음
-    // @EvictCache로 명시적 캐시 무효화 지정
-    @Modifying
-    @Query("UPDATE User u SET u.status = :status WHERE u.role = :role")
-    @EvictCache(User.class)
-    int updateStatusByRole(@Param("status") Status status, @Param("role") Role role);
+## 라이선스
 
-    @Modifying
-    @Query("DELETE FROM User u WHERE u.deletedAt < :date")
-    @EvictCache(User.class)
-    int deleteOldUsers(@Param("date") LocalDateTime date);
-
-    // 여러 엔티티 캐시 무효화
-    @Modifying
-    @Query("UPDATE User u SET u.status = :status")
-    @EvictCache({User.class, UserProfile.class})
-    int updateUserStatus(@Param("status") Status status);
-}
-```
-
-## @EvictCache Annotation
-
-`@Modifying` 쿼리에서 캐시를 무효화할 엔티티를 명시합니다.
-
-### 속성
-
-| 속성 | 타입 | 기본값 | 설명 |
-|------|------|--------|------|
-| `value` | `Class<?>[]` | (필수) | 무효화할 엔티티 클래스들 |
-| `regions` | `String[]` | `{}` | 커스텀 캐시 리전명 |
-| `evictQueryCache` | `boolean` | `true` | 쿼리 캐시도 함께 무효화할지 여부 |
-
-### 사용 예제
-
-```java
-// 기본 사용
-@Modifying
-@Query("UPDATE User u SET u.email = :email WHERE u.id = :id")
-@EvictCache(User.class)
-int updateEmail(@Param("id") Long id, @Param("email") String email);
-
-// 쿼리 캐시 무효화 비활성화
-@Modifying
-@Query("UPDATE User u SET u.lastLoginDate = :date WHERE u.id = :id")
-@EvictCache(value = User.class, evictQueryCache = false)
-int updateLastLogin(@Param("id") Long id, @Param("date") LocalDateTime date);
-
-// 커스텀 리전 지정
-@Modifying
-@Query("UPDATE User u SET u.status = :status")
-@EvictCache(value = User.class, regions = "user-status-region")
-int updateStatus(@Param("status") Status status);
-```
-
-## Manual Cache Eviction
-
-`HibernateCacheManager`를 통해 프로그래밍 방식으로 캐시를 제어할 수 있습니다.
-
-```java
-@Service
-@RequiredArgsConstructor
-public class CacheService {
-    private final HibernateCacheManager cacheManager;
-
-    public void evictUser(Long userId) {
-        cacheManager.evictEntity(User.class, userId);
-    }
-
-    public void evictAllUsers() {
-        cacheManager.evictEntityCache(User.class);
-    }
-
-    public void evictQueryCache() {
-        cacheManager.evictQueryRegion("default");
-    }
-
-    public void evictAll() {
-        cacheManager.evictAll();
-    }
-
-    public boolean isCached(Long userId) {
-        return cacheManager.contains(User.class, userId);
-    }
-}
-```
-
-## Configuration
-
-```yaml
-simplix:
-  hibernate:
-    cache:
-      disabled: false                    # 모듈 비활성화
-      query-cache-auto-eviction: true    # 쿼리 캐시 자동 제거
-      scan-packages:                     # @Cache 엔티티 스캔 패키지
-        - com.example.domain
-```
-
-## Distributed Cache
-
-분산 캐시 동기화가 필요한 경우, Hibernate의 네이티브 분산 캐시 통합을 사용하세요:
-
-- **Hazelcast**: `hibernate-jcache` + Hazelcast JCache provider
-- **Infinispan**: `hibernate-cache-infinispan`
-- **Redis**: Redisson Hibernate cache
-
-이러한 프로바이더들은 클러스터 전체 캐시 무효화를 자동으로 처리합니다.
-
-## Disabling
-
-```yaml
-simplix:
-  hibernate:
-    cache:
-      disabled: true
-```
-
-## Documentation
-
-- [Overview (아키텍처 상세)](ko/hibernate/overview.md)
-- [Configuration Guide (설정 가이드)](ko/hibernate/configuration.md)
-- [Cache Eviction Guide (캐시 무효화)](ko/hibernate/cache-eviction.md)
-- [Entity 이벤트 발행 가이드](ko/hibernate/entity-events-guide.md)
-
-## Requirements
-
-- Spring Boot 4.1+
-- Hibernate 7.x
-- Java 17+
-
-## License
-
-SimpleCORE License 1.0 (SCL-1.0)
+[SimpleCORE License 1.0 (SCL-1.0)](ko/license.md)

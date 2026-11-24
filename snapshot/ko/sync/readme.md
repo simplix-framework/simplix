@@ -1,175 +1,46 @@
-# SimpliX Sync Module
+[English](en/sync/readme.md) | **한국어**
 
-다중 인스턴스 환경에서 인스턴스 간 상태 동기화(state reconciliation)와 가벼운 pub/sub 브로드캐스트를 위한 경량 모듈입니다. Redis Pub/Sub 또는 NATS core pub/sub를 백엔드로 선택할 수 있으며, 단일 인스턴스 환경에서는 No-Op 모드로 자동 동작합니다.
+# simplix-sync
 
-## Features
+여러 애플리케이션 인스턴스의 메모리 상태를 동기화하는 모듈입니다. 한 인스턴스가 변경을 브로드캐스트하면 다른 인스턴스가 이를 반영합니다. 제거할 캐시 항목, 바뀐 카운터, 온라인 상태가 된 장치 같은 변경에 사용합니다. 전달은 빠르지만 최선형(best-effort)이므로, 다시 불러올 수 있는 상태에 적합합니다.
 
-- ✔ **타입 안전 채널** - `SyncChannel<T>`로 직렬화/역직렬화 통합 처리
-- ✔ **자기 메시지 필터링** - UUID 기반으로 발신자 자신은 수신하지 않음
-- ✔ **다중 백엔드** - Redis Pub/Sub, NATS core pub/sub 자유 선택
-- ✔ **로컬 모드** - 단일 인스턴스에서 No-Op으로 무비용 동작
-- ✔ **상태 저장소** - `InMemoryStateStore<S>`로 키 기반 동기화 락 제공
-- ✔ **라운드로빈 reconciliation** - `ReconciliationScheduler`로 부하 분산 배치 처리
-- ✔ **Resilience 통합** - Circuit Breaker, Rate Limiter (simplix-core) 연동
+![인스턴스가 채널에 변경을 브로드캐스트하면 브로커가 다른 인스턴스에 전달합니다. 보낸 인스턴스는 자신의 메시지를 받지 않습니다.](../../assets/figures/sync-readme-broadcast.ko.svg)
 
-## Quick Start
+## 설치
 
-### 1. Dependency
+스타터에는 이 모듈이 포함되어 있지 않습니다. 별도 의존성으로 추가하세요.
 
-```gradle
+```groovy
 dependencies {
-    implementation 'dev.simplecore:simplix-sync'
-
-    // Distributed mode 백엔드 (택 1)
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    // 또는
-    implementation 'io.nats:jnats'
+    implementation "dev.simplecore.simplix:simplix-sync:${version}"
 }
 ```
 
-### 2. Configuration
+## 사용하는 경우
 
-```yaml
-simplix:
-  sync:
-    enabled: true
-    mode: DISTRIBUTED   # LOCAL 또는 DISTRIBUTED
-    distributed:
-      broker: REDIS     # REDIS 또는 NATS
-```
+| 필요한 기능 | 사용할 모듈 |
+|---|---|
+| 로컬 상태가 바뀌었음을 다른 인스턴스에 알리고, 메시지 유실을 허용할 수 있음 | simplix-sync |
+| 재시도, 컨슈머 그룹, 재생을 포함해 모든 메시지를 전달 | [simplix-messaging](ko/messaging/readme.md) |
+| 브라우저로 데이터 전송 | [simplix-stream](ko/stream/readme.md) |
 
-### 3. Usage
+## 문서
 
-타입 안전 동기화 채널 정의:
+- [시작하기](ko/sync/getting-started.md): 첫 변경 브로드캐스트
+- [상태 일관성 유지](ko/sync/keeping-state-consistent.md): 상태 저장소와 재조정
+- [simplix-sync 동작 방식](ko/sync/how-it-works.md): 메시지 전달 과정과 전송 수단 직접 작성
+- [설정 레퍼런스](ko/sync/configuration-reference.md)
+- [문제 해결](ko/sync/troubleshooting.md)
 
-```java
-@Configuration
-public class SyncConfig {
+## 요구 사항
 
-    @Bean
-    public SyncChannel<DeviceState> deviceStateChannel(
-        InstanceSyncBroadcaster broadcaster,
-        ObjectMapper objectMapper
-    ) {
-        PayloadCodec<DeviceState> codec = PayloadCodec.of(
-            state -> {
-                try {
-                    return objectMapper.writeValueAsBytes(state);
-                } catch (Exception e) {
-                    throw new IllegalStateException(e);
-                }
-            },
-            bytes -> objectMapper.readValue(bytes, DeviceState.class)
-        );
-        return new SyncChannel<>("device-state", codec, broadcaster);
-    }
-}
-```
+| 프로젝트 | SimpliX 라인 | 선언할 버전 |
+|---|---|---|
+| Spring Boot 4 | 2.x | `2.x` 릴리스 |
+| Spring Boot 3 | 1.x | `1.x` 릴리스 |
 
-브로드캐스트 및 구독:
+분산 모드에는 Redis(`spring-boot-starter-data-redis`)나 NATS(`io.nats:jnats`와 `Connection` 빈)가 필요합니다.
 
-```java
-@Service
-@RequiredArgsConstructor
-public class DeviceStateService {
+## 라이선스
 
-    private final SyncChannel<DeviceState> channel;
-
-    @PostConstruct
-    public void init() {
-        channel.subscribe(this::onPeerUpdate);
-    }
-
-    public void updateState(DeviceState state) {
-        applyLocally(state);
-        channel.broadcast(state);   // Sent to all peer instances (self-filtered)
-    }
-
-    private void onPeerUpdate(DeviceState state) {
-        applyLocally(state);
-    }
-}
-```
-
-## Configuration Summary
-
-| Property | Default | Description |
-|----------|---------|-------------|
-| `simplix.sync.enabled` | `true` | 모듈 활성화 |
-| `simplix.sync.mode` | `LOCAL` | 동작 모드 (LOCAL/DISTRIBUTED) |
-| `simplix.sync.distributed.broker` | `REDIS` | 분산 백엔드 (REDIS/NATS) |
-
-## Architecture
-
-```
-simplix-sync/
-+-- autoconfigure/
-|   +-- SimpliXSyncAutoConfiguration   # Mode-based broadcaster selection
-+-- config/
-|   +-- SyncProperties                 # Configuration properties
-+-- core/
-|   +-- InstanceSyncBroadcaster        # Broadcasting SPI
-|   +-- NoOpInstanceSyncBroadcaster    # Local mode (no-op)
-|   +-- SyncChannel                    # Typed pub/sub channel
-|   +-- PayloadCodec                   # Encoder/decoder interface
-|   +-- InMemoryStateStore             # Concurrent state store
-|   +-- ReconciliationScheduler        # Round-robin batch processor
-+-- infrastructure/
-    +-- redis/
-    |   +-- RedisInstanceSyncBroadcaster   # Redis Pub/Sub backend
-    +-- nats/
-        +-- NatsInstanceSyncBroadcaster    # NATS core pub/sub backend
-```
-
-## Operation Modes
-
-| 모드 | Broadcaster | 외부 의존성 | 용도 |
-|------|-------------|-------------|------|
-| `LOCAL` | `NoOpInstanceSyncBroadcaster` | 없음 | 단일 인스턴스, 개발 환경 |
-| `DISTRIBUTED` + `REDIS` | `RedisInstanceSyncBroadcaster` | Redis | 일반 분산 운영 |
-| `DISTRIBUTED` + `NATS` | `NatsInstanceSyncBroadcaster` | NATS Connection | NATS 기반 인프라 |
-
-> ℹ NATS 모드는 `io.nats.client.Connection` 빈이 별도로 제공되어야 합니다. simplix-messaging이 `simplix.messaging.broker=nats`로 설정된 경우 자동으로 제공됩니다.
-
-## Required Implementations
-
-### PayloadCodec
-
-타입 `T`를 바이트 배열로 인/디코딩하는 코덱을 구현합니다. JSON, Protobuf, Avro 등 어떤 형식이든 사용 가능합니다.
-
-```java
-public interface PayloadCodec<T> {
-    byte[] encode(T message);
-    T decode(byte[] payload) throws IOException;
-}
-```
-
-### InstanceSyncBroadcaster (선택적 커스터마이징)
-
-기본 구현체 외에 사용자 정의 백엔드를 사용하려면 인터페이스를 직접 구현하여 빈으로 등록하면 됩니다.
-
-```java
-public interface InstanceSyncBroadcaster {
-    void broadcast(String channel, byte[] payload);
-    void subscribe(String channel, InboundPayloadListener listener);
-}
-```
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [Overview](ko/sync/overview.md) | 모듈 개요, 아키텍처, 백엔드 비교, 설정 속성 |
-| [Getting Started](ko/sync/getting-started.md) | 단계별 통합 가이드 (LOCAL → DISTRIBUTED 전환) |
-| [Advanced Guide](ko/sync/advanced-guide.md) | State Store, Reconciliation, Resilience, Custom Backend |
-
-## Requirements
-
-- Java 17+
-- Spring Boot 4.1+
-- (Optional) Spring Data Redis - Redis 백엔드 사용 시
-- (Optional) jnats client - NATS 백엔드 사용 시
-
-## License
-
-SimpleCORE License 1.0 (SCL-1.0)
+[SimpleCORE License 1.0 (SCL-1.0)](ko/license.md)
