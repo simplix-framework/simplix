@@ -72,6 +72,7 @@
   * [Encrypting values in code](/en/encryption/encrypting-values-in-code.md)
   * [Choosing a key provider](/en/encryption/choosing-a-key-provider.md)
   * [Rotating keys](/en/encryption/rotating-keys.md)
+  * [Keeping keys safe](/en/encryption/keeping-keys-safe.md)
   * [How it works](/en/encryption/how-it-works.md)
   * [Configuration reference](/en/encryption/configuration-reference.md)
   * [Troubleshooting](/en/encryption/troubleshooting.md)
