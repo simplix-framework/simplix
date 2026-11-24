@@ -4,14 +4,15 @@
 
 ![version](https://img.shields.io/badge/version-{{VERSION}}-blue)
 
-> Modular Spring Boot Starter Library for Enterprise Applications
+> Modular Spring Boot starters for business applications
+>
+> 업무용 애플리케이션을 위한 모듈형 Spring Boot 스타터
 
-- Java 17+ / Spring Boot 4 and 3
-- JWE Token Authentication & OAuth2
-- Multi-Provider Caching, Email, File Storage
-- Data Encryption with Key Rotation
+- Java 17+ / Spring Boot 4 · 3
+- JWE tokens · OAuth2 · 토큰 인증과 소셜 로그인
+- Cache · Email · File storage · 캐시, 이메일, 파일 저장소
+- Encryption with key rotation · 키 교체를 지원하는 암호화
 
-[한국어 문서](/ko/)
-[English](/en/)
 [GitHub](https://github.com/simplix-framework/simplix)
-[Get Started](/ko/getting-started.md)
+[한국어 문서](/ko/)
+[English documentation](/en/)
