@@ -118,14 +118,25 @@ jobs:
             (cd simplix-cli && npm version "${{ steps.version.outputs.release }}" --no-git-tag-version --allow-same-version)
           fi
 
-      - name: Publish
-        run: |
-          gradle publish --info --stacktrace
-
+      # The CLI is published before the Maven artifacts: a token without publish rights on the
+      # @simplix-boot scope then fails while nothing has been released. A version npm already
+      # holds is left as it is, so the workflow can be run again after a later step failed.
       - name: Publish the CLI
         if: steps.cli.outputs.present == 'true'
         working-directory: simplix-cli
-        run: npm publish --access public
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.release }}
+        run: |
+          PUBLISHED=$(npm view "@simplix-boot/cli@$RELEASE_VERSION" version 2>/dev/null || true)
+          if [ "$PUBLISHED" = "$RELEASE_VERSION" ]; then
+            echo "ℹ @simplix-boot/cli@$RELEASE_VERSION is already on npm, skipping"
+          else
+            npm publish --access public
+          fi
+
+      - name: Publish
+        run: |
+          gradle publish --info --stacktrace
 
       - name: Commit and tag the release version
         env:
