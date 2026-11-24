@@ -91,7 +91,17 @@ simplix:
     provider: vault
 ```
 
-Add `spring-cloud-starter-vault-config`. Keys are read from `secret/encryption/keys/<version>`, each with a Base64 `key` field, and the current version is named at `secret/encryption/keys/current`. A key is fetched when it is first needed and then kept in memory.
+Add `spring-cloud-starter-vault-config`. Keys are read from `secret/encryption/keys/<version>`, each with a Base64 `key` field, and the current version is named in the `version` field of `secret/encryption/keys/current`. The path is fixed.
+
+```bash
+vault secrets enable -version=1 -path=secret kv
+vault kv put secret/encryption/keys/v1 key="$(head -c 32 /dev/urandom | base64)"
+vault kv put secret/encryption/keys/current version=v1
+```
+
+- The `secret/` mount has to be a key-value engine of version 1. On a version 2 mount, which a Vault in development mode creates by default, the provider cannot read the path and the application does not start: `Vault initialization failed`.
+- Write the first key and the `current` entry before the application starts for the first time. The provider does not start without them.
+- To rotate, write the new key under a new version and point `current` at it. Keep the earlier versions: rows encrypted with them are decrypted with them.
 
 ## Related documents
 

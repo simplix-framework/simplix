@@ -68,7 +68,7 @@ public class LoanNotifier {
 | Spring Boot 4 | 2.x | `2.x` 릴리스 |
 | Spring Boot 3 | 1.x | `1.x` 릴리스 |
 
-로컬 브로커에는 추가 의존성이 필요하지 않습니다. 실제 브로커를 사용하려면 해당 클라이언트 라이브러리를 애플리케이션의 의존성에 추가하세요: `io.nats:jnats`, `spring-boot-starter-data-redis`, `org.springframework.kafka:spring-kafka`, `spring-boot-starter-amqp`.
+로컬 브로커에는 추가 의존성이 필요하지 않습니다. 실제 브로커를 사용하려면 해당 클라이언트 라이브러리를 애플리케이션의 의존성에 추가하세요: `io.nats:jnats`, `spring-boot-starter-data-redis`, 사용하는 릴리스 라인의 Kafka 스타터, `spring-boot-starter-amqp`.
 
 ## 라이선스
 

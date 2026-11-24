@@ -11,7 +11,8 @@ The exception is logged with the name of the handler, and the message is not ack
 | `local` | is not delivered again: the handler ran once and the message stays only in the replay history |
 | `redis` | stays pending; every `redis.pending-check-interval` the consumers claim messages that were idle longer than `redis.claim-min-idle-time` and process them again |
 | `nats` | is negatively acknowledged at once and delivered again, at most `nats.max-deliver` times; without that setting, `error.max-retries` + 1 times. A message whose consumer stopped before it answered is delivered again after `nats.ack-wait`, 30 seconds unless set |
-| `kafka`, `rabbit` | is not acknowledged; the listener container of Spring Kafka or Spring AMQP runs in manual acknowledgment mode, and its behaviour decides the redelivery |
+| `kafka` | is not acknowledged, and the error handler of the Spring Kafka listener container delivers it again several times, one attempt after the other |
+| `rabbit` | is not acknowledged: it stays in its queue, is delivered again when the consumer connects again, and is not moved to the dead letter queue |
 
 A handler therefore has to be safe to run twice. Make the work idempotent, or let the module skip repeated ids with `idempotent = true`.
 

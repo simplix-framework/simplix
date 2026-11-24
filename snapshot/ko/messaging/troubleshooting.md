@@ -28,6 +28,8 @@
 | 헬스 엔드포인트에서 메시징이 `DOWN`으로 보고됨 | 브로커가 준비 상태가 아닙니다. 서버에 접속할 수 없거나 인증이 거부되었습니다 | 주소와 인증 정보를 확인하세요. 연결 로그에 사유가 기록됩니다 |
 | NATS에서 발행이 `Failed to publish message to subject <subject>`로 실패함 | 채널에 아직 스트림이 없습니다. 스트림은 핸들러가 구독할 때 생성됩니다 | 채널을 처리하는 애플리케이션을 먼저 시작하거나 스트림을 미리 생성하세요 |
 | NATS에서 `RequestReplyTemplate` 요청이 `Failed to add/update consumer for stream <stream>`으로 실패함 | 응답 채널에 스트림이 없습니다 | 응답 채널의 스트림을 미리 생성하세요 |
+| Kafka에서 애플리케이션이 시작되지 않음: `KafkaTemplate` 타입의 빈을 찾을 수 없음 | 2.x 라인에서는 `spring-kafka`만으로 자동 구성이 등록되지 않습니다 | `org.springframework.boot:spring-boot-starter-kafka`를 추가하세요 |
+| Kafka에서 발행이 `Failed to send Kafka message to topic`으로 실패함 | 프로듀서가 기본 직렬화 설정을 사용하는데 모듈은 바이트를 전송합니다 | `spring.kafka`에 바이트 배열 직렬화 · 역직렬화 설정을 지정하세요 |
 
 ## 관련 문서
 

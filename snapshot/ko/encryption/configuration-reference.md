@@ -17,7 +17,7 @@
 | `rotation.days` | `90` | 키를 교체하는 경과 일수 |
 | `auto-rotation` | `true` | 주기적으로 경과 일수 확인 |
 | `vault.enabled` | `true` | vault 프로바이더의 Vault 호출 허용 |
-| `vault.path` | `secret/encryption` | Vault의 기본 경로 |
+| `vault.path` | `secret/encryption` | 효과가 없습니다. 이 값을 읽는 코드가 없습니다. 키는 항상 `secret/encryption/keys` 아래에 있습니다 |
 | `vault.namespace` | 없음 | 효과가 없습니다. 이 값을 읽는 코드가 없으므로 `spring.cloud.vault.namespace`를 사용하세요 |
 
 ## 관련 문서
