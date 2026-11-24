@@ -184,7 +184,7 @@ IpAddressMaskingUtils.isValidIpAddress("192.168.10.25");                 // true
 | `IpAddressMaskingUtils`의 메서드 | 반환값 |
 |---|---|
 | `maskSubnetLevel(ip)` | 마지막 부분을 0으로 바꾼 주소. 네트워크 대역은 남고 호스트는 식별되지 않습니다. `null`이면 `null`을, 주소 형식이 아니면 입력값을 그대로 반환합니다 |
-| `isMasked(ip)` | 주소가 0으로 끝나는지 여부. `10.0.0.0`처럼 실제로 0으로 끝나는 주소도 true를 반환합니다 |
+| `isMasked(ip)` | 주소가 0으로 끝나면 true를 반환합니다. `10.0.0.0`처럼 실제로 0으로 끝나는 주소에도 true를 반환합니다 |
 | `isValidIpAddress(ip)` | 문자열이 IPv4 또는 IPv6 주소인지 여부 |
 
 감사 기록과 접근 기록에 사용하세요. 서브넷 수준의 주소로도 요청의 출처 대역을 확인할 수 있습니다.

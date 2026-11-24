@@ -104,7 +104,7 @@ scalar:
   enabled: false
 ```
 
-The first two properties make `/v3/api-docs` and Swagger UI answer 404. The Scalar page has a switch of its own and stays reachable without it.
+The springdoc properties make `/v3/api-docs` and Swagger UI answer 404. The Scalar page has a switch of its own and stays reachable without it.
 
 ## Related documents
 

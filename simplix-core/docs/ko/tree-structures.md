@@ -271,7 +271,7 @@ public class CategoryNode {
 | `normalizeParentId(parentId)` | 빈 문자열을 루트의 상위 값인 `null`로 변환합니다. 폼에서 "상위 없음"을 빈 문자열로 보낼 때 사용합니다 | 실패하지 않음 |
 | `validateNoCircularReference(nodeId, newParentId)` | 새 상위 노드가 자기 자신이나 자신의 하위 노드가 아닌지 검사합니다 | `IllegalArgumentException`: `Cannot move node <id> to its descendant <id>` |
 | `validateNoChildren(id)` | 가지를 삭제하면 안 되는 삭제 전에 노드에 자식이 없는지 검사합니다 | `IllegalStateException` |
-| 마지막 인수로 supplier를 받는 두 검사 | 같은 검사 | supplier가 반환한 예외. 예: 오류 코드를 지정한 `SimpliXGeneralException` |
+| supplier를 마지막 인수로 받는 형태의 검사 | 같은 검사 | supplier가 반환한 예외. 예: 오류 코드를 지정한 `SimpliXGeneralException` |
 | `buildTreeFromFlatList(nodes, rootParentId)` | 평면 목록을 상위 ID 기준으로 메모리에서 중첩해 `children`이 채워진 루트 목록을 반환합니다 | 실패하지 않음 |
 | `mapToTreeDto(entities, mapper, childrenGetter, childrenSetter)` | 중첩된 엔티티 트리를 중첩된 DTO 트리로 변환합니다 | 실패하지 않음 |
 | `mapToTreeDtoWithChildInfo(entities, mapper, childrenGetter, setter)` | 같은 변환을 수행하며 setter에 자식 수도 전달합니다. 건수나 펼침 표시가 필요한 화면에 사용합니다 | 실패하지 않음 |

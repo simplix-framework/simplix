@@ -110,7 +110,7 @@ public class LibraryOAuth2Service implements OAuth2AuthenticationService {
 | `loadUserDetailsByUserId(userId)` | `null` 반환 | 계정 연결 후 새 토큰을 발급할 때 |
 | `onAuthenticationSuccess(user, socialInfo, ipAddress, userAgent)` | 동작 없음 | 소셜 로그인 성공 후. 로그인 이력 기록이나 이벤트 발행에 사용하세요 |
 
-계정 연결 기능을 제공하는 애플리케이션은 조회 메서드 세 개를 재정의해야 합니다. 기본 구현으로는 연결 흐름에서 사용자를 찾을 수 없습니다.
+계정 연결 기능을 제공하는 애플리케이션은 `findUserIdByProviderConnection`, `findUserIdByEmail`, `loadUserDetailsByUserId`를 재정의해야 합니다. 기본 구현으로는 연결 흐름에서 사용자를 찾을 수 없습니다.
 
 ## 3단계. 제공자로 이동
 

@@ -110,7 +110,7 @@ public class LibraryOAuth2Service implements OAuth2AuthenticationService {
 | `loadUserDetailsByUserId(userId)` | returns `null` | after an account was linked, to issue new tokens |
 | `onAuthenticationSuccess(user, socialInfo, ipAddress, userAgent)` | does nothing | after a successful social sign-in; write the login history or publish an event here |
 
-An application that lets users link accounts overrides the three lookups: with the defaults the link flow cannot find the user.
+An application that lets users link accounts overrides `findUserIdByProviderConnection`, `findUserIdByEmail` and `loadUserDetailsByUserId`: with the defaults the link flow cannot find the user.
 
 ## Step 3. Send the user to the provider
 
