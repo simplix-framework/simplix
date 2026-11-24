@@ -9,8 +9,8 @@
 | `default-ttl-seconds` | `3600` | 유효 시간을 지정하지 않은 캐시에 적용하는 Redis 캐시 매니저와 NATS 버킷의 유효 시간 |
 | `cache-null-values` | `false` | Redis 캐시 매니저의 `null` 결과 저장 여부 |
 | `cache-configs.<name>.ttl-seconds` | 없음 | 어노테이션에서 사용할 캐시를 선언하고, Redis와 NATS에 적용할 유효 시간을 지정 |
-| `redis.key-prefix` | `cache:` | Redis 키의 접두어 |
-| `redis.use-key-prefix` | `true` | 접두어 사용 여부 |
+| `redis.key-prefix` | `cache:` | `CacheService`가 기록하는 Redis 키의 접두어. 캐시 어노테이션은 접두어 없이 키를 기록합니다 |
+| `redis.use-key-prefix` | `true` | `CacheService`의 키 앞에 접두어를 기록합니다 |
 | `nats.bucket-prefix` | `simplix-cache-` | NATS 버킷 이름의 접두어 |
 | `nats.replicas` | `1` | NATS 버킷의 복제본 수 |
 | `metrics.enabled` | `true` | 캐시 통계 수집 |
