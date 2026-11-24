@@ -283,7 +283,7 @@ createElement(StreamProvider, {
 ```
 
 - 프로바이더는 하위 애플리케이션 영역에 연결 하나를 열고 전체 구독 목록을 한 번 지정합니다. 구독 호출이 목록을 교체하기 때문입니다. 컴포넌트는 훅으로 리소스를 읽으며, 해당 리소스의 첫 메시지가 도착할 때까지 `waiting`을 렌더링합니다.
-- 프로바이더가 언마운트되면 세션을 닫습니다.
+- 프로바이더가 언마운트되면 세션을 종료합니다.
 - 같은 핸들러 등록 방식으로 다른 스토어에 전달할 수 있습니다: `client.on(resource, payload => store.dispatch(received(resource, payload)))`.
 
 ## TypeScript 타입

@@ -95,7 +95,7 @@
 }
 ```
 
-`SimpliXGeneralException`이 아닌 예외에서는 `errorDetail`에 위의 고정 문구가 들어갑니다. 개발 중에는 JVM을 시스템 속성 `-Dspring.profiles.active`에 `dev`, `local`, `debug` 중 하나를 포함해 시작한 경우에 한해 `java.lang.IllegalStateException: connection to ledger-db refused`처럼 예외 정보가 들어갑니다.
+`SimpliXGeneralException`이 아닌 예외에서는 `errorDetail`에 위의 고정 문구를 기록합니다. 개발 중에는 JVM을 시스템 속성 `-Dspring.profiles.active`에 `dev`, `local`, `debug` 중 하나를 포함해 시작한 경우에 한해 `java.lang.IllegalStateException: connection to ledger-db refused`처럼 예외 정보를 기록합니다.
 
 > ⚠ 시스템 속성만 확인합니다. `application.yml`이나 환경 변수 `SPRING_PROFILES_ACTIVE`로 지정한 프로파일에서는 고정 문구가 유지됩니다. 운영 환경의 JVM을 `-Dspring.profiles.active=dev`로 시작하면 예외 메시지가 클라이언트에 노출됩니다.
 

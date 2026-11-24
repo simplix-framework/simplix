@@ -104,7 +104,7 @@ scalar:
   enabled: false
 ```
 
-앞의 두 속성을 지정하면 `/v3/api-docs`와 Swagger UI가 404를 반환합니다. Scalar 페이지는 별도의 속성으로 비활성화하며, 지정하지 않으면 계속 접근할 수 있습니다.
+springdoc 속성을 지정하면 `/v3/api-docs`와 Swagger UI가 404를 반환합니다. Scalar 페이지는 별도의 속성으로 비활성화하며, 지정하지 않으면 계속 접근할 수 있습니다.
 
 ## 관련 문서
 
