@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Verifies that every change one release line owes the other has reached it, or is declared not to.
 #
-# Usage: scripts/branch-sync/check.sh [--local]
+# Usage: scripts/branch-sync/check.sh [--local | --refs <mainline> <maintenance>]
 #   --local  compare the local branches instead of the remote-tracking ones
+#   --refs   compare the two given commits or refs
 #
 # Exits 1 and lists each commit that lacks a declaration or whose counterpart is missing.
 set -euo pipefail
@@ -15,13 +16,16 @@ branch_lines_load
 if [[ "${1:-}" == "--local" ]]; then
   mainline_ref="refs/heads/$BL_MAINLINE"
   maintenance_ref="refs/heads/$BL_MAINTENANCE"
+elif [[ "${1:-}" == "--refs" ]]; then
+  mainline_ref="${2:?--refs needs the mainline ref}"
+  maintenance_ref="${3:?--refs needs the maintenance ref}"
 else
   mainline_ref="refs/remotes/$BL_REMOTE/$BL_MAINLINE"
   maintenance_ref="refs/remotes/$BL_REMOTE/$BL_MAINTENANCE"
 fi
 
 for ref in "$mainline_ref" "$maintenance_ref"; do
-  if ! git rev-parse --verify --quiet "$ref" >/dev/null; then
+  if ! git rev-parse --verify --quiet "$ref^{commit}" >/dev/null; then
     echo "✖ branch-sync: $ref does not exist; fetch both release lines first" >&2
     exit 1
   fi
