@@ -68,7 +68,7 @@ With no configuration the broker is `local`: the message is delivered inside the
 | Spring Boot 4 | 2.x | a `2.x` release |
 | Spring Boot 3 | 1.x | a `1.x` release |
 
-The local broker needs nothing else. Each real broker needs its client library among the dependencies of the application: `io.nats:jnats`, `spring-boot-starter-data-redis`, `org.springframework.kafka:spring-kafka` or `spring-boot-starter-amqp`.
+The local broker needs nothing else. Each real broker needs its client library among the dependencies of the application: `io.nats:jnats`, `spring-boot-starter-data-redis`, the Kafka starter of your release line or `spring-boot-starter-amqp`.
 
 ## License
 
