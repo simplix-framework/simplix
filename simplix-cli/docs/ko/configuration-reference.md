@@ -141,7 +141,7 @@ fields:
 
 > ℹ `config`는 `@NaturalId`를 지정한 필드에 `naturalId: true`를, `@Lob`을 지정한 필드에 `largeText: true`를 함께 씁니다. 이 키를 읽는 템플릿은 없습니다.
 
-> ⚠ `searchKeyword: true`를 지정하면 필드의 `@SearchableField`에 `keyword = true`를 생성합니다. 이 속성은 현재 SimpliX 릴리스가 의존하는 searchable-jpa 릴리스에 없으므로, 이 속성이 있는 searchable-jpa 빌드를 사용하는 프로젝트에서만 생성된 DTO가 컴파일됩니다.
+> ℹ `searchKeyword: true`를 지정하면 필드의 `@SearchableField`에 `keyword = true`를 생성합니다. 이 속성은 현재 SimpliX 릴리스가 의존하는 searchable-jpa 릴리스에 포함되어 있습니다. 더 낮은 searchable-jpa 버전을 고정한 프로젝트에서는 생성된 DTO가 컴파일되지 않습니다.
 
 `config`가 필드에 처음 지정하는 검색 연산자는 타입에 따라 다릅니다.
 

@@ -104,9 +104,9 @@ Book.yml uses statusCounts or aggregates, which needs supportClasses.searchFigur
 
 ## 생성된 DTO가 keyword에서 컴파일되지 않음
 
-**원인**: yml의 필드에 `searchKeyword: true`를 지정하면 `@SearchableField(keyword = true)`를 생성합니다. 프로젝트가 의존하는 searchable-jpa 릴리스에 `keyword` 속성이 없습니다.
+**원인**: yml의 필드에 `searchKeyword: true`를 지정하면 `@SearchableField(keyword = true)`를 생성합니다. 프로젝트가 `keyword` 속성이 없는 searchable-jpa 릴리스를 사용하고 있습니다. 더 낮은 searchable-jpa 버전을 고정했거나, CLI보다 낮은 SimpliX 릴리스를 사용하는 경우입니다.
 
-**해결**: yml에서 `searchKeyword`를 제거하고 다시 생성하거나, 이 속성이 있는 searchable-jpa 버전으로 빌드하세요.
+**해결**: `./gradlew dependencies --configuration compileClasspath`로 실제 적용된 searchable-jpa 버전을 확인하세요. 고정한 버전을 제거하거나 SimpliX를 CLI와 같은 릴리스로 올리세요. 또는 yml에서 `searchKeyword`를 제거하고 다시 생성하세요.
 
 ## 명령을 찾을 수 없음
 
