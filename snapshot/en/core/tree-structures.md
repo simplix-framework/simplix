@@ -214,6 +214,85 @@ When the entity implements `SoftDeletable` and carries a Hibernate `@Filter` who
 
 The repository reads the product name of the connection and writes the recursive queries in the dialect of PostgreSQL, MySQL, MariaDB, Oracle, SQL Server or H2.
 
+## Helpers for your own service methods
+
+A service that adds its own operations uses the protected helpers of `SimpliXTreeBaseService` instead of repeating the checks.
+
+```java
+@Service
+public class CategoryMaintenance extends SimpliXSortableTreeBaseService<Category, String> {
+
+    private final CategoryRepository repository;
+
+    public CategoryMaintenance(CategoryRepository repository) {
+        super(repository);
+        this.repository = repository;
+    }
+
+    @Transactional
+    public Category reparent(String categoryId, String newParentId) {
+        String parentId = normalizeParentId(newParentId);          // "" becomes null: a root
+        validateNoCircularReference(categoryId, parentId);          // IllegalArgumentException
+        return move(categoryId, parentId);
+    }
+
+    @Transactional
+    public void removeLeaf(String categoryId) {
+        validateNoChildren(categoryId, () ->
+            new SimpliXGeneralException(ErrorCode.GEN_CONFLICT, "The category still has children", categoryId));
+        deleteById(categoryId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryNode> outline() {
+        List<Category> roots = buildTreeFromFlatList(repository.findAll(), null);
+        return mapToTreeDto(roots,
+            category -> new CategoryNode(category.getId(), category.getName()),
+            Category::getChildren,
+            CategoryNode::setChildren);
+    }
+}
+```
+
+```java
+@Getter
+@Setter
+@RequiredArgsConstructor
+public class CategoryNode {
+
+    private final String id;
+    private final String name;
+    private List<CategoryNode> children = new ArrayList<>();
+}
+```
+
+| Helper | Does | When the check fails |
+|---|---|---|
+| `normalizeParentId(parentId)` | turns a blank string into `null`, the parent of a root, which is what a form sends for "no parent" | never fails |
+| `validateNoCircularReference(nodeId, newParentId)` | checks that the new parent is not the node itself or one of its descendants | `IllegalArgumentException`: `Cannot move node <id> to its descendant <id>` |
+| `validateNoChildren(id)` | checks that the node has no children, before a delete that must not remove a branch | `IllegalStateException` |
+| either check with a supplier as last argument | the same check | the exception the supplier returns, for example a `SimpliXGeneralException` with an error code |
+| `buildTreeFromFlatList(nodes, rootParentId)` | nests a flat list by parent id in memory and returns the roots with `children` filled in | never fails |
+| `mapToTreeDto(entities, mapper, childrenGetter, childrenSetter)` | converts a nested entity tree into a nested DTO tree | never fails |
+| `mapToTreeDtoWithChildInfo(entities, mapper, childrenGetter, setter)` | the same, and hands the setter the number of children as well, for a screen that shows a count or an expand arrow | never fails |
+
+With the categories Fiction > Fantasy > Epic fantasy, `reparent(fiction, epicFantasy)` is refused, `reparent(epicFantasy, "")` makes Epic fantasy a root, and `outline()` then returns Fiction with Fantasy below it and Epic fantasy beside it.
+
+## Methods of the repository
+
+The service calls these methods of `SimpliXTreeRepository`. Call them yourself where a query of your own needs the rows without the service.
+
+| Method | Returns |
+|---|---|
+| `findRootItems()` | the nodes without a parent |
+| `findDirectChildren(parentId)` | the children of one node |
+| `findItemWithAllDescendants(itemId)` | the node and everything below it, as a flat list |
+| `findCompleteHierarchy()` | every root with `children` filled in at every level |
+| `buildHierarchy(allItems)` | the roots of a flat list you pass, nested |
+| `findByLookup(parameters)` | the nodes whose lookup columns equal the given values |
+| `countChildrenByParentId()` | rows of parent id and number of children |
+| `findRootItemsWithChildCount()`, `findDirectChildrenWithChildCount(parentId)` | rows of entity and number of children, for a lazily expanding tree screen |
+
 ## Operations at a glance
 
 | Group | Methods |

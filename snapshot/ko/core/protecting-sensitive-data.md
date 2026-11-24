@@ -171,6 +171,34 @@ public class PaymentMethod extends SimpliXBaseEntity<String> {
 
 `MaskingConverter`는 복구할 수 있어야 하는 값에 사용합니다. 값을 AES-GCM으로 암호화해 저장하고, 엔티티를 읽을 때는 `****MASKED****`를 반환합니다. 키는 32자 이상의 `simplix.core.masking.key`로 지정하며, 지정하지 않으면 고정된 개발용 키를 사용하므로 운영 환경에서는 안전하지 않습니다. `simplix.core.masking.enabled: false`를 지정하면 변환기가 동작하지 않고, JVM 시스템 속성 `simplix.core.masking.unmask=true`를 지정하면 복호화한 값을 반환합니다. 키 교체가 필요한 암호화에는 [simplix-encryption](ko/encryption/readme.md)을 사용하세요.
 
+## 보관하는 기록의 IP 주소 마스킹
+
+```java
+IpAddressMaskingUtils.maskSubnetLevel("192.168.10.25");                  // 192.168.10.0
+IpAddressMaskingUtils.maskSubnetLevel("2001:db8:85a3::8a2e:370:7334");   // 2001:db8:85a3::8a2e:370:0
+IpAddressMaskingUtils.maskSubnetLevel("not-an-ip");                      // not-an-ip
+IpAddressMaskingUtils.isMasked("192.168.10.0");                          // true
+IpAddressMaskingUtils.isValidIpAddress("192.168.10.25");                 // true
+```
+
+| `IpAddressMaskingUtils`의 메서드 | 반환값 |
+|---|---|
+| `maskSubnetLevel(ip)` | 마지막 부분을 0으로 바꾼 주소. 네트워크 대역은 남고 호스트는 식별되지 않습니다. `null`이면 `null`을, 주소 형식이 아니면 입력값을 그대로 반환합니다 |
+| `isMasked(ip)` | 주소가 0으로 끝나면 true를 반환합니다. `10.0.0.0`처럼 실제로 0으로 끝나는 주소에도 true를 반환합니다 |
+| `isValidIpAddress(ip)` | 문자열이 IPv4 또는 IPv6 주소인지 여부 |
+
+감사 기록과 접근 기록에 사용하세요. 서브넷 수준의 주소로도 요청의 출처 대역을 확인할 수 있습니다.
+
+## 위험별 사용 도구
+
+| 위험 | 사용할 도구 |
+|---|---|
+| 사용자 입력에 포함된 마크업 | DTO 필드의 `@SafeHtml` 또는 저장 · 표시 위치의 `HtmlSanitizer` |
+| 문자열로 조립하는 쿼리(예: 정렬 컬럼)에 들어가는 사용자 입력 | 먼저 바인딩 매개변수를 사용하고, 바인딩할 수 없는 값에는 `SqlInjectionValidator`를 사용 |
+| 로그에 포함되는 개인정보 | 로그 기록 전 문자열에 `LogMasker` 적용 |
+| API 응답이나 저장하는 감사 기록의 개인정보 | `DataMaskingUtils`, `@MaskSensitive`, `IpAddressMaskingUtils` |
+| 값을 읽을 수 있는 형태로 저장하지 않고 조회 | 검색 컬럼에 `HashingUtils` 사용. 비밀번호에는 `HashingUtils`가 아닌 Spring Security의 `PasswordEncoder`를 사용 |
+
 ## 관련 문서
 
 - [입력 검증](ko/core/validating-input.md)

@@ -24,6 +24,7 @@ dependencies {
 | 코드에서 값 암호화 | [코드에서 값 암호화](ko/encryption/encrypting-values-in-code.md) |
 | 키의 출처 결정 | [키 프로바이더 선택](ko/encryption/choosing-a-key-provider.md) |
 | 키 교체 | [키 교체](ko/encryption/rotating-keys.md) |
+| 키 생성 · 보관 · 운영 점검, 노출 대응 | [키 안전하게 운영하기](ko/encryption/keeping-keys-safe.md) |
 | 속성 조회 | [설정 레퍼런스](ko/encryption/configuration-reference.md) |
 | 암호화한 컬럼의 크기 산정, 검색, 전환 | [컬럼 암호화](ko/encryption/encrypting-columns.md) |
 | 값의 암호화 과정과 프로바이더 선택 방식 확인 | [simplix-encryption 동작 방식](ko/encryption/how-it-works.md) |

@@ -59,6 +59,10 @@ A refusal is thrown with a message key and translated in the language of the req
 | `error.license.signingKeyCompromised` | a token signed with a key marked as leaked |
 | `error.license.quotaReached` | a quota that is used up |
 | `error.license.serverError` | an error of the license server without a key of its own |
+| `error.license.malformedProductKey` | a product key that fails its own checksum, answered before anything is sent |
+| `error.license.fingerprintUnavailable` | an offline activation request that cannot be built because no machine fingerprint could be read |
+| `error.license.activationServerUnconfirmed` | during the first installation, a license server address that does not answer as a license server |
+| `error.license.activationServerKeyMismatch` | during the first installation, a license server that signs with a key this build does not verify against |
 | `error.system.featureNotLicensed` | a feature the license does not grant |
 | `error.system.featureNotActive` | a feature an administrator switched off |
 

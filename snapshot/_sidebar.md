@@ -72,6 +72,7 @@
   * [코드에서 값 암호화](/ko/encryption/encrypting-values-in-code.md)
   * [키 프로바이더 선택](/ko/encryption/choosing-a-key-provider.md)
   * [키 교체](/ko/encryption/rotating-keys.md)
+  * [키 안전하게 운영하기](/ko/encryption/keeping-keys-safe.md)
   * [동작 방식](/ko/encryption/how-it-works.md)
   * [설정 레퍼런스](/ko/encryption/configuration-reference.md)
   * [문제 해결](/ko/encryption/troubleshooting.md)

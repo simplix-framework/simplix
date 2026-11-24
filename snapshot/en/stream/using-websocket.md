@@ -2,6 +2,17 @@
 
 How to offer the stream over STOMP on a WebSocket connection, what a client sends and where the messages arrive, and what to settle before choosing it over Server-Sent Events.
 
+## Server-Sent Events or WebSocket
+
+|  | Server-Sent Events | WebSocket |
+|---|---|---|
+| Needs | nothing beside the module | `spring-boot-starter-websocket` and `websocket.enabled` |
+| Subscriptions are sent | with an HTTP call | as a STOMP message on the same connection |
+| A message reaches | the connection of its session only | every client subscribed to the destination |
+| The user comes from | the token of the request or a connect ticket | the principal of the handshake |
+| A lost session | can be restored with `/reconnect` | starts again with a new session |
+| Fits | data that differs per user, which is the usual case | data every connected client may see |
+
 ## Enable the transport
 
 ```groovy

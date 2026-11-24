@@ -171,6 +171,34 @@ The listener masks `String` fields only, and `FULL` writes at most 50 mask chara
 
 `MaskingConverter` is for a value that has to be recoverable: it stores the value encrypted with AES-GCM and gives the entity `****MASKED****` when it is read. The key is `simplix.core.masking.key`, at least 32 characters; without it a fixed development key is used, which is not safe for production. `simplix.core.masking.enabled: false` switches the converter off, and the JVM system property `simplix.core.masking.unmask=true` makes it return the decrypted value. For encryption with key rotation, use [simplix-encryption](en/encryption/readme.md).
 
+## Mask an IP address for a record you keep
+
+```java
+IpAddressMaskingUtils.maskSubnetLevel("192.168.10.25");                  // 192.168.10.0
+IpAddressMaskingUtils.maskSubnetLevel("2001:db8:85a3::8a2e:370:7334");   // 2001:db8:85a3::8a2e:370:0
+IpAddressMaskingUtils.maskSubnetLevel("not-an-ip");                      // not-an-ip
+IpAddressMaskingUtils.isMasked("192.168.10.0");                          // true
+IpAddressMaskingUtils.isValidIpAddress("192.168.10.25");                 // true
+```
+
+| Method of `IpAddressMaskingUtils` | Returns |
+|---|---|
+| `maskSubnetLevel(ip)` | the address with its last part set to zero, so that the network stays visible and the host does not; `null` for `null`, and the text unchanged when it is not an address |
+| `isMasked(ip)` | whether the address ends in zero. An address that really ends in zero, such as `10.0.0.0`, also answers true |
+| `isValidIpAddress(ip)` | whether the text is an IPv4 or IPv6 address |
+
+Use it for audit and access records: an address at the level of its subnet still shows where requests come from.
+
+## Which tool for which risk
+
+| Risk | Use |
+|---|---|
+| markup in text a user typed | `@SafeHtml` on the DTO field, or `HtmlSanitizer` where the text is stored or shown |
+| user input in a query you build as text, such as a sort column | bound parameters first; `SqlInjectionValidator` for what cannot be bound |
+| personal data in a log line | `LogMasker` on the text before it is logged |
+| personal data in an API response or a stored audit record | `DataMaskingUtils`, `@MaskSensitive` and `IpAddressMaskingUtils` |
+| looking a value up without storing it readable | `HashingUtils` for the search column; passwords go through the `PasswordEncoder` of Spring Security, not through `HashingUtils` |
+
 ## Related documents
 
 - [Validating input](en/core/validating-input.md)

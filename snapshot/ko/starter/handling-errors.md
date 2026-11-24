@@ -84,6 +84,21 @@
 }
 ```
 
+### 예상하지 못한 예외의 상세 정보
+
+```json
+{
+  "type" : "ERROR",
+  "message" : "Conflict",
+  "errorCode" : "GEN_CONFLICT",
+  "errorDetail" : "An error occurred while processing your request"
+}
+```
+
+`SimpliXGeneralException`이 아닌 예외에서는 `errorDetail`에 위의 고정 문구를 기록합니다. 개발 중에는 JVM을 시스템 속성 `-Dspring.profiles.active`에 `dev`, `local`, `debug` 중 하나를 포함해 시작한 경우에 한해 `java.lang.IllegalStateException: connection to ledger-db refused`처럼 예외 정보를 기록합니다.
+
+> ⚠ 시스템 속성만 확인합니다. `application.yml`이나 환경 변수 `SPRING_PROFILES_ACTIVE`로 지정한 프로파일에서는 고정 문구가 유지됩니다. 운영 환경의 JVM을 `-Dspring.profiles.active=dev`로 시작하면 예외 메시지가 클라이언트에 노출됩니다.
+
 ## 실패한 요청의 로그 찾기
 
 보안 필터를 통과한 요청의 응답에는 `X-Trace-Id` 헤더가 있으며, 해당 요청의 모든 로그 줄에 같은 ID가 기록됩니다. ID는 요청마다 서버에서 생성하며, 보안 필터가 401로 거부한 요청에는 ID가 없습니다. 사용자에게 헤더 값을 받아 로그에서 검색하세요.

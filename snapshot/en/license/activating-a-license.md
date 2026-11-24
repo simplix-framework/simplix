@@ -112,6 +112,25 @@ curl -X POST "http://localhost:8080/api/deployment-license/deactivate" -H "Autho
 
 Deactivating gives the seat back to the license server and deletes the local registration. Activate with the same key on the new machine afterwards. An activation on the new machine without that step is refused because the seat is taken; when the old machine cannot be reached, release the seat on the license server.
 
+## Activate from your own code
+
+The endpoints call `LicenseActivationService` and `LicenseManager`. A product with a registration screen or an installer of its own calls the same beans.
+
+| Method | Does |
+|---|---|
+| `LicenseActivationService.isOnlineActivationAvailable()` | whether a license server is configured |
+| `activateOnline(productKey)` | claims a seat at the license server and registers the license it returns; the key is checked against its own checksum first |
+| `activateOnline(productKey, replaceExisting)` | the same; `true` replaces a registration under another key that still works |
+| `buildOfflineRequest(productKey)` | the activation request to carry to the issuer by hand; empty when no machine fingerprint could be read |
+| `applyOfflineResponse(productKey, licenseToken)` | registers the token the issuer returned |
+| `heartbeat()`, `deactivate()` | report to the license server, and give the seat back |
+| `LicenseManager.applyRecord(record)` | stores a registration and judges it at once |
+| `LicenseManager.markRevoked()` | records that the license server revoked the activation; the refusal survives a restart |
+| `LicenseManager.clearRegistration()` | discards the registered license; the deployment is unregistered again |
+| `LicenseManager.verify()`, `currentRecord()`, `getState()` | judge again, read the stored registration, and read the verdict |
+
+The activation methods return an `ActivationOutcome`, which the endpoints turn into the license status above.
+
 ## Who may call these endpoints
 
 | Endpoint | Needs |

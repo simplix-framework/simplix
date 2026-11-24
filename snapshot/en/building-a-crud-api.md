@@ -8,6 +8,8 @@ This page takes one entity to a complete API: create, read, update, delete and s
 
 - A project set up as [Getting started](en/getting-started.md) describes.
 - The [SimpliX CLI](en/cli/readme.md) of your release line, which needs Node.js 20 or later.
+- [Writing services and controllers](en/starter/writing-services-and-controllers.md): the same classes written by hand
+- [Auditing entities](en/starter/auditing-entities.md): a base entity with who and when
 
 ## Step 1. Write the entity
 
@@ -203,3 +205,5 @@ public class CatalogStatisticsController {
 - [Securing an application](en/securing-an-application.md)
 - [SimpliX CLI](en/cli/readme.md): templates, regeneration, versions
 - [simplix-core](en/core/readme.md): entities, repositories, tree structures, exceptions
+- [Writing services and controllers](en/starter/writing-services-and-controllers.md): the same classes written by hand
+- [Auditing entities](en/starter/auditing-entities.md): a base entity with who and when

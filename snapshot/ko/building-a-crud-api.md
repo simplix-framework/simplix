@@ -8,6 +8,8 @@
 
 - [시작하기](ko/getting-started.md)에 따라 설정한 프로젝트
 - 사용하는 릴리스 라인의 [SimpliX CLI](ko/cli/readme.md). Node.js 20 이상이 필요합니다.
+- [서비스와 컨트롤러 작성](ko/starter/writing-services-and-controllers.md): 같은 클래스를 직접 작성하는 방법
+- [엔티티 감사](ko/starter/auditing-entities.md): 작성자와 시각을 기록하는 기본 엔티티
 
 ## 1단계. 엔티티 작성
 
@@ -203,3 +205,5 @@ public class CatalogStatisticsController {
 - [애플리케이션 보안 적용](ko/securing-an-application.md)
 - [SimpliX CLI](ko/cli/readme.md): 템플릿, 재생성, 버전 관리
 - [simplix-core](ko/core/readme.md): 엔티티, 저장소, 트리 구조, 예외
+- [서비스와 컨트롤러 작성](ko/starter/writing-services-and-controllers.md): 같은 클래스를 직접 작성하는 방법
+- [엔티티 감사](ko/starter/auditing-entities.md): 작성자와 시각을 기록하는 기본 엔티티

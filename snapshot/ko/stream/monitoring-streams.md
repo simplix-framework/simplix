@@ -38,6 +38,8 @@ Micrometer가 클래스패스에 있으면 `StreamMetrics`가 `simplix.stream.mo
 | `simplix.stream.monitoring.metrics-prefix` | `simplix.stream` | 메트릭 이름의 접두어 |
 | `simplix.stream.monitoring.health-check-interval` | 10초 | 효과가 없습니다. 이 값을 읽는 코드가 없습니다 |
 
+의존성에 `micrometer-registry-prometheus`를 추가하고 엔드포인트를 노출하면, Spring Boot 애플리케이션의 다른 메트릭과 같이 Prometheus가 `/actuator/prometheus`에서 게이지를 수집합니다.
+
 ## 알림 규칙
 
 ```yaml

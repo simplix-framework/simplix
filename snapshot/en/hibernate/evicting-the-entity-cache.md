@@ -84,6 +84,10 @@ public class EvictionLog {
 }
 ```
 
+### See what is waiting for the commit
+
+Evictions asked for inside a transaction are held until it commits. `TransactionAwareCacheEvictionCollector`, a bean, answers `getPendingCount()` and `hasPendingEvictions()` for the transaction of the calling thread, and 0 and `false` outside a transaction. Use them in a test or a debug log to see that a change registered its evictions.
+
 ## Cached queries
 
 With `use_query_cache` on, a query marked cacheable keeps its result. `simplix.hibernate.cache.query-cache-auto-eviction` (on by default) clears the query cache together with the entity cache, so a cached query does not return rows a bulk change removed.

@@ -84,6 +84,21 @@ The message of an unexpected exception is written to the log and not to the resp
 }
 ```
 
+### The detail of an unexpected exception
+
+```json
+{
+  "type" : "ERROR",
+  "message" : "Conflict",
+  "errorCode" : "GEN_CONFLICT",
+  "errorDetail" : "An error occurred while processing your request"
+}
+```
+
+For an exception that is not a `SimpliXGeneralException`, `errorDetail` is this fixed text. During development the handler writes the exception instead, `java.lang.IllegalStateException: connection to ledger-db refused`, when the JVM was started with the system property `-Dspring.profiles.active` containing `dev`, `local` or `debug`.
+
+> ⚠ Only the system property is read. A profile set in `application.yml` or in the environment variable `SPRING_PROFILES_ACTIVE` keeps the fixed text, and a production JVM started with `-Dspring.profiles.active=dev` would show exception messages to clients.
+
 ## Find the log of a failed request
 
 Every response of a request that passes the security filters carries an `X-Trace-Id` header, and the same id is in each log line of that request. The id is created by the server for each request, and a request refused with 401 by the security filters has none. Ask the user for the header value and search the log for it.

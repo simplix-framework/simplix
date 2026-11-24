@@ -84,6 +84,7 @@ public class AuthorLabels {
 ## 키와 조건
 
 - `key = "#authorId"`는 매개변수를 지정하고, `key = "#request.code + ':' + #locale"`은 여러 값으로 키를 구성합니다.
+- `keyGenerator = "authorKeys"`는 표현식 대신 Spring의 `KeyGenerator` 빈을 지정합니다. 여러 메서드가 같은 키 규칙을 공유할 때 사용합니다. 한 어노테이션에 `key`와 `keyGenerator`를 함께 지정할 수 없습니다.
 - `condition = "#authorId != null"`은 호출 전에 캐시 사용 여부를 정하고, `unless = "#result == null"`은 호출 후에 결과 저장 여부를 정합니다.
 - 같은 클래스의 메서드끼리 호출하면 캐시가 적용되지 않습니다. 어노테이션은 Spring 빈을 통해 들어온 호출에만 적용됩니다.
 

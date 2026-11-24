@@ -46,10 +46,11 @@ for (BulkEmailResult.RecipientResult recipient : result.getResults()) {
 | Field of `BulkEmailResult` | Holds |
 |---|---|
 | `batchId` | the id of the batch |
-| `totalCount`, `successCount`, `failureCount`, `pendingCount` | how many recipients there were, and how many were sent and failed; `pendingCount` stays 0 |
+| `totalCount`, `successCount`, `failureCount`, `pendingCount` | how many recipients there were, how many were sent and how many failed; `pendingCount` counts the recipients that were not tried, which happens with `continueOnError: false` |
 | `results` | a `BulkEmailResult.RecipientResult` per recipient: `email`, `success`, `messageId`, `errorMessage`, `status` |
 | `startTime`, `endTime` | when the batch began and ended |
 | `providerType` | the provider that sent |
+| `isAllSuccess()`, `hasAnySuccess()`, `getSuccessRate()` | whether every recipient succeeded, whether at least one did, and the share of successes as a percentage from 0 to 100 |
 
 ## Large batches
 

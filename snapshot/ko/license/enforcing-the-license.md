@@ -59,6 +59,10 @@
 | `error.license.signingKeyCompromised` | 유출로 표시된 키로 서명된 토큰 |
 | `error.license.quotaReached` | 수량 상한 초과 |
 | `error.license.serverError` | 전용 키가 없는 라이선스 서버 오류 |
+| `error.license.malformedProductKey` | 자체 체크섬 검사에 실패한 제품 키. 전송 전에 반환합니다 |
+| `error.license.fingerprintUnavailable` | 장비 지문을 읽지 못해 오프라인 활성화 요청을 생성할 수 없는 경우 |
+| `error.license.activationServerUnconfirmed` | 최초 설치 중 입력한 라이선스 서버 주소가 라이선스 서버로 응답하지 않는 경우 |
+| `error.license.activationServerKeyMismatch` | 최초 설치 중 라이선스 서버의 서명 키가 이 빌드의 검증 키와 다른 경우 |
 | `error.system.featureNotLicensed` | 라이선스가 부여하지 않은 기능 |
 | `error.system.featureNotActive` | 관리자가 비활성화한 기능 |
 

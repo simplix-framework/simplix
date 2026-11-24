@@ -101,7 +101,7 @@ if (result.isSuccess()) {
 | `retryable` | 나중에 다시 발송하면 성공할 가능성이 있는지 여부 |
 | `timestamp` | 프로바이더가 응답한 시각 |
 
-수신자나 제목이 없는 요청은 프로바이더를 호출하기 전에 실패로 응답합니다: `Validation failed: At least one recipient is required`.
+수신자나 제목이 없는 요청에는 프로바이더를 호출하기 전에 실패 결과를 반환합니다: `Validation failed: At least one recipient is required`.
 
 ## 백그라운드 발송
 

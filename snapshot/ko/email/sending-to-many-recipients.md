@@ -46,10 +46,11 @@ for (BulkEmailResult.RecipientResult recipient : result.getResults()) {
 | `BulkEmailResult`의 필드 | 내용 |
 |---|---|
 | `batchId` | 배치 식별자 |
-| `totalCount`, `successCount`, `failureCount`, `pendingCount` | 전체 수신자 수와 발송 성공, 실패 수. `pendingCount`는 0으로 유지됩니다 |
+| `totalCount`, `successCount`, `failureCount`, `pendingCount` | 전체 수신자 수와 발송 성공 · 실패 건수. `pendingCount`는 시도하지 않은 수신자 수이며 `continueOnError: false`일 때 발생합니다 |
 | `results` | 수신자별 `BulkEmailResult.RecipientResult`: `email`, `success`, `messageId`, `errorMessage`, `status` |
 | `startTime`, `endTime` | 배치의 시작 시각과 종료 시각 |
 | `providerType` | 발송한 프로바이더 |
+| `isAllSuccess()`, `hasAnySuccess()`, `getSuccessRate()` | 모든 수신자의 성공 여부, 한 건 이상 성공 여부, 0~100 사이의 성공률(퍼센트) |
 
 ## 대량 배치
 

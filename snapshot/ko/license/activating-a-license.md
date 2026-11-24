@@ -112,6 +112,25 @@ curl -X POST "http://localhost:8080/api/deployment-license/deactivate" -H "Autho
 
 반납하면 라이선스 서버의 좌석이 해제되고 로컬 등록 정보가 삭제됩니다. 이후 새 머신에서 같은 키로 활성화하세요. 반납하지 않고 새 머신에서 활성화하면 좌석이 사용 중이므로 거부됩니다. 이전 머신에 접근할 수 없으면 라이선스 서버에서 좌석을 해제하세요.
 
+## 코드에서 활성화
+
+엔드포인트는 `LicenseActivationService`와 `LicenseManager`를 호출합니다. 자체 등록 화면이나 설치 프로그램이 있는 제품은 같은 빈을 직접 호출합니다.
+
+| 메서드 | 동작 |
+|---|---|
+| `LicenseActivationService.isOnlineActivationAvailable()` | 라이선스 서버 설정 여부 |
+| `activateOnline(productKey)` | 라이선스 서버에서 좌석을 할당받고 반환된 라이선스를 등록합니다. 먼저 키 자체의 체크섬을 검사합니다 |
+| `activateOnline(productKey, replaceExisting)` | 같은 동작. `true`이면 다른 키로 등록된 유효한 등록 정보를 교체합니다 |
+| `buildOfflineRequest(productKey)` | 발급자에게 직접 전달할 활성화 요청. 장비 지문을 읽지 못하면 빈 값을 반환합니다 |
+| `applyOfflineResponse(productKey, licenseToken)` | 발급자가 반환한 토큰을 등록합니다 |
+| `heartbeat()`, `deactivate()` | 라이선스 서버에 상태를 보고하고, 좌석을 반납합니다 |
+| `LicenseManager.applyRecord(record)` | 등록 정보를 저장하고 즉시 판정합니다 |
+| `LicenseManager.markRevoked()` | 라이선스 서버가 활성화를 취소했음을 기록합니다. 재시작 후에도 거부 상태가 유지됩니다 |
+| `LicenseManager.clearRegistration()` | 등록된 라이선스를 삭제합니다. 배포본은 다시 미등록 상태가 됩니다 |
+| `LicenseManager.verify()`, `currentRecord()`, `getState()` | 다시 판정하고, 저장된 등록 정보와 판정 결과를 조회합니다 |
+
+활성화 메서드는 `ActivationOutcome`을 반환하며, 엔드포인트는 이를 위의 라이선스 상태로 변환합니다.
+
 ## 엔드포인트 호출 권한
 
 | 엔드포인트 | 필요 권한 |

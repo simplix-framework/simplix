@@ -96,6 +96,22 @@ public class LibraryOAuth2Service implements OAuth2AuthenticationService {
 
 `OAuth2UserInfo` is the same for every provider: `provider`, `providerId`, `email`, `emailVerified`, `name`, `firstName`, `lastName`, `profileImageUrl`, `locale`, and the raw `attributes`.
 
+### Methods of `OAuth2AuthenticationService`
+
+| Method | Default | Called |
+|---|---|---|
+| `authenticateOAuth2User(userInfo)` | required | on every social sign-in: find the user by provider and provider id, decide what to do with a new one, and return the `UserDetails` the tokens are issued for |
+| `authenticateOAuth2User(userInfo, intent)` | calls the method above | the same, with the `OAuth2Intent` of the request: `LOGIN` signs existing users in only, `REGISTER` refuses an account that is already registered, `AUTO` signs in or creates |
+| `linkSocialAccount(userId, userInfo)` | required | when a signed-in user adds a provider to the account |
+| `unlinkSocialAccount(userId, provider)` | required | when a user removes a provider; refuse it when it is the last way to sign in |
+| `getLinkedProviders(userId)` | required | to list the providers of an account |
+| `findUserIdByProviderConnection(provider, providerId)` | returns `null` | when a user who signed in socially links another provider, to find the internal user id |
+| `findUserIdByEmail(email)` | returns `null` | as a fallback of the lookup above, when no connection record exists |
+| `loadUserDetailsByUserId(userId)` | returns `null` | after an account was linked, to issue new tokens |
+| `onAuthenticationSuccess(user, socialInfo, ipAddress, userAgent)` | does nothing | after a successful social sign-in; write the login history or publish an event here |
+
+An application that lets users link accounts overrides `findUserIdByProviderConnection`, `findUserIdByEmail` and `loadUserDetailsByUserId`: with the defaults the link flow cannot find the user.
+
 ## Step 3. Send the user to the provider
 
 | Link | Does |
