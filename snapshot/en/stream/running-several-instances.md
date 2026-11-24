@@ -147,6 +147,7 @@ server {
 - `ip_hash` sends a client to the same instance every time, so that the ticket request, the connection and the subscription calls meet.
 - `proxy_buffering off` passes each event on as it is written. With buffering, events arrive late and in bursts.
 - Keep `proxy_read_timeout` above `session.heartbeat-interval`, so that a quiet stream is not cut between heartbeats.
+- Another load balancer needs the same three things: one instance per client, no response buffering, and an idle timeout above the heartbeat interval.
 
 ## What the instances share
 
@@ -157,7 +158,7 @@ server {
 | `StreamStatisticsService` | answers the global endpoints of the admin API from the tables |
 | `AdminCommandProcessor` | carries out admin commands that were stored for this instance; see below |
 
-Data is collected by the instance that holds the subscribing sessions. Two instances with subscribers to the same key each call the collector.
+Data is collected by the instance that holds the subscribing sessions. Two instances with subscribers to the same key each call the collector. An application event reaches the subscribers of the instance on which it was published: `EventStreamHandler` listens to the events of its own application context. Publish the event on every instance when all subscribers have to receive it.
 
 ## When an instance stops
 

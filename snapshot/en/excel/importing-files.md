@@ -68,6 +68,10 @@ for (int i = 0; i < rows.size(); i++) {
 
 Report the row number as the user sees it in the file: with a header row, the first data row is row 2.
 
+## Large files
+
+`importFromExcel` and `importFromCsv` return every row of the file as one list, so the whole file is held in memory. The importer has no method that hands rows over in batches. Limit the size of the upload, and save the list in batches inside a transaction of your own.
+
 ## Related documents
 
 - [Exporting data](en/excel/exporting-data.md)
