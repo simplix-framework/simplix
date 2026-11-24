@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -13,6 +13,9 @@ export const FIXTURES_DIR = path.join(here, '..', 'fixtures');
 export const EXPECTED_DIR = path.join(FIXTURES_DIR, 'expected');
 
 const CLI = path.join(here, '..', '..', 'bin', 'simplix-boot.js');
+
+/** The environment every CLI run of the tests gets: no colour, and no call to the npm registry. */
+const CLI_ENV = { ...process.env, NO_COLOR: '1', npm_config_offline: 'true' };
 
 /**
  * Copies a fixture project into a fresh temporary directory.
@@ -37,10 +40,32 @@ export function runCli(args, cwd) {
   const result = spawnSync(process.execPath, [CLI, ...args], {
     cwd,
     encoding: 'utf8',
-    env: { ...process.env, NO_COLOR: '1', npm_config_offline: 'true' },
+    env: CLI_ENV,
   });
 
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
+}
+
+/**
+ * Runs the CLI with a standard output nobody reads: the reading end of the pipe is closed before
+ * the command writes, as when a pipeline's next command has already ended.
+ *
+ * @param {string[]} args the arguments after the executable
+ * @param {string} cwd the directory the command is run in
+ * @returns {Promise<{ status: number | null, stderr: string }>}
+ */
+export function runCliUnread(args, cwd) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [CLI, ...args], { cwd, env: CLI_ENV, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stderr = '';
+
+    child.stdout.destroy();
+    child.stderr.setEncoding('utf8').on('data', chunk => {
+      stderr += chunk;
+    });
+    child.on('error', reject);
+    child.on('close', status => resolve({ status, stderr }));
+  });
 }
 
 /**
