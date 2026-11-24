@@ -60,7 +60,7 @@ project/
 | `target.generatedBasePath` | string | required | the folder `generate` writes sources into; `target.basePath` is read as the same key |
 | `target.basePackage` | string | required | the base package of the generated classes |
 | `target.targetPath.<component>` | string | none | the sub-path of a component, which is generated only when this is set; `{modulePath}` is replaced by the yml's `modulePath`. Components: `service`, `controllerRest`, `controllerWeb`, `dto`, `repository` |
-| `target.testGeneratedBasePath` | string | `generatedBasePath` with `/main/` replaced by `/test/` | the folder test sources are written into |
+| `target.testGeneratedBasePath` | string | `generatedBasePath` with `/main/` replaced by `/test/` | the folder test sources are written into; `target.testBasePath` is read as the same key |
 | `target.testTargetPath.serviceTest` | string | none | the sub-path `promote` moves the service test to |
 | `promote.moduleRoot` | string | `modules` | the folder that holds the modules `promote` writes into |
 | `template.<component>` | string | the built-in path | the relative path of the template a component is rendered from; tests are `serviceTest` and `restControllerTest` |
@@ -138,6 +138,8 @@ fields:
 | `required`, `unique`, `maxLength` | decide the validation annotations |
 | `type` | the DTO field type, when it is not the entity field's; `config` fills it for a value object kept in a JSON column |
 | `reference` | the entity the field refers to: `entity`, `idField`, `idType`, `nameField`, `multiple`, `modulePath` |
+
+> ℹ `config` also writes `naturalId: true` on a field marked `@NaturalId` and `largeText: true` on a field marked `@Lob`. No template reads them.
 
 > ⚠ `searchKeyword: true` writes `keyword = true` on the field's `@SearchableField`. That attribute is not in the searchable-jpa release the current SimpliX releases depend on, so the generated DTO compiles only when the project uses a searchable-jpa build that has it.
 
