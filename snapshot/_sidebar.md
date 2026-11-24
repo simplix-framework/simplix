@@ -118,6 +118,14 @@
   * [강제 적용 가이드](ko/license/enforcement-guide.md)
   * [설정 레퍼런스](ko/license/configuration.md)
 
+* **코드 생성 CLI**
+  * [소개](ko/cli/readme.md)
+  * [개요](ko/cli/overview.md)
+  * [명령 가이드](ko/cli/command-guide.md)
+  * [템플릿 가이드](ko/cli/template-guide.md)
+  * [설정 레퍼런스](ko/cli/configuration.md)
+  * [전환 가이드](ko/cli/migration-guide.md)
+
 * **eGovFrame 연동**
   * [소개](ko/egov/readme.md)
   * [개요](ko/egov/overview.md)
