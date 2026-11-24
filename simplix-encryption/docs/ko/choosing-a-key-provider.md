@@ -91,7 +91,17 @@ simplix:
     provider: vault
 ```
 
-`spring-cloud-starter-vault-config`를 추가하세요. 키는 `secret/encryption/keys/<version>`에서 읽으며 각 항목에 Base64 `key` 필드가 있습니다. 현재 버전은 `secret/encryption/keys/current`에 지정합니다. 키는 처음 필요할 때 조회하고 이후에는 메모리에 보관합니다.
+`spring-cloud-starter-vault-config`를 추가하세요. 키는 `secret/encryption/keys/<version>`에서 읽으며 각 키에는 Base64로 인코딩한 `key` 필드가 있습니다. 현재 버전은 `secret/encryption/keys/current`의 `version` 필드로 지정합니다. 경로는 고정되어 있습니다.
+
+```bash
+vault secrets enable -version=1 -path=secret kv
+vault kv put secret/encryption/keys/v1 key="$(head -c 32 /dev/urandom | base64)"
+vault kv put secret/encryption/keys/current version=v1
+```
+
+- `secret/` 마운트는 버전 1의 키-값 엔진이어야 합니다. 개발 모드의 Vault가 기본으로 생성하는 버전 2 마운트에서는 프로바이더가 경로를 읽지 못해 애플리케이션이 `Vault initialization failed` 오류로 시작되지 않습니다.
+- 애플리케이션을 처음 시작하기 전에 첫 키와 `current` 항목을 기록하세요. 이 값이 없으면 프로바이더가 시작되지 않습니다.
+- 키를 교체하려면 새 키를 새 버전으로 기록하고 `current`가 그 버전을 가리키도록 변경합니다. 이전 버전은 유지하세요. 이전 버전으로 암호화한 행은 해당 버전의 키로 복호화합니다.
 
 ## 관련 문서
 

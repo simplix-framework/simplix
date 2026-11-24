@@ -17,7 +17,7 @@ Every property of the module, under `simplix.encryption`.
 | `rotation.days` | `90` | the age at which a key is rotated |
 | `auto-rotation` | `true` | checks the age on a schedule |
 | `vault.enabled` | `true` | lets the Vault provider call Vault |
-| `vault.path` | `secret/encryption` | the base path in Vault |
+| `vault.path` | `secret/encryption` | no effect: no code reads it; the keys are always under `secret/encryption/keys` |
 | `vault.namespace` | none | no effect: no code reads it; set `spring.cloud.vault.namespace` |
 
 ## Related documents
