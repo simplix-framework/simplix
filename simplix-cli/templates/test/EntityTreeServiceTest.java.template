@@ -161,9 +161,9 @@ class <%= classPrefix %>TreeServiceTest {
         entity.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(true);
         <%      }
             }
-        }); %>
-        entity.setCreatedAt(Instant.now());
-        entity.setUpdatedAt(Instant.now());
+        }); %><% if (ymlConfig.fields?.createdAt) { %>
+        entity.setCreatedAt(Instant.now());<% } %><% if (ymlConfig.fields?.updatedAt) { %>
+        entity.setUpdatedAt(Instant.now());<% } %>
 
         // Setup child entity
         childEntity = new <%= entityName %>();
@@ -185,9 +185,9 @@ class <%= classPrefix %>TreeServiceTest {
         childEntity.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(true);
         <%      }
             }
-        }); %>
-        childEntity.setCreatedAt(Instant.now());
-        childEntity.setUpdatedAt(Instant.now());
+        }); %><% if (ymlConfig.fields?.createdAt) { %>
+        childEntity.setCreatedAt(Instant.now());<% } %><% if (ymlConfig.fields?.updatedAt) { %>
+        childEntity.setUpdatedAt(Instant.now());<% } %>
 
         // Setup DTOs
         createDto = new <%= classPrefix %>CreateDTO();
