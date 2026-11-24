@@ -60,7 +60,7 @@ project/
 | `target.generatedBasePath` | string | 필수 | `generate`가 소스를 쓰는 폴더입니다. `target.basePath`도 같은 키로 읽습니다 |
 | `target.basePackage` | string | 필수 | 생성 클래스의 기준 패키지입니다 |
 | `target.targetPath.<구성 요소>` | string | 없음 | 구성 요소의 하위 경로이며, 지정한 구성 요소만 생성합니다. `{modulePath}`는 yml의 `modulePath`로 바뀝니다. 구성 요소는 `service`, `controllerRest`, `controllerWeb`, `dto`, `repository`입니다 |
-| `target.testGeneratedBasePath` | string | `generatedBasePath`의 `/main/`을 `/test/`로 바꾼 경로 | 테스트 소스를 쓰는 폴더입니다 |
+| `target.testGeneratedBasePath` | string | `generatedBasePath`의 `/main/`을 `/test/`로 바꾼 경로 | 테스트 소스를 쓰는 폴더입니다. `target.testBasePath`도 같은 키로 읽습니다 |
 | `target.testTargetPath.serviceTest` | string | 없음 | `promote`가 서비스 테스트를 옮기는 하위 경로입니다 |
 | `promote.moduleRoot` | string | `modules` | `promote`가 파일을 쓰는 모듈들이 있는 폴더입니다 |
 | `template.<구성 요소>` | string | 내장 템플릿 경로 | 구성 요소를 렌더링할 템플릿의 상대 경로입니다. 테스트는 `serviceTest`, `restControllerTest`로 지정합니다 |
@@ -138,6 +138,8 @@ fields:
 | `required`, `unique`, `maxLength` | 검증 어노테이션을 정합니다 |
 | `type` | DTO 필드의 타입이 엔티티 필드와 다를 때 지정합니다. JSON 컬럼에 저장하는 값 객체에는 `config`가 채웁니다 |
 | `reference` | 필드가 참조하는 엔티티입니다. `entity`, `idField`, `idType`, `nameField`, `multiple`, `modulePath`로 구성합니다 |
+
+> ℹ `config`는 `@NaturalId`를 지정한 필드에 `naturalId: true`를, `@Lob`을 지정한 필드에 `largeText: true`를 함께 씁니다. 이 키를 읽는 템플릿은 없습니다.
 
 > ⚠ `searchKeyword: true`를 지정하면 필드의 `@SearchableField`에 `keyword = true`를 생성합니다. 이 속성은 현재 SimpliX 릴리스가 의존하는 searchable-jpa 릴리스에 없으므로, 이 속성이 있는 searchable-jpa 빌드를 사용하는 프로젝트에서만 생성된 DTO가 컴파일됩니다.
 
