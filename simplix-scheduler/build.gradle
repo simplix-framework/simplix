@@ -31,8 +31,9 @@ dependencies {
     // Configuration properties
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
-    // ShedLock integration (optional)
-    compileOnly "net.javacrumbs.shedlock:shedlock-spring:${shedlockVersion}"
+    // ShedLock: the aspect reads @SchedulerLock and the database strategy takes a LockProvider,
+    // so the annotation and core types are on every consumer's classpath. A lock provider is optional.
+    api "net.javacrumbs.shedlock:shedlock-spring:${shedlockVersion}"
     compileOnly "net.javacrumbs.shedlock:shedlock-provider-jdbc-template:${shedlockVersion}"
 
     // JPA (optional - for database strategy)
@@ -58,7 +59,6 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     testImplementation 'com.h2database:h2'
-    testImplementation "net.javacrumbs.shedlock:shedlock-spring:${shedlockVersion}"
 
     // Lombok for tests
     testCompileOnly 'org.projectlombok:lombok'
