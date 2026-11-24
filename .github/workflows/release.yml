@@ -132,7 +132,8 @@ jobs:
           if [ "$PUBLISHED" = "$RELEASE_VERSION" ]; then
             echo "ℹ @simplix-boot/cli@$RELEASE_VERSION is already on npm, skipping"
           else
-            npm publish --access public --tag "$(node -p "require('./package.json').publishConfig.tag")"
+            TAG=$(node --input-type=commonjs -e "const tag = require('./package.json').publishConfig.tag; if (!tag) process.exit(1); console.log(tag)")
+            npm publish --access public --tag "$TAG"
           fi
 
       - name: Publish
