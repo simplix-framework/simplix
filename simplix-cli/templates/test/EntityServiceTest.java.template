@@ -250,9 +250,9 @@ class <%= classPrefix %>ServiceTest {
         entity.set<%= setterSuffix %>(true);
         <%      }
             }
-        }); %>
-        entity.setCreatedAt(Instant.now());
-        entity.setUpdatedAt(Instant.now());
+        }); %><% if (ymlConfig.fields?.createdAt) { %>
+        entity.setCreatedAt(Instant.now());<% } %><% if (ymlConfig.fields?.updatedAt) { %>
+        entity.setUpdatedAt(Instant.now());<% } %>
 
         // Setup DTOs
         createDto = new <%= classPrefix %>CreateDTO();
