@@ -69,6 +69,30 @@ public class PasswordConfig {
 | `isAccountLocked`, `isAccountExpired`, `isCredentialsExpired` | optional | read the flags of the `UserDetails` |
 | `getUserAuthorities(username)` | optional | the names of the authorities of a user |
 
+### Carry your own user data
+
+`loadUserByUsername` may return a class of your own instead of the `User` of Spring Security, for example to carry a display name. With a token, the principal of each request is the object this method returned.
+
+```java
+@Getter
+public class LibraryUser extends User {
+
+    private final String displayName;
+
+    public LibraryUser(String username, String passwordHash, Collection<? extends GrantedAuthority> authorities, String displayName) {
+        super(username, passwordHash, authorities);
+        this.displayName = displayName;
+    }
+}
+```
+
+```java
+@GetMapping("/whoami")
+public String whoAmI(@AuthenticationPrincipal LibraryUser user) {
+    return user.getDisplayName();
+}
+```
+
 ## Try the whole cycle
 
 ```bash
