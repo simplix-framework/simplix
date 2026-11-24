@@ -56,3 +56,9 @@ node .claude/scripts/validate-docs.mjs
 - No emoji; status marks are ✔ ✖ ⚠ ℹ.
 - No patch version in a document: write `${version}` or leave it out.
 - When you rename or remove a document, update the sidebars and every link that names it.
+
+## How the site is published
+
+The workflow **Deploy Documentation** builds the site and publishes it at <https://simplix-framework.github.io/simplix/> whenever a push to `main` changes a document, a figure, the site files under `docs` or the build scripts. Nothing has to be done by hand after a merge.
+
+To publish the documents of a release again, run the workflow from the Actions tab and give it the version: it then builds from the tag of that release instead of `main`.
