@@ -13,6 +13,7 @@ Symptoms an application meets with encryption, the cause of each and what to cha
 | Some rows show plain text in the table | they were written before the converter was added and not saved since | read and save them in batches |
 | The log shows `SimpleKeyProvider initialized - DO NOT USE IN PRODUCTION` | the simple provider is active | choose `configurable`, `managed` or `vault` outside development |
 | `simplix.encryption.vault.namespace` has no effect | no code reads the property | set the namespace with `spring.cloud.vault.namespace` |
+| The application does not start: `Vault initialization failed` | the `secret/` mount is a key-value engine of version 2, or `secret/encryption/keys/current` does not exist | use a version 1 mount at `secret/`, and write the first key and the `current` entry before the first start |
 
 ## Related documents
 

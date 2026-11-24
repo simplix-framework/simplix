@@ -13,6 +13,7 @@
 | 테이블의 일부 행이 평문으로 표시됨 | 변환기를 추가하기 전에 기록된 뒤 다시 저장되지 않은 행입니다 | 배치 단위로 읽어 다시 저장하세요 |
 | 로그에 `SimpleKeyProvider initialized - DO NOT USE IN PRODUCTION`이 기록됨 | simple 프로바이더가 활성화되어 있습니다 | 개발 환경이 아니면 `configurable`, `managed`, `vault` 중에서 선택하세요 |
 | `simplix.encryption.vault.namespace`가 적용되지 않음 | 이 속성을 읽는 코드가 없습니다 | 네임스페이스는 `spring.cloud.vault.namespace`로 지정하세요 |
+| 애플리케이션이 시작되지 않음: `Vault initialization failed` | `secret/` 마운트가 버전 2의 키-값 엔진이거나 `secret/encryption/keys/current`가 없습니다 | `secret/`에 버전 1 마운트를 사용하고, 처음 시작하기 전에 첫 키와 `current` 항목을 기록하세요 |
 
 ## 관련 문서
 
