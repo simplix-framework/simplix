@@ -8,6 +8,8 @@ This page takes one entity to a complete API: create, read, update, delete and s
 
 - A project set up as [Getting started](./getting-started.md) describes.
 - The [SimpliX CLI](../../simplix-cli/README.md) of your release line, which needs Node.js 20 or later.
+- [Writing services and controllers](../../spring-boot-starter-simplix/docs/en/writing-services-and-controllers.md): the same classes written by hand
+- [Auditing entities](../../spring-boot-starter-simplix/docs/en/auditing-entities.md): a base entity with who and when
 
 ## Step 1. Write the entity
 
@@ -203,3 +205,5 @@ public class CatalogStatisticsController {
 - [Securing an application](./securing-an-application.md)
 - [SimpliX CLI](../../simplix-cli/README.md): templates, regeneration, versions
 - [simplix-core](../../simplix-core/README.md): entities, repositories, tree structures, exceptions
+- [Writing services and controllers](../../spring-boot-starter-simplix/docs/en/writing-services-and-controllers.md): the same classes written by hand
+- [Auditing entities](../../spring-boot-starter-simplix/docs/en/auditing-entities.md): a base entity with who and when
