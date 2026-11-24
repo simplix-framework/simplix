@@ -26,7 +26,7 @@
 
 | core의 기능 | 스타터의 처리 |
 |---|---|
-| `SimpliXGeneralException`, `ErrorCode` | 예외 핸들러가 코드의 상태로 `SimpliXApiResponse`를 응답합니다 |
+| `SimpliXGeneralException`, `ErrorCode` | 예외 핸들러가 코드의 상태와 함께 `SimpliXApiResponse`로 응답합니다 |
 | 변환기와 Jackson 직렬화기 | 애플리케이션의 `ObjectMapper`에 등록합니다 |
 | `TimezoneContext` | 요청마다 `X-Timezone` 헤더의 값으로 설정합니다 |
 | `@I18nTrans`, 메시지 리졸버 | 요청 로케일과 메시지 소스를 구성합니다 |

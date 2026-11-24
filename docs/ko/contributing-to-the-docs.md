@@ -29,7 +29,7 @@ SimpliX를 사용하는 개발자를 독자로 작성하세요. 작업에서 출
 
 ## 그림
 
-그림은 `docs/figures` 아래의 Python 모듈이 그리는 SVG이며, 언어별로 한 장씩 저장합니다. 모듈을 고치고 다시 빌드하세요. 직접 편집한 SVG는 다음 빌드에서 덮어씁니다. 명령은 `docs/figures/README.md`에 있습니다.
+그림은 `docs/figures` 아래의 Python 모듈이 그리는 SVG이며, 언어별로 한 장씩 저장합니다. 모듈을 고치고 다시 빌드하세요. 직접 편집한 SVG는 다음 빌드에서 덮어씁니다. 명령은 `docs/figures/README.ko.md`에 있습니다.
 
 ## 사이트 미리 보기
 
