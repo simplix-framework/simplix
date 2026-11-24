@@ -252,7 +252,7 @@ simplix-boot promote Author --module catalog
 ✔ Promotion complete!
 ```
 
-`promote`는 각 파일을 `modules/catalog` 아래의 소스 경로로 옮기고 파일 첫머리에 생성 표시를 넣습니다. 같은 내용을 `.simplix/bases/`에도 저장하는데, 이 사본이 있어야 직접 고친 파일에 이후의 템플릿 변경을 병합할 수 있습니다. `.simplix/`를 모듈과 함께 커밋하세요.
+`promote`는 각 파일을 `modules/catalog` 아래의 소스 경로로 옮기고 파일 첫머리에 생성 표시를 추가합니다. 같은 내용을 `.simplix/bases/`에도 저장하는데, 이 사본이 있어야 직접 고친 파일에 이후의 템플릿 변경을 병합할 수 있습니다. `.simplix/`를 모듈과 함께 커밋하세요.
 
 ```java
 // @simplix-generated
