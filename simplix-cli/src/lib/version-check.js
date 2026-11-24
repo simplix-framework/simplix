@@ -7,6 +7,7 @@ import {
   compareReleaseVersions,
   getGeneratorPackageName,
   getGeneratorVersion,
+  getReleaseTag,
   isSnapshotVersion,
   toReleaseVersion,
 } from './version-utils.js';
@@ -57,13 +58,13 @@ export function recordGeneratorVersion(configPath, version) {
 }
 
 /**
- * Latest version published to the npm registry, or null when the registry
- * cannot be reached or the package has never been published.
+ * Latest version of this build's release line published to the npm registry, or null when the
+ * registry cannot be reached or the line has never been published.
  */
-export function fetchLatestPublishedVersion(packageName = getGeneratorPackageName()) {
+export function fetchLatestPublishedVersion(packageName = getGeneratorPackageName(), releaseTag = getReleaseTag()) {
   let output;
   try {
-    output = execFileSync(NPM_BIN, ['view', packageName, 'version'], {
+    output = execFileSync(NPM_BIN, ['view', `${packageName}@${releaseTag}`, 'version'], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
       timeout: NPM_LOOKUP_TIMEOUT_MS,

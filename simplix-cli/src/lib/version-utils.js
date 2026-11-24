@@ -30,6 +30,14 @@ export function getGeneratorPackageName() {
 }
 
 /**
+ * The npm dist-tag this build's release line is published under. Each release line publishes
+ * under its own tag, so the newest version of one line is never offered to a project on another.
+ */
+export function getReleaseTag() {
+  return readOwnPackageJson().publishConfig?.tag || 'latest';
+}
+
+/**
  * Development builds carry a -SNAPSHOT suffix; released builds never do.
  */
 export function isSnapshotVersion(version) {

@@ -23,6 +23,11 @@
   - 표준 출력을 읽는 프로세스가 먼저 종료해도(`simplix-boot generate Book | head`) 작업을 끝까지 수행하고 원래의 종료 코드로 종료
   - [상세 문서](/ko/cli/command-guide.md)
 
+- **코드 생성 CLI의 릴리스 라인별 npm 태그**
+  - Spring Boot 3 라인의 CLI를 `spring-boot-3x` 태그로 게시하고, `latest`는 Spring Boot 4 라인을 가리킴
+  - `version` 명령과 버전 검사가 실행 중인 CLI와 같은 라인의 게시 버전만 조회
+  - [상세 문서](/ko/cli/overview.md)
+
 ### 2026-08
 
 #### 새로운 기능

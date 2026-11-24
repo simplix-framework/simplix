@@ -41,6 +41,7 @@
   },
   "license": "SEE LICENSE IN LICENSE",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "tag": "latest"
   }
 }
