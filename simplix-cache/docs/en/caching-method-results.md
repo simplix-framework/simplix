@@ -84,6 +84,7 @@ Two calls of `labelOf("a1")` run the body once. After `rename("a1", "Ursula K.")
 ## Keys and conditions
 
 - `key = "#authorId"` names a parameter; `key = "#request.code + ':' + #locale"` builds a key from several values.
+- `keyGenerator = "authorKeys"` names a `KeyGenerator` bean of Spring instead of an expression, for a rule that several methods share. `key` and `keyGenerator` cannot be set on the same annotation.
 - `condition = "#authorId != null"` decides before the call whether to use the cache; `unless = "#result == null"` decides afterwards whether to store the result.
 - A call from one method of a class to another method of the same class does not pass the cache: the annotations work on calls that come through the Spring bean.
 
