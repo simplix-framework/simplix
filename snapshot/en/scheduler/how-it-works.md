@@ -52,9 +52,11 @@ The guides show the methods a task needs. The types they name also have these pu
 | `SchedulerLoggingService` | `isEnabled()`, `isExcluded(schedulerName)` | say whether runs are recorded at all, and whether a scheduler is left out |
 | `DefaultSchedulerLoggingService` | `getActiveStrategy()` | returns the `SchedulerLoggingStrategy` in use |
 | `SchedulerRegistryProvider` | `existsBySchedulerName(schedulerName)` | default method: says whether the registry has an entry of that name |
-| `SchedulerRegistryProvider` | `updateMetadata(registryId, metadata)` | default method, called when the class name, the cron expression or the lock name of a registered scheduler changed; returns the number of updated entries |
+| `SchedulerRegistryProvider` | `updateMetadata(registryId, metadata)` | default method, called when the class name, the cron expression or the lock name of a registered scheduler changed; it returns the number of updated entries, and the default implementation updates nothing and returns 0 |
 | `SchedulerRegistryEntry` | `fromMetadata(metadata)`, `needsMetadataUpdate(metadata)` | create an entry with a new registry id from the metadata, and say whether an entry differs from the metadata |
 | `InMemoryLoggingStrategy` | `getRegistryCount()`, `getExecutionCount()` | return the number of registered schedulers and of runs kept in memory |
+| `SchedulerMetadata`, `SchedulerRegistryEntry` | `getSchedulerType()` | the `SchedulerMetadata.SchedulerType` of the scheduler: `LOCAL` or `DISTRIBUTED` |
+| `SchedulerRegistryEntry` | `getDisplayName()` | the name shown for the scheduler; `fromMetadata` sets it to the scheduler name |
 
 ## Related documents
 

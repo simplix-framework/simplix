@@ -95,6 +95,7 @@ The guides show the methods a task needs. The types they name also have these pu
 | `LicenseManager` | `collectedIdentifiers()` | returns what the machine reported about itself, with the source of each value |
 | `ContactIdentity` | `contactEmail()` | the method your bean implements: the address the license was sold to, which the license server compares with the customer record when a seat is claimed |
 | `InstallationDiscriminator` | `installationDiscriminator()` | the method your bean implements: a value read from the running environment that tells two installations on one host apart |
+| `CompromiseCeiling` | `pinnedAt()` | the time the ceiling was fixed |
 
 ## Related documents
 

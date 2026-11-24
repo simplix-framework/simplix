@@ -95,6 +95,7 @@
 | `LicenseManager` | `collectedIdentifiers()` | 장비에서 수집한 식별 정보를 값의 출처와 함께 반환합니다 |
 | `ContactIdentity` | `contactEmail()` | 애플리케이션의 빈에서 구현하는 메서드입니다. 라이선스를 구매한 주소를 반환하며, 라이선스 서버가 좌석을 할당할 때 고객 정보의 주소와 비교합니다 |
 | `InstallationDiscriminator` | `installationDiscriminator()` | 애플리케이션의 빈에서 구현하는 메서드입니다. 같은 호스트의 설치본을 서로 구분하는 값을 실행 환경에서 읽어 반환합니다 |
+| `CompromiseCeiling` | `pinnedAt()` | 허용 상한을 확정한 시각을 반환합니다 |
 
 ## 관련 문서
 

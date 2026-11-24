@@ -80,7 +80,7 @@ The guides show the methods a task needs. The types they name also have these pu
 | `SessionRegistry` | `findById(sessionId)`, `findByUserId(userId)`, `findAll()`, `countByUserId(userId)` | find one session, the sessions of a user and all sessions, and count the sessions of a user |
 | `SessionRegistry`, `BroadcastService` | `isAvailable()`, `initialize()`, `shutdown()` | say whether the part can be used, and prepare and release what it needs |
 | `BroadcastService` | `sendToSession(sessionId, message)` | sends a message to one session and says whether it was handed over |
-| `ConnectTicketService` | `redeem(ticket)` | exchanges a ticket for the user it was issued to; a ticket can be redeemed once, and an unknown or used one gives an empty `Optional` |
+| `ConnectTicketService` | `redeem(ticket)` | exchanges a ticket for the user it was issued to; a ticket can be redeemed once, and an unknown, used or expired one gives an empty `Optional` |
 | `AdminCommandService` | `queueCommand(command)`, `queueTerminateSession(sessionId)`, `queueStopScheduler(subscriptionKey)`, `queueTriggerScheduler(subscriptionKey)` | store a command for the instance that holds the target |
 | `AdminCommandService` | `getCommand(commandId)`, `getCommandsForTarget(targetId)`, `getPendingCommands()`, `isEnabled()` | read one command, the recent commands of a target and the commands not carried out yet, and say whether commands are stored at all |
 | `MessageSender` | `isActive()` | says whether the connection of the sender is still open |
@@ -95,6 +95,8 @@ The guides show the methods a task needs. The types they name also have these pu
 | `StreamMessage` | `subscriptionRemoved(key, reason)`, `sessionTerminated(reason)`, `serialize(objectMapper)` | create the message for a removed subscription and for an ended session, and return the message as JSON |
 | `SimpliXStreamDataCollectorRegistry`, `SimpliXStreamEventSourceRegistry` | `register(collector)`, `register(source)` | add a collector or an event source that is not a bean; the beans of these types are registered at start |
 | `StreamAuthorizationService` | `registerAuthorizer(authorizer)` | adds a `ResourceAuthorizer` that is not a bean |
+| `SubscriptionKey`, `Subscription`, `StreamSession` | `getParamsHash()`, `getRequestedAt()`, `getDisconnectedAt()` | the hash of the parameters of a key, the time a subscription was requested, and the time a session lost its connection |
+| `CommandResponse` | `getErrorMessage()` | the reason an admin command failed |
 
 ## Related documents
 

@@ -61,6 +61,8 @@ The guides show the methods a task needs. The types they name also have these pu
 | `DeadLetterStrategy` | `dlqChannelFor(channel)` | returns the name of the dead letter channel of a channel |
 | `IdempotencyStore` | `tryAcquire(channel, groupName, messageId)` | the method a store of your own implements: `true` for a message id seen for the first time, `false` for a duplicate |
 | `LocalBrokerStrategy` | `clearPublishedMessages()` | discards the messages the local broker recorded, to reset a test |
+| `SubscribeRequest.Builder` | `consumerName(name)`, `batchSize(size)`, `pollTimeout(timeout)` | set the name of the consumer, the number of messages read at once and the time one read waits; `consumerName()` of the request reads the name back |
+| `RetryPolicy` | `maxRetries()`, `initialBackoff()`, `backoffMultiplier()`, `maxBackoff()` | the number of retries, the first wait, the factor each further attempt multiplies the wait by, and the longest wait; `defaults()` gives 3 retries, 1 second, a factor of 2 and 30 seconds |
 
 ## Related documents
 

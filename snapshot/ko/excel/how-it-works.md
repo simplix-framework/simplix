@@ -61,7 +61,7 @@ POI로 시트를 직접 작성하는 코드에서는 `ExcelConverter`와 `ExcelS
 | `ExcelLabels` | `configure(source, labelResolvers, format)`, `reset()` | 라벨에 사용할 `MessageSource`와 리졸버를 지정하고, 초기 상태로 되돌립니다. `configure`는 모듈이 시작할 때 호출하며 `reset`은 테스트에 사용합니다 |
 | `ExcelLabelResolver` | `resolve(key, locale)` | 직접 작성하는 리졸버에서 구현하는 메서드입니다. 로케일에 맞는 키의 텍스트를 반환합니다 |
 | `ValueFormatter` | `formatValue(value, column)`, `parseValue(value, targetType, pattern)`, `registerFormatter(type, formatter)` | 값을 타입과 `@ExcelColumn`에 따라 포맷하고, 문자열을 지정한 타입으로 파싱하고, 타입의 `Formatter`를 등록합니다 |
-| `Formatter` | `parse(value, pattern)`, `getDefaultPattern()` | 패턴으로 문자열을 파싱하고, 컬럼에 패턴이 없을 때 사용하는 패턴을 반환합니다 |
+| `Formatter` | `parse(value, pattern)`, `getDefaultPattern()` | 패턴으로 문자열을 파싱하고, 포매터의 기본 패턴을 반환합니다 |
 | `TypeConverter` | `formatNumber`, `formatDate`, `formatLocalDate`, `formatLocalDateTime`, `formatLocalTime`, `formatZonedDateTime`, `formatOffsetDateTime`, `formatInstant`, `formatEnum`, `formatMap`, `formatCollection`, `formatArray` | 해당 타입의 값을 문자열로 변환합니다 |
 | `TypeConverter` | `fromString`, `parseDate`, `parseLocalDate`, `parseLocalDateTime`, `parseLocalTime`, `parseZonedDateTime`, `parseOffsetDateTime`, `parseInstant`, `parseEnum`, `parseTemporal` | 문자열을 해당 타입의 값으로 변환합니다 |
 | `TypeConverter`, `TemporalConverter` | `setDefaultZone(zone)` | 시간대 정보가 없는 값에 사용할 시간대를 지정합니다 |
@@ -70,7 +70,9 @@ POI로 시트를 직접 작성하는 코드에서는 `ExcelConverter`와 `ExcelS
 | `DateConverter` | `formatDate(date, pattern)`, `formatCalendar(calendar, pattern)`, `parseDate(value)`, `parseCalendar(value)` | `java.util.Date` 값과 `Calendar` 값을 포맷하고 파싱합니다 |
 | `Converter` | `fromString(value, targetType)` | 날짜 변환기에서 문자열을 대상 타입으로 변환하는 메서드입니다 |
 | `ConverterRegistry` | `registerFromStringConverter(targetType, converter)`, `fromString(str, targetType, defaultValue)`, `clear()` | 문자열 변환 함수를 등록하고, 실패 시 사용할 기본값과 함께 문자열을 변환하고, 등록한 변환 함수를 모두 제거합니다 |
-| `ExcelTemplateGenerator` | `generateDefaultTemplate()`, `generateTemplateResource()` | JXLS 익스포터의 기본 템플릿을 만듭니다. 파일로 만들어 위치를 반환하거나 `Resource`로 반환합니다 |
+| `ExcelTemplateGenerator` | `generateDefaultTemplate()`, `generateTemplateResource()` | JXLS 익스포터의 기본 템플릿을 만듭니다. 임시 `.xlsx` 파일로 만들어 경로를 반환하거나 `Resource`로 반환합니다 |
+| `UnifiedCsvExporter.Encoding` | `getName()`, `getCharset()`, `isIncludeBom()` | 인코딩 이름, `Charset`, 바이트 순서 표시(BOM) 기록 여부를 반환합니다 |
+| `StandardExcelImporter` | `setApplicationZoneId(zone)`, `getApplicationZoneId()` | 임포터가 날짜·시간 값에 사용하는 시간대를 지정하고 조회합니다. 기본값은 시스템 시간대입니다 |
 
 ## 관련 문서
 

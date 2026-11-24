@@ -80,7 +80,7 @@
 | `SessionRegistry` | `findById(sessionId)`, `findByUserId(userId)`, `findAll()`, `countByUserId(userId)` | 세션 하나, 사용자의 세션 목록, 전체 세션을 조회하고 사용자의 세션 수를 반환합니다 |
 | `SessionRegistry`, `BroadcastService` | `isAvailable()`, `initialize()`, `shutdown()` | 해당 구성 요소를 사용할 수 있는지 반환하고, 필요한 자원을 준비하고 해제합니다 |
 | `BroadcastService` | `sendToSession(sessionId, message)` | 세션 하나에 메시지를 전송하고 전달 여부를 반환합니다 |
-| `ConnectTicketService` | `redeem(ticket)` | 티켓을 발급 대상 사용자로 교환합니다. 티켓은 한 번만 사용할 수 있으며, 알 수 없거나 이미 사용한 티켓에는 빈 `Optional`을 반환합니다 |
+| `ConnectTicketService` | `redeem(ticket)` | 티켓을 발급 대상 사용자로 교환합니다. 티켓은 한 번만 사용할 수 있으며, 알 수 없는 티켓, 이미 사용한 티켓, 만료된 티켓에는 빈 `Optional`을 반환합니다 |
 | `AdminCommandService` | `queueCommand(command)`, `queueTerminateSession(sessionId)`, `queueStopScheduler(subscriptionKey)`, `queueTriggerScheduler(subscriptionKey)` | 대상을 보유한 인스턴스가 처리하도록 명령을 저장합니다 |
 | `AdminCommandService` | `getCommand(commandId)`, `getCommandsForTarget(targetId)`, `getPendingCommands()`, `isEnabled()` | 명령 하나, 대상의 최근 명령, 아직 처리하지 않은 명령을 조회하고 명령 저장 기능의 사용 여부를 반환합니다 |
 | `MessageSender` | `isActive()` | 전송기의 연결이 유지되고 있는지 반환합니다 |
@@ -95,6 +95,8 @@
 | `StreamMessage` | `subscriptionRemoved(key, reason)`, `sessionTerminated(reason)`, `serialize(objectMapper)` | 구독 해제 메시지와 세션 종료 메시지를 만들고, 메시지를 JSON으로 반환합니다 |
 | `SimpliXStreamDataCollectorRegistry`, `SimpliXStreamEventSourceRegistry` | `register(collector)`, `register(source)` | 빈이 아닌 수집기나 이벤트 소스를 추가합니다. 해당 타입의 빈은 시작할 때 등록됩니다 |
 | `StreamAuthorizationService` | `registerAuthorizer(authorizer)` | 빈이 아닌 `ResourceAuthorizer`를 추가합니다 |
+| `SubscriptionKey`, `Subscription`, `StreamSession` | `getParamsHash()`, `getRequestedAt()`, `getDisconnectedAt()` | 키의 매개변수 해시, 구독을 요청한 시각, 세션의 연결이 끊긴 시각을 반환합니다 |
+| `CommandResponse` | `getErrorMessage()` | 관리 명령이 실패한 사유를 반환합니다 |
 
 ## 관련 문서
 
