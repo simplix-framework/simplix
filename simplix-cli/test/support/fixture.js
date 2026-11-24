@@ -34,13 +34,14 @@ export function copyFixture(name) {
  *
  * @param {string[]} args the arguments after the executable
  * @param {string} cwd the directory the command is run in
+ * @param {Record<string, string>} [env] variables that replace those of the test environment
  * @returns {{ status: number | null, stdout: string, stderr: string }}
  */
-export function runCli(args, cwd) {
+export function runCli(args, cwd, env = {}) {
   const result = spawnSync(process.execPath, [CLI, ...args], {
     cwd,
     encoding: 'utf8',
-    env: CLI_ENV,
+    env: { ...CLI_ENV, ...env },
   });
 
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };

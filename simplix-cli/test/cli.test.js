@@ -159,6 +159,22 @@ describe('version', () => {
     assert.strictEqual(runCli(['generate', 'Author', '--skip-version-check'], root).status, 0);
   });
 
+  it('asks npm for the newest version under the dist-tag of its own release line', { skip: process.platform === 'win32' }, () => {
+    const bin = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'simplix-boot-npm-')));
+    try {
+      const asked = path.join(bin, 'asked');
+      fs.writeFileSync(path.join(bin, 'npm'), `#!/bin/sh\necho "$@" > "${asked}"\necho 9.9.9\n`, { mode: 0o755 });
+
+      const result = runCli(['version', '--json'], root, { PATH: `${bin}${path.delimiter}${process.env.PATH}` });
+
+      assert.strictEqual(result.status, 0, result.stderr);
+      assert.strictEqual(fs.readFileSync(asked, 'utf8'), `view @simplix-boot/cli@${packageJson.publishConfig.tag} version\n`);
+      assert.strictEqual(JSON.parse(result.stdout).latest, '9.9.9');
+    } finally {
+      fs.rmSync(bin, { recursive: true, force: true });
+    }
+  });
+
   it('refuses --to without --update, and a target that is not a version', () => {
     assert.match(runCli(['version', '--to', '1.2.3'], root).stderr, /--to is only used with --update/);
     assert.match(runCli(['version', '--update', '--to', 'latest'], root).stderr, /"latest" is not an X\.Y\.Z version/);
