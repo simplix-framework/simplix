@@ -1,169 +1,66 @@
-# SimpliX Email Module
+**English** | [한국어](./README.ko.md)
 
-Spring Boot 애플리케이션을 위한 유연한 다중 Provider 이메일 발송 모듈입니다.
+# simplix-email
 
-## Features
+Sends mail from an application through one service, whichever provider delivers it: an SMTP server, AWS SES, SendGrid or Resend. The same call sends a single message, a message from a template in the language of the reader, or one template to many recipients, and it answers with a result instead of throwing.
 
-- ✔ **다중 Provider 지원** - SMTP, AWS SES, SendGrid, Resend
-- ✔ **자동 Failover** - Provider 장애 시 자동 전환
-- ✔ **템플릿 엔진** - Thymeleaf 기반 이메일 템플릿
-- ✔ **비동기 발송** - CompletableFuture 기반 비동기 처리
-- ✔ **대량 발송** - 수신자별 개별 변수 지원
-- ✔ **다국어 지원** - 로케일 기반 템플릿 선택
-- ✔ **첨부 파일** - 일반 첨부 및 인라인 이미지
+![A request passes the email service, which tries the enabled providers in order of priority until one accepts the message, and returns a result with the status, the message id and the provider.](../docs/assets/figures/email-readme-send-path.en.svg)
 
-## Quick Start
+## Install
 
-### 1. Dependency
+The module is part of the [starter](../spring-boot-starter-simplix/README.md). To use it alone, add the dependency.
 
-```gradle
+```groovy
 dependencies {
-    implementation 'dev.simplecore:simplix-email:${version}'
-
-    // Optional: Provider별 의존성
-    implementation 'software.amazon.awssdk:ses:2.x.x'      // AWS SES
-    implementation 'com.sendgrid:sendgrid-java:4.x.x'      // SendGrid
-    implementation 'com.resend:resend-java:3.x.x'          // Resend
+    implementation "dev.simplecore.simplix:simplix-email:${version}"
 }
 ```
 
-### 2. Configuration
-
-```yaml
-simplix:
-  email:
-    enabled: true
-    provider: SMTP
-    from:
-      address: noreply@example.com
-      name: My Application
-    smtp:
-      enabled: true
-      host: smtp.example.com
-      port: 587
-      username: user@example.com
-      password: ${SMTP_PASSWORD}
-      starttls: true
-```
-
-### 3. Usage
+## A first message
 
 ```java
 @Service
 @RequiredArgsConstructor
-public class NotificationService {
+@Slf4j
+public class WelcomeMailer {
 
     private final EmailService emailService;
 
-    // 간단한 이메일 발송
-    public void sendSimpleEmail(String to, String subject, String content) {
+    public void welcome(String address, String name) {
         EmailResult result = emailService.send(
-            EmailRequest.simple(to, subject, content)
-        );
+            EmailRequest.simple(address, "Welcome to the library", "<p>Hello " + name + "</p>"));
 
-        if (result.isSuccess()) {
-            log.info("Email sent: {}", result.getMessageId());
+        if (!result.isSuccess()) {
+            log.warn("welcome mail failed: {}", result.getErrorMessage());
         }
-    }
-
-    // 템플릿 이메일 발송
-    public void sendWelcomeEmail(User user) {
-        emailService.sendTemplate(
-            TemplateEmailRequest.builder()
-                .templateCode("welcome")
-                .to(List.of(EmailAddress.of(user.getName(), user.getEmail())))
-                .variables(Map.of("userName", user.getName()))
-                .locale(Locale.KOREAN)
-                .build()
-        );
-    }
-
-    // 비동기 발송
-    public void sendAsyncEmail(EmailRequest request) {
-        emailService.sendAsync(request)
-            .thenAccept(result -> log.info("Sent: {}", result.getMessageId()))
-            .exceptionally(ex -> {
-                log.error("Failed", ex);
-                return null;
-            });
     }
 }
 ```
 
-## Providers
+Without configuration nothing leaves the machine: the console provider prints the message to the log, which is what development needs. [Getting started](docs/en/getting-started.md) connects a real provider.
 
-| Provider | Priority | 용도 | 설정 |
-|----------|----------|------|------|
-| AWS SES | 100 | Production (AWS) | `aws-ses.enabled: true` |
-| Resend | 55 | Production | `resend.enabled: true` |
-| SendGrid | 50 | Production | `sendgrid.enabled: true` |
-| SMTP | 10 | Self-hosted | `smtp.enabled: true` |
-| Console | -100 | Development | `provider: CONSOLE` |
+## Documents
 
-## Template
+| To | Read |
+|---|---|
+| send a first message and connect a provider | [Getting started](docs/en/getting-started.md) |
+| set recipients, bodies, attachments and inline images, and send in the background | [Sending mail](docs/en/sending-mail.md) |
+| write a message once per language and fill it with values | [Using templates](docs/en/using-templates.md) |
+| send one template to many recipients | [Sending to many recipients](docs/en/sending-to-many-recipients.md) |
+| choose and configure SMTP, AWS SES, SendGrid or Resend, and fail over between them | [Choosing a provider](docs/en/choosing-a-provider.md) |
+| see which class does what | [How simplix-email works](docs/en/how-it-works.md) |
+| look a property up | [Configuration reference](docs/en/configuration-reference.md) |
+| find the cause of a problem | [Troubleshooting](docs/en/troubleshooting.md) |
 
-```
-templates/email/
-└── welcome/
-    ├── en/
-    │   ├── subject.txt
-    │   └── body.html
-    └── ko/
-        ├── subject.txt
-        └── body.html
-```
+## Requirements
 
-**subject.txt:**
-```
-[(${userName})]님, 환영합니다!
-```
+| Your project | SimpliX line | Version to declare |
+|---|---|---|
+| Spring Boot 4 | 2.x | a `2.x` release |
+| Spring Boot 3 | 1.x | a `1.x` release |
 
-**body.html:**
-```html
-<h1>Welcome!</h1>
-<p th:text="'Hello, ' + ${userName}">Hello, User</p>
-```
-
-## Configuration
-
-```yaml
-simplix:
-  email:
-    enabled: true
-    provider: SMTP                    # CONSOLE, SMTP, AWS_SES, SENDGRID, RESEND
-    from:
-      address: noreply@example.com
-      name: My Application
-    smtp:
-      enabled: true
-      host: smtp.example.com
-      port: 587
-      username: user
-      password: secret
-    aws-ses:
-      enabled: false
-      region: us-east-1
-    sendgrid:
-      enabled: false
-      api-key: SG.xxxx
-    resend:
-      enabled: false
-      api-key: re_xxxx
-    template:
-      base-path: templates/email
-    async:
-      core-pool-size: 2
-      max-pool-size: 10
-```
-
-## Documentation
-
-- [Overview (아키텍처 상세)](docs/ko/overview.md)
-- [Sending Guide (이메일 발송)](docs/ko/sending-guide.md)
-- [Template Guide (템플릿 사용)](docs/ko/template-guide.md)
-- [Provider Guide (Provider 설정)](docs/ko/provider-guide.md)
-- [Advanced Guide (고급 기능)](docs/ko/advanced-guide.md)
+SMTP works with what the module brings. AWS SES needs `software.amazon.awssdk:sesv2`, SendGrid `com.sendgrid:sendgrid-java` and Resend `com.resend:resend-java` among the dependencies of the application.
 
 ## License
 
-SimpleCORE License 1.0 (SCL-1.0)
+[SimpleCORE License 1.0 (SCL-1.0)](../docs/en/license.md)
