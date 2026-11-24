@@ -61,6 +61,16 @@ With the blacklist on and Spring Boot Actuator present, `/actuator/health` inclu
 
 `AuthRequestCorrelationFilter` puts `requestId`, `sessionId` and, once the request is authenticated, `username` into the logging context (MDC). Add them to the log pattern, for example `%X{requestId} %X{username}`.
 
+## Log
+
+The module writes its log under the logger `dev.simplecore.simplix.auth`. The default handlers of the issue endpoint write `Token authentication successful - username: ..., IP: ..., User-Agent: ...` at `INFO` and `Token authentication failed - username: ..., IP: ..., User-Agent: ..., reason: ...` at `WARN`. Set the level of the logger to see more:
+
+```yaml
+logging:
+  level:
+    dev.simplecore.simplix.auth: DEBUG
+```
+
 ## Related documents
 
 - [Revoking tokens](en/auth/revoking-tokens.md)
