@@ -141,7 +141,7 @@ fields:
 
 > ℹ `config` also writes `naturalId: true` on a field marked `@NaturalId` and `largeText: true` on a field marked `@Lob`. No template reads them.
 
-> ⚠ `searchKeyword: true` writes `keyword = true` on the field's `@SearchableField`. That attribute is not in the searchable-jpa release the current SimpliX releases depend on, so the generated DTO compiles only when the project uses a searchable-jpa build that has it.
+> ℹ `searchKeyword: true` writes `keyword = true` on the field's `@SearchableField`. The attribute comes with the searchable-jpa release this SimpliX release depends on; a project that pins an older searchable-jpa version does not compile the generated DTO.
 
 The search operators `config` starts a field with depend on its type.
 
