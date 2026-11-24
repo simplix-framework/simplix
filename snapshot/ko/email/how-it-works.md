@@ -34,7 +34,7 @@
 - 주소 형식을 검사하지 않으며 발송 금지 주소 목록을 관리하지 않습니다.
 - 발송 속도를 제한하지 않습니다. 대량으로 발송하는 코드에서 프로바이더의 한도를 넘지 않도록 조절하세요.
 
-`EmailTemplateEngine`도 빈입니다. `processText(template, variables, locale)`와 `processHtml(template, variables, locale)`은 텍스트 하나를 텍스트 문법 또는 HTML 문법으로 렌더링합니다. `process(resolvedTemplate, variables, locale)`는 조회된 템플릿의 제목과 본문을 렌더링하며, 본문의 존재 여부는 템플릿의 `hasHtmlBody()`와 `hasTextBody()`로 확인합니다.
+`EmailTemplateEngine`도 빈입니다. `processText(template, variables, locale)`와 `processHtml(template, variables, locale)`은 텍스트 하나를 텍스트 문법 또는 HTML 문법으로 렌더링합니다. `process(resolvedTemplate, variables, locale)`는 조회된 템플릿의 제목과 본문을 렌더링하며, 본문의 존재 여부는 템플릿의 `hasHtmlBody()`와 `hasTextBody()`로 확인합니다. 텍스트용 Thymeleaf 엔진과 HTML용 Thymeleaf 엔진은 각각 `textTemplateEngine` 빈과 `htmlTemplateEngine` 빈입니다. 애플리케이션에서 같은 이름의 `TemplateEngine` 빈을 선언하면 해당 엔진이 교체됩니다. 방언(dialect)을 추가할 때 사용하세요.
 
 ## 관련 문서
 

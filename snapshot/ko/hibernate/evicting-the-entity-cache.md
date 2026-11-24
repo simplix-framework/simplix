@@ -54,7 +54,7 @@ cacheManager.contains(Branch.class, branchId);      // whether the record is cac
 
 ### 캐시 대상 엔티티 조회
 
-`EntityCacheScanner`는 `simplix.hibernate.cache.scan-packages`의 패키지에서 `@Cache`를 지정한 엔티티를 찾아 보관합니다. 배치 작업이 변경한 테이블처럼 외부에서 전달된 이름으로 캐시를 제거할 때 사용하세요.
+`EntityCacheScanner`는 `simplix.hibernate.cache.scan-packages`의 패키지에서 `@Cache`를 지정한 엔티티를 찾아 보관합니다. 모듈은 시작할 때 `scanForCachedEntities(packages...)`를 호출해 목록을 구성합니다. 애플리케이션에서 다른 패키지를 지정해 이 메서드를 다시 호출하면 해당 패키지에서 찾은 엔티티가 목록에 추가됩니다. 배치 작업이 변경한 테이블처럼 외부에서 전달된 이름으로 캐시를 제거할 때 사용하세요.
 
 ```java
 Class<?> entity = entityCacheScanner.findBySimpleName("Branch");

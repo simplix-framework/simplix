@@ -56,7 +56,7 @@ Google needs only the client id and secret. Providers Spring Security does not k
 | `apple` | OpenID Connect | `AppleUserInfoExtractor` | `sub` |
 | any other OpenID Connect provider | OpenID Connect | `StandardOidcUserInfoExtractor` | `sub`, with the standard claims |
 
-Each extractor is an `OAuth2UserInfoExtractorStrategy`; `OAuth2UserInfoExtractor` picks the one whose `getProviderType()` matches the registration. The registration id is the lower-case name of the `OAuth2ProviderType`.
+Each extractor is an `OAuth2UserInfoExtractorStrategy`; `OAuth2UserInfoExtractor` picks the one whose `getProviderType()` matches the registration. The registration id is the lower-case name of the `OAuth2ProviderType`. In your own code, `OAuth2ProviderType.fromRegistrationId(id)` returns the constant of an id without regard to case and throws `IllegalArgumentException` for an id the enum does not name; `OAuth2ProviderType.resolve(id)` returns `OIDC` for such an id.
 
 ## Step 2. Tell SimpliX who the user is
 

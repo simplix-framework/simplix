@@ -32,6 +32,8 @@ SimpliX 모듈은 문구를 `messages/simplix_<module>.properties`로 제공하�
 
 검증기는 같은 `MessageSource`에서 메시지를 읽고, 제약 메시지의 `{min}`, `{max}` 같은 매개변수를 실제 값으로 바꿉니다. `@Size(max = 200)`에는 `Size must be between 0 and 200`으로 응답합니다.
 
+직접 작성하는 메시지에는 매개변수를 이름으로 지정하세요. 번호 매개변수도 값으로 바뀌지만 `max`가 `min`보다 먼저 전달됩니다. `@Size(min = 2, max = 5, message = "Between {0} and {1} characters")`에는 `Between 5 and 2 characters`로 응답하고, `message = "From {min} to {max} characters"`에는 `From 2 to 5 characters`로 응답합니다.
+
 ## 속성
 
 | 속성 | 기본값 | 의미 |

@@ -34,7 +34,7 @@ The classes behind a send, what the module registers and where a message can sto
 - It does not check the form of an address or keep a list of addresses that must not be mailed.
 - It does not limit the rate of sends. Stay under the limit of the provider in the code that sends many messages.
 
-`EmailTemplateEngine` is a bean as well: `processText(template, variables, locale)` and `processHtml(template, variables, locale)` render one text in the text or the HTML syntax, and `process(resolvedTemplate, variables, locale)` renders the subject and the bodies of a resolved template, whose `hasHtmlBody()` and `hasTextBody()` say which bodies exist.
+`EmailTemplateEngine` is a bean as well: `processText(template, variables, locale)` and `processHtml(template, variables, locale)` render one text in the text or the HTML syntax, and `process(resolvedTemplate, variables, locale)` renders the subject and the bodies of a resolved template, whose `hasHtmlBody()` and `hasTextBody()` say which bodies exist. The two Thymeleaf engines are the beans `textTemplateEngine` and `htmlTemplateEngine`. A `TemplateEngine` bean of your application with one of these names replaces that engine, for example to add a dialect.
 
 ## Related documents
 

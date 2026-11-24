@@ -27,7 +27,7 @@
 | 사용자에게 권한이 없는 호출 | `SimpliXAccessDeniedHandler`. 메서드 보안에서 거부한 호출은 스타터의 예외 핸들러가 처리합니다 | `AUTHZ_` 코드가 포함된 403 JSON 응답 |
 | 그 밖의 경로 | 폼 로그인을 사용하는 웹 체인. `SimpliXAuthLoginController`가 로그인 페이지를 제공합니다 | 로그인 페이지로 리다이렉트하거나, 로그인한 세션이면 해당 페이지를 반환합니다 |
 
-토큰 엔드포인트는 `SimpliXTokenAuthenticationSuccessHandler`와 `SimpliXTokenAuthenticationFailureHandler`를 호출합니다. 이 핸들러는 응답에 기록하지 않고 결과를 애플리케이션의 핸들러에 전달합니다. 모든 체인은 `simplix.auth.cors`로 구성한 `SimpliXCorsConfigurations`의 CORS 규칙을 사용합니다.
+발급 엔드포인트는 로그인 시도를 처리한 뒤 `tokenAuthenticationSuccessHandler`와 `tokenAuthenticationFailureHandler`라는 이름의 빈을 호출합니다. 기본 빈인 `SimpliXTokenAuthenticationSuccessHandler`와 `SimpliXTokenAuthenticationFailureHandler`는 로그를 기록합니다. 이 빈을 교체하는 방법은 [토큰 발급과 갱신](ko/auth/issuing-and-refreshing-tokens.md)에서 설명합니다. 모든 체인은 `simplix.auth.cors`로 구성한 `SimpliXCorsConfigurations`의 CORS 규칙을 사용합니다.
 
 ## 폐기된 토큰의 보관 위치
 

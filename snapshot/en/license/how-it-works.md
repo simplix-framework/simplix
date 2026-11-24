@@ -50,7 +50,7 @@ A key marked `compromised` still verifies, but a token signed with it cannot giv
 | Keeps the ceiling in | the column `compromise_ceiling` of the same row | the member `compromiseCeiling` of the same file |
 | A replaced container | keeps its license without a volume | needs the file on a volume |
 
-A store of your own implements `LicenseStore` of the SDK and `CompromiseCeilingStore` together. With only one of the two the application does not start: a deployment that cannot keep its ceiling would lose the limit without any error. The registration and the ceiling belong in the same place, so that a ceiling never outlives or predates its registration. `LicenseStorePackage` marks the package of the entity for applications that list their entity packages by hand.
+A store of your own implements `LicenseStore` of the SDK and `CompromiseCeilingStore` together. `CompromiseCeilingStore` has `loadCeiling()`, which returns the stored ceiling or an empty `Optional` when none was fixed yet, and `saveCeiling(ceiling)`, which replaces what was stored. With only one of the two the application does not start: a deployment that cannot keep its ceiling would lose the limit without any error. The registration and the ceiling belong in the same place, so that a ceiling never outlives or predates its registration. `LicenseStorePackage` marks the package of the entity for applications that list their entity packages by hand.
 
 ## Statuses
 

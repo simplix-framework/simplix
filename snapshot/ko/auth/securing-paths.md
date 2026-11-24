@@ -12,6 +12,37 @@
 
 체인은 애플리케이션이 `SimpliXUserDetailsService`를 제공하면 등록됩니다. `simplix.auth.security.enable-token-endpoints: false`를 지정하면 첫 번째 체인과 토큰 필터가 제외되고, `enable-web-security: false`를 지정하면 마지막 체인이 제외됩니다.
 
+### 체인 직접 추가
+
+Spring Security는 `@Order` 값의 순서대로 체인을 검사하고, 요청이 매처와 일치하는 첫 번째 체인을 사용합니다.
+
+| 체인 | 빈 | 순서 |
+|---|---|---|
+| 토큰 엔드포인트 | `tokenSecurityFilterChain` | 50 |
+| 소셜 로그인 경로(소셜 로그인을 설정한 경우) | `oauth2SecurityFilterChain` | 90 |
+| `/api/**` | `apiSecurityFilterChain` | 100 |
+| 리소스 서버 경로(리소스 서버를 활성화한 경우) | `resourceServerSecurityFilterChain` | 100 |
+| 그 밖의 모든 경로 | `webSecurityFilterChain` | 102 |
+
+애플리케이션의 `SecurityFilterChain` 빈에는 `securityMatcher`를 지정하고, 우선해야 하는 체인보다 작은 순서 값을 지정하세요.
+
+```java
+@Configuration
+public class PartnerChainConfig {
+
+    @Bean
+    @Order(40)
+    public SecurityFilterChain partnerSecurityFilterChain(HttpSecurity http) throws Exception {
+        http.securityMatcher("/api/partner/**")
+                .authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
+                .csrf(csrf -> csrf.disable());
+        return http.build();
+    }
+}
+```
+
+이 체인을 등록하면 토큰이 없는 `GET /api/partner/ping` 요청에 상태 코드 200으로 응답하고, `/api`의 나머지 경로에는 계속 401로 응답합니다. 순서 값이 102보다 큰 체인은 모든 요청과 일치하는 웹 체인보다 나중에 검사되어 요청을 받을 수 없습니다. Spring Security가 이 구성을 오류로 판정하므로 애플리케이션이 시작되지 않고 `UnreachableFilterChainException: A filter chain that matches any request [...] has already been configured` 예외가 발생합니다.
+
 ## 경로 공개와 규칙 조정
 
 ```yaml

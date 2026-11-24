@@ -23,6 +23,18 @@
 
 `Converter<T>`는 날짜 변환기의 인터페이스입니다. `ConverterRegistry`와 `StringUtil`은 애플리케이션에서 직접 변환할 때 호출할 수 있는 도우미이며, 익스포터와 임포터는 레지스트리를 사용하지 않습니다.
 
+POI로 시트를 직접 작성하는 코드에서는 `ExcelConverter`와 `ExcelStyleManager`도 호출할 수 있습니다. 아래 결과는 `Title` 컬럼과 `format`이 `#,##0.00`인 `Price` 컬럼으로 구성된 행 클래스에서 얻은 값입니다.
+
+| 호출 | 결과 |
+|---|---|
+| `ExcelConverter.extractColumnTitles(BookRow.class)` | `@ExcelColumn` 필드의 `name`을 `order` 순서로 정렬한 목록: `[Title, Price]` |
+| `ExcelConverter.convertToRowData(rows, BookRow.class)` | 행별 텍스트 목록. 컬럼 값은 `toString()` 결과이고 `null`은 빈 텍스트입니다: `[[Dune, 12.5], [Emma, ]]`. 컬럼의 `format`은 적용하지 않습니다 |
+| `ExcelConverter.prepareDataModel(rows, BookRow.class)` | 제목 목록과 행 목록을 `headers`와 `rows` 키에 넣은 맵. 직접 작성한 템플릿에 전달할 때 사용합니다 |
+| `ExcelConverter.clearCaches()` | 지금까지 읽은 필드와 제목의 캐시를 비웁니다 |
+| `new ExcelStyleManager(workbook).createHeaderStyle()` | 익스포터의 헤더 스타일: 가운데 정렬, 굵은 글꼴, 가는 테두리, 회색 배경 |
+| `createDataStyle(value, column)` | `@ExcelColumn`의 속성으로 만든 데이터 셀 스타일. 값이 숫자나 날짜이면 `format`을 지정하므로 `Price` 컬럼의 `12.5`에는 `#,##0.00`이, 텍스트에는 `General`이 지정됩니다 |
+| `clearCache()` | 지금까지 만든 스타일의 캐시를 비웁니다. 캐시를 비우기 전에는 같은 속성에 같은 스타일 객체를 반환합니다 |
+
 ## 모듈이 등록하는 구성
 
 `SimplixExcelAutoConfiguration`이 `simplix.excel`을 `SimplixExcelProperties`에 바인딩하고 시작 시 적용합니다. 형식은 `ValueFormatter`에, 캐시 전환 값은 템플릿 캐시와 필드 캐시에, 템플릿 설정은 `ExcelTemplateGenerator.TemplateOptions` 빈에 적용합니다. 다음 빈도 등록합니다.

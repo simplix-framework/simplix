@@ -12,6 +12,37 @@ Which requests need a login, how a caller proves who they are on each kind of pa
 
 The chains are registered once the application provides a `SimpliXUserDetailsService`. `simplix.auth.security.enable-token-endpoints: false` removes the first and the token filter, and `enable-web-security: false` removes the last.
 
+### Add a chain of your own
+
+Spring Security asks the chains in the order of their `@Order` value and uses the first one whose matcher accepts the request.
+
+| Chain | Bean | Order |
+|---|---|---|
+| token endpoints | `tokenSecurityFilterChain` | 50 |
+| social login paths, when social login is configured | `oauth2SecurityFilterChain` | 90 |
+| `/api/**` | `apiSecurityFilterChain` | 100 |
+| paths of the resource server, when it is enabled | `resourceServerSecurityFilterChain` | 100 |
+| every other path | `webSecurityFilterChain` | 102 |
+
+A `SecurityFilterChain` bean of your application needs a `securityMatcher` and an order below the chain it should precede.
+
+```java
+@Configuration
+public class PartnerChainConfig {
+
+    @Bean
+    @Order(40)
+    public SecurityFilterChain partnerSecurityFilterChain(HttpSecurity http) throws Exception {
+        http.securityMatcher("/api/partner/**")
+                .authorizeHttpRequests(requests -> requests.anyRequest().permitAll())
+                .csrf(csrf -> csrf.disable());
+        return http.build();
+    }
+}
+```
+
+With this chain, `GET /api/partner/ping` without a token is answered with status 200, while the other paths under `/api` still answer 401. A chain with an order above 102 comes after the web chain, which accepts every request, and the application does not start: `UnreachableFilterChainException: A filter chain that matches any request [...] has already been configured`.
+
 ## Open paths and adjust the rules
 
 ```yaml

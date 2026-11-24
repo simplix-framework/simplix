@@ -39,6 +39,17 @@
 
 > ℹ 티켓은 발급한 인스턴스에서만 사용할 수 있습니다. 로드 밸런서 뒤에서는 티켓 요청과 연결 요청이 같은 인스턴스에 도달해야 하며, 스티키 세션으로 보장합니다.
 
+아래 빈은 애플리케이션에 같은 이름의 빈이 없을 때만 모듈이 등록합니다. 같은 이름으로 빈을 선언하면 모듈의 빈 대신 사용됩니다.
+
+| 빈 이름 | 타입 | 모듈이 등록하는 빈 |
+|---|---|---|
+| `streamScheduledExecutor` | `ScheduledExecutorService` | `scheduler.thread-pool-size`개의 `stream-scheduler` 스레드로 구성된 풀 |
+| `streamSendExecutor` | `ExecutorService` | `send.writer-threads`개의 스레드로 구성된 쓰기 풀 |
+| `sessionValidationExecutor` | `ExecutorService` | `session-validator` 스레드를 필요에 따라 생성하는 캐시형 풀 |
+| `streamInstanceId` | `String` | `simplix.stream.instance-id` 값 또는 생성한 UUID. 분산 모드에서 등록합니다 |
+| `persistenceInstanceId` | `String` | `simplix.stream.server.instance-id` 값 또는 생성한 UUID의 앞 8자. 영속화를 활성화하면 등록합니다 |
+| `streamHealthIndicator` | `HealthIndicator` | `/actuator/health/stream`의 값을 제공하는 `StreamHealthIndicator` |
+
 ## 스레드
 
 | 풀 | 크기 | 실행 대상 |

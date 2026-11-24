@@ -76,6 +76,17 @@ spring:
       - dev.simplecore.simplix.springboot.autoconfigure.SimpliXThymeleafAutoConfiguration
 ```
 
+### Thymeleaf 빈
+
+`SimpliXThymeleafAutoConfiguration`은 클래스패스에 Thymeleaf와 레이아웃 방언이 있을 때 활성화됩니다. 아래 빈은 애플리케이션에 같은 이름의 빈이 없을 때만 등록하고, `LayoutDialect`를 추가한 `SpringTemplateEngine`은 애플리케이션에 같은 타입의 빈이 없을 때만 등록합니다.
+
+| 빈 이름 | 타입 | 모듈이 등록하는 빈 |
+|---|---|---|
+| `defaultTemplateResolver` | `SpringResourceTemplateResolver` | `spring.thymeleaf.prefix`, `suffix`, `mode`, `encoding`, `cache` 설정으로 템플릿을 읽습니다 |
+| `errorTemplateResolver` | `SpringResourceTemplateResolver` | 이름이 `error`로 시작하는 템플릿을 `classpath:/templates/`에서 캐시 없이 읽습니다. 기본 리졸버보다 먼저 적용됩니다 |
+| `thymeleafViewResolver` | `ViewResolver` | `redirect:*`를 제외한 모든 뷰 이름을 렌더링합니다. 다른 뷰 리졸버보다 먼저 적용됩니다 |
+| `jspViewResolver` | `ViewResolver` | `spring.mvc.view.prefix`와 `suffix`를 사용하는 `InternalResourceViewResolver`. Thymeleaf 리졸버 다음에 적용됩니다 |
+
 ## 관련 문서
 
 - [시작하기](ko/getting-started.md)
