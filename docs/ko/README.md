@@ -1,286 +1,41 @@
-[English](../../README.md) | 한국어
+# SimpliX 문서
 
-# SimpliX Framework
+하려는 일에 맞는 문서를 찾으세요. SimpliX를 처음 사용한다면 「처음 시작」의 문서를 위에서부터 순서대로 읽으면 됩니다.
 
-[![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://www.oracle.com/java/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-green.svg)](https://spring.io/projects/spring-boot)
-[![License](https://img.shields.io/badge/License-SCL--1.0-blue.svg)](../../LICENSE)
+## 처음 시작
 
-빠른 엔터프라이즈 애플리케이션 개발을 위한 모듈형 Spring Boot 스타터 라이브러리입니다.
+| 하려는 일 | 문서 |
+|---|---|
+| SimpliX를 사용하는 프로젝트 설정 | [시작하기](./getting-started.md) |
+| 엔티티의 API 만들기 | [CRUD API 만들기](./building-a-crud-api.md) |
+| 로그인과 토큰 적용 | [애플리케이션 보안 적용](./securing-an-application.md) |
+| 2.x와 1.x 라인 선택 | [릴리스 라인](./release-lines.md) |
 
-> [!TIP]
-> `spring-boot-starter-simplix` 하나로 모든 모듈을 사용할 수 있습니다!
+## 모듈
 
-## 주요 기능
+| 모듈 | 제공하는 기능 | 스타터 포함 |
+|---|---|---|
+| [simplix-core](../../simplix-core/README.ko.md) | 기본 엔티티와 저장소, 트리 구조, 타입 변환, 예외, API 응답, 검증기, 보안 유틸리티 | ✔ |
+| [spring-boot-starter-simplix](../../spring-boot-starter-simplix/README.ko.md) | 스타터: 웹, JPA, 다국어, 검증, 날짜와 시각, Jackson, OpenAPI의 자동 구성과 기본 서비스 · 컨트롤러 | ✔ |
+| [simplix-auth](../../simplix-auth/README.ko.md) | JWE 토큰 인증, OAuth2 소셜 로그인, Spring Security 통합 | ✔ |
+| [simplix-encryption](../../simplix-encryption/README.ko.md) | 키 교체를 지원하는 데이터 암호화 | ✔ |
+| [simplix-cache](../../simplix-cache/README.ko.md) | Caffeine(로컬)과 Redis(분산)를 같은 API로 사용하는 캐시 | ✔ |
+| [simplix-hibernate](../../simplix-hibernate/README.ko.md) | Hibernate 2차 캐시 관리 | ✔ |
+| [simplix-mybatis](../../simplix-mybatis/README.ko.md) | 타입 핸들러를 포함한 MyBatis 통합 | ✔ |
+| [simplix-messaging](../../simplix-messaging/README.ko.md) | NATS JetStream, Redis Streams, Kafka, RabbitMQ, 로컬 브로커를 지원하는 메시징 | ✔ |
+| [simplix-email](../../simplix-email/README.ko.md) | SMTP, AWS SES, SendGrid, Resend를 지원하는 템플릿 기반 이메일 | ✔ |
+| [simplix-file](../../simplix-file/README.ko.md) | 로컬 디스크, AWS S3, Google Cloud Storage를 지원하는 파일 저장 | ✔ |
+| [simplix-excel](../../simplix-excel/README.ko.md) | Excel과 CSV 가져오기 · 내보내기 | ✔ |
+| [simplix-scheduler](../../simplix-scheduler/README.ko.md) | `@Scheduled` 메서드의 실행 기록과 ShedLock 연동 | ✔ |
+| [simplix-egov](../../simplix-egov/README.ko.md) | eGovFrame 연동 | ✔ |
+| [simplix-stream](../../simplix-stream/README.ko.md) | SSE와 WebSocket 기반 실시간 구독 | 직접 추가 |
+| [simplix-sync](../../simplix-sync/README.ko.md) | 인스턴스 간 상태 동기화와 경량 pub/sub | 직접 추가 |
+| [simplix-license](../../simplix-license/README.ko.md) | 라이선스 등록 · 활성화와 기능 · 수량 제한 | 직접 추가 |
 
-SimpliX는 엔터프라이즈 애플리케이션 구축을 위한 포괄적인 모듈 세트를 제공합니다:
+코드 생성: [SimpliX CLI](../../simplix-cli/README.ko.md)
 
-| 모듈 | 설명 |
-|------|------|
-| **simplix-core** | 핵심 유틸리티, 베이스 엔티티/저장소, 트리 구조, 보안 유틸리티, 표준화된 예외 및 API 응답, 유니크 검증(@Unique), I18n 번역(@I18nTrans) |
-| **simplix-auth** | Spring Security 통합 JWT/JWE 토큰 인증 |
-| **simplix-cache** | Caffeine(로컬) 및 Redis(분산) 지원 SPI 기반 캐싱 |
-| **simplix-encryption** | 다중 키 프로바이더(Simple, Managed, Vault) 및 키 로테이션 지원 데이터 암호화 |
-| **simplix-event** | NATS 메시징 지원 이벤트 기반 아키텍처 |
-| **simplix-excel** | Apache POI 통합 Excel 및 CSV 가져오기/내보내기 |
-| **simplix-file** | 로컬 파일시스템, AWS S3, Google Cloud Storage 지원 파일 스토리지 추상화 |
-| **simplix-email** | 템플릿 지원 멀티 프로바이더 이메일 서비스 (SMTP, AWS SES, SendGrid, Resend) |
-| **simplix-hibernate** | Ehcache, Redis, Hazelcast 지원 Hibernate L2 캐시 관리 |
-| **simplix-mybatis** | 커스텀 타입 핸들러 포함 MyBatis 통합 |
-| **simplix-scheduler** | @Scheduled 메서드 실행 로깅 및 모니터링 (ShedLock 연동 지원) |
-| **spring-boot-starter-simplix** | 모든 모듈을 포함하는 자동 구성 통합 스타터 |
+## 프로젝트 정보
 
-다음 모듈은 통합 스타터에 포함되지 않습니다. 필요할 때 개별 의존성으로 추가합니다.
-
-| 모듈 | 설명 |
-|------|------|
-| **simplix-stream** | SSE 및 WebSocket 기반 실시간 구독 |
-| **simplix-sync** | 다중 인스턴스 상태 동기화와 경량 pub/sub |
-| **simplix-license** | 라이선스 등록·활성화·하트비트와 기능·수량 제한 강제 |
-
-명령줄 도구는 프레임워크와 같은 버전으로 npm에 `@simplix-boot/cli`라는 이름으로 게시합니다.
-
-| 도구 | 설명 |
-|------|------|
-| **simplix-cli** | JPA 엔티티에서 서비스, REST 컨트롤러, DTO, 테스트를 생성합니다. 템플릿을 내장하며 프로젝트가 템플릿을 교체할 수 있습니다. |
-
-## 빠른 시작
-
-### 1. 의존성 추가
-
-모든 SimpliX 기능 사용 (통합 스타터):
-
-```gradle
-dependencies {
-    implementation 'dev.simplecore:spring-boot-starter-simplix:${version}'
-}
-```
-
-또는 필요한 개별 모듈만 추가:
-
-```gradle
-dependencies {
-    implementation 'dev.simplecore:simplix-core:${version}'
-    implementation 'dev.simplecore:simplix-auth:${version}'
-    // ... 기타 모듈
-}
-```
-
-### 2. GitHub Packages 저장소 설정
-
-SimpliX는 GitHub Packages에 배포됩니다. `settings.gradle`에 다음을 추가하세요:
-
-```gradle
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        maven {
-            url = uri("https://maven.pkg.github.com/simplix-framework/simplix")
-            credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
-                password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
-            }
-        }
-    }
-}
-```
-
-`gradle.properties`에 GitHub 자격 증명을 생성하세요:
-
-```properties
-gpr.user=your_github_username
-gpr.token=your_github_personal_access_token
-```
-
-> [!IMPORTANT]
-> GitHub 토큰에 `read:packages` 권한이 필요합니다. [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens)에서 생성하세요.
-
-### 3. 기본 설정
-
-```yaml
-simplix:
-  core:
-    enabled: true
-  date-time:
-    default-timezone: Asia/Seoul
-    use-utc-for-database: true
-  i18n:
-    default-locale: en
-    supported-locales: [en, ko, ja]
-```
-
-### 4. SimpliX 컴포넌트 사용
-
-```java
-// 엔티티
-@Entity
-public class User extends SimpliXBaseEntity<Long> {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String username;
-    private String email;
-}
-
-// 리포지토리
-public interface UserRepository extends SimpliXBaseRepository<User, Long> {
-    Optional<User> findByUsername(String username);
-}
-
-// 서비스
-@Service
-public class UserService extends SimpliXBaseService<User, Long> {
-    public UserService(UserRepository repository, EntityManager em) {
-        super(repository, em);
-    }
-}
-
-// 컨트롤러
-@RestController
-@RequestMapping("/api/users")
-public class UserController extends SimpliXBaseController<User, Long> {
-    public UserController(UserService service) {
-        super(service);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<SimpliXApiResponse<User>> getUser(@PathVariable Long id) {
-        return service.findById(id)
-            .map(user -> ResponseEntity.ok(SimpliXApiResponse.success(user)))
-            .orElseThrow(() -> new SimpliXGeneralException(ErrorCode.GEN_NOT_FOUND));
-    }
-}
-```
-
-## 모듈 아키텍처
-
-```mermaid
-flowchart TB
-    subgraph core["simplix-core"]
-        direction TB
-        C[기본 라이브러리]
-    end
-
-    subgraph starter["spring-boot-starter-simplix"]
-        direction TB
-        S[통합 스타터]
-    end
-
-    subgraph modules["기능 모듈"]
-        direction TB
-        AUTH[simplix-auth<br/>인증]
-        CACHE[simplix-cache<br/>캐싱]
-        ENC[simplix-encryption<br/>암호화]
-        EVENT[simplix-event<br/>이벤트]
-        EXCEL[simplix-excel<br/>Excel/CSV]
-        FILE[simplix-file<br/>파일 스토리지]
-        EMAIL[simplix-email<br/>이메일]
-        HIB[simplix-hibernate<br/>L2 캐시]
-        MYBATIS[simplix-mybatis<br/>MyBatis]
-        SCHED[simplix-scheduler<br/>스케줄러 로깅]
-    end
-
-    subgraph standalone["개별 모듈"]
-        direction TB
-        STREAM[simplix-stream<br/>실시간 구독]
-        SYNC[simplix-sync<br/>상태 동기화]
-        LICENSE[simplix-license<br/>라이선스 강제]
-    end
-
-    core --> standalone
-    core --> starter
-    starter --> AUTH
-    starter --> CACHE
-    starter --> ENC
-    starter --> EVENT
-    starter --> EXCEL
-    starter --> FILE
-    starter --> EMAIL
-    starter --> HIB
-    starter --> MYBATIS
-    starter --> SCHED
-```
-
-## 튜토리얼
-
-SimpliX를 시작하기 위한 단계별 가이드:
-
-| 가이드 | 설명 |
-|--------|------|
-| [빠른 시작](./quick-start.md) | 프로젝트 설정 및 기본 구성 |
-| [CRUD 튜토리얼](./crud-tutorial.md) | Entity, Repository, Service, Controller 구현 |
-| [애플리케이션 설정](../../spring-boot-starter-simplix/docs/ko/application-setup.md) | 메인 클래스 및 어노테이션 설정 |
-| [보안 통합](./security-integration.md) | Spring Security 및 JWE 토큰 인증 |
-| [문서 기여 가이드](./documentation-guide.md) | 문서 빌드, 미리보기, 기여 방법 |
-
-## 문서
-
-각 모듈은 상세한 문서가 포함된 README를 제공합니다:
-
-- [simplix-core](../../simplix-core/README.md) - 핵심 유틸리티 및 베이스 클래스
-- [simplix-auth](../../simplix-auth/README.md) - 인증 및 권한 부여
-- [simplix-cache](../../simplix-cache/README.md) - 캐싱 추상화
-- [simplix-encryption](../../simplix-encryption/README.md) - 데이터 암호화
-- [simplix-event](../../simplix-event/README.md) - 이벤트 시스템
-- [simplix-excel](../../simplix-excel/README.md) - Excel/CSV 처리
-- [simplix-file](../../simplix-file/README.md) - 파일 스토리지
-- [simplix-email](../../simplix-email/README.md) - 이메일 서비스
-- [simplix-hibernate](../../simplix-hibernate/README.md) - Hibernate L2 캐시
-- [simplix-mybatis](../../simplix-mybatis/README.md) - MyBatis 통합
-- [simplix-scheduler](../../simplix-scheduler/README.md) - 스케줄러 실행 로깅
-- [spring-boot-starter-simplix](../../spring-boot-starter-simplix/README.md) - 통합 스타터
-- [simplix-stream](../../simplix-stream/README.md) - SSE/WebSocket 실시간 구독
-- [simplix-sync](../../simplix-sync/README.md) - 다중 인스턴스 상태 동기화
-- [simplix-license](../../simplix-license/README.md) - 라이선스 강제
-
-## 보안
-
-SimpliX는 엔터프라이즈 보안을 고려하여 설계되었습니다:
-
-| 기능 | 설명 |
-|------|------|
-| **OWASP Top 10** | 일반적인 웹 취약점 방어 |
-| **XSS 방지** | `HtmlSanitizer`를 통한 내장 HTML 살균 |
-| **SQL Injection 방지** | 매개변수를 바인딩한 쿼리 및 `SqlInjectionValidator` |
-| **데이터 암호화** | 키 로테이션 지원 AES-256 암호화 |
-| **데이터 마스킹** | 로그에서 PII 자동 마스킹 (`DataMaskingUtils`, `IpAddressMaskingUtils`) |
-| **JWT/JWE 토큰** | 암호화를 통한 안전한 토큰 기반 인증 |
-| **BCrypt 비밀번호** | Spring Security를 통한 안전한 비밀번호 해싱 |
-
-> [!WARNING]
-> GitHub 토큰이 포함된 `gradle.properties`를 버전 관리에 커밋하지 마세요. `.gitignore`에 추가하세요.
-
-## 요구 사항
-
-- Java 17+
-- Spring Boot 3.5.x
-- Gradle 8.5+
-
-## 소스에서 빌드
-
-```bash
-# 저장소 클론
-git clone https://github.com/simplix-framework/simplix.git
-cd simplix
-
-# 빌드 (테스트 제외)
-./gradlew clean build -x test
-
-# 테스트 포함 빌드
-./gradlew build
-
-# 로컬 Maven 저장소에 배포
-./gradlew publishToMavenLocal
-```
-
-## 라이선스
-
-이 프로젝트는 [SimpleCORE License 1.0 (SCL-1.0)](./license.md) 라이선스를 따릅니다.
-
-## 개발팀
-
-SimpliX는 [SimpleCORE Inc.](https://simplecore.kr) CoreLabs에서 만들고 있습니다.
-
-- **Website**: [simplecore.kr](https://simplecore.kr)
-- **GitHub**: [github.com/simplecore-inc](https://github.com/simplecore-inc)
-- **Contact**: license@simplecore.kr
+- [변경 이력](./changelog.md)
+- [라이선스](./license.md)
+- [문서 기여 가이드](./contributing-to-the-docs.md)

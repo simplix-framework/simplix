@@ -1,253 +1,99 @@
-[한국어](docs/ko/README.md) | English
+**English** | [한국어](./README.ko.md)
 
-# SimpliX Framework
+# SimpliX
 
-[![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://www.oracle.com/java/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-green.svg)](https://spring.io/projects/spring-boot)
-[![License](https://img.shields.io/badge/License-SCL--1.0-blue.svg)](LICENSE)
+SimpliX is a set of Spring Boot starters for business applications. It gives every API of an application the same shape (base classes for the entity, repository, service and controller, one response type, one way to report errors) and adds the parts such applications keep rebuilding: authentication, encryption, caching, files, email, Excel, messaging and scheduling. A command line tool generates the CRUD code of an entity on top of it.
 
-A modular Spring Boot starter library providing common enterprise features for rapid application development.
+![An application gets most modules through the one starter dependency, adds simplix-stream, simplix-sync and simplix-license one by one, and uses the command line tool to generate code.](docs/assets/figures/start-readme-modules.en.svg)
 
-> [!TIP]
-> Use `spring-boot-starter-simplix` to get all modules in one dependency!
+## Modules
 
-## Features
+| Module | What it gives you | In the starter |
+|---|---|---|
+| [simplix-core](simplix-core/README.md) | Base entity and repository, tree structures, type converters, exceptions, the API response, validators, security utilities | ✔ |
+| [spring-boot-starter-simplix](spring-boot-starter-simplix/README.md) | The starter: auto-configuration of web, JPA, i18n, validation, date and time, Jackson and OpenAPI, and the base service and controller | ✔ |
+| [simplix-auth](simplix-auth/README.md) | JWE token authentication, OAuth2 social login, Spring Security integration | ✔ |
+| [simplix-encryption](simplix-encryption/README.md) | Data encryption with key rotation | ✔ |
+| [simplix-cache](simplix-cache/README.md) | One cache API over Caffeine (local) and Redis (distributed) | ✔ |
+| [simplix-hibernate](simplix-hibernate/README.md) | Hibernate second-level cache management | ✔ |
+| [simplix-mybatis](simplix-mybatis/README.md) | MyBatis integration with type handlers | ✔ |
+| [simplix-messaging](simplix-messaging/README.md) | Messaging over NATS JetStream, Redis Streams, Kafka, RabbitMQ or a local broker | ✔ |
+| [simplix-email](simplix-email/README.md) | Email through SMTP, AWS SES, SendGrid or Resend, with templates | ✔ |
+| [simplix-file](simplix-file/README.md) | File storage on the local disk, AWS S3 or Google Cloud Storage | ✔ |
+| [simplix-excel](simplix-excel/README.md) | Excel and CSV import and export | ✔ |
+| [simplix-scheduler](simplix-scheduler/README.md) | Execution records of `@Scheduled` methods, with ShedLock | ✔ |
+| [simplix-egov](simplix-egov/README.md) | eGovFrame integration | ✔ |
+| [simplix-stream](simplix-stream/README.md) | Real-time subscriptions over SSE and WebSocket | add it yourself |
+| [simplix-sync](simplix-sync/README.md) | State sync between instances and lightweight pub/sub | add it yourself |
+| [simplix-license](simplix-license/README.md) | License registration, activation and feature or quota gating | add it yourself |
 
-SimpliX provides a comprehensive set of modules for building enterprise applications:
-
-| Module | Description |
-|--------|-------------|
-| **simplix-core** | Core utilities, base entities/repositories, tree structures, security utilities, standardized exceptions & API responses |
-| **simplix-auth** | JWT/JWE token authentication with Spring Security integration |
-| **simplix-cache** | SPI-based caching with Caffeine (local) and Redis (distributed) support |
-| **simplix-encryption** | Data encryption with multiple key providers (Simple, Managed, Vault) and key rotation |
-| **simplix-event** | Event-driven architecture with NATS messaging support |
-| **simplix-excel** | Excel and CSV import/export with Apache POI integration |
-| **simplix-file** | File storage abstraction supporting local filesystem, AWS S3, and Google Cloud Storage |
-| **simplix-email** | Multi-provider email service (SMTP, AWS SES, SendGrid, Resend) with template support |
-| **simplix-hibernate** | Hibernate L2 cache management with Ehcache, Redis, Hazelcast support |
-| **simplix-mybatis** | MyBatis integration with custom type handlers |
-| **simplix-scheduler** | @Scheduled method execution logging and monitoring with ShedLock integration |
-| **spring-boot-starter-simplix** | Umbrella starter that includes all modules with auto-configuration |
-
-The following modules are published separately and are not bundled in the umbrella starter. Add them individually when needed:
-
-| Module | Description |
-|--------|-------------|
-| **simplix-stream** | Real-time subscriptions over SSE and WebSocket |
-| **simplix-sync** | Multi-instance state sync and lightweight pub/sub |
-| **simplix-license** | License registration, activation, heartbeat, and feature/quota gating |
-
-The command line tool is published to npm as `@simplix-boot/cli`, with the framework version:
-
-| Tool | Description |
-|------|-------------|
-| **simplix-cli** | Generates services, REST controllers, DTOs and tests from JPA entities, with built-in templates a project can replace |
-
-## Quick Start
-
-### 1. Add Dependency
-
-For all SimpliX features (umbrella starter):
-
-```gradle
-dependencies {
-    implementation 'dev.simplecore:spring-boot-starter-simplix:${version}'
-}
-```
-
-Or add individual modules as needed:
-
-```gradle
-dependencies {
-    implementation 'dev.simplecore:simplix-core:${version}'
-    implementation 'dev.simplecore:simplix-auth:${version}'
-    // ... other modules
-}
-```
-
-### 2. Configure GitHub Packages Repository
-
-SimpliX is published to GitHub Packages. Add the following to your `settings.gradle`:
-
-```gradle
-dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        maven {
-            url = uri("https://maven.pkg.github.com/simplix-framework/simplix")
-            credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
-                password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
-            }
-        }
-    }
-}
-```
-
-Create `gradle.properties` with your GitHub credentials:
-
-```properties
-gpr.user=your_github_username
-gpr.token=your_github_personal_access_token
-```
-
-> [!IMPORTANT]
-> Your GitHub token needs `read:packages` permission. Generate one at [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens).
-
-### 3. Basic Configuration
-
-```yaml
-simplix:
-  core:
-    enabled: true
-  date-time:
-    default-timezone: Asia/Seoul
-    use-utc-for-database: true
-```
-
-### 4. Use SimpliX Components
-
-```java
-// Entity
-@Entity
-public class User extends SimpliXBaseEntity<Long> {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String username;
-    private String email;
-}
-
-// Repository
-public interface UserRepository extends SimpliXBaseRepository<User, Long> {
-    Optional<User> findByUsername(String username);
-}
-
-// Service
-@Service
-public class UserService extends SimpliXBaseService<User, Long> {
-    public UserService(UserRepository repository, EntityManager em) {
-        super(repository, em);
-    }
-}
-
-// Controller
-@RestController
-@RequestMapping("/api/users")
-public class UserController extends SimpliXBaseController<User, Long> {
-    public UserController(UserService service) {
-        super(service);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<SimpliXApiResponse<User>> getUser(@PathVariable Long id) {
-        return service.findById(id)
-            .map(user -> ResponseEntity.ok(SimpliXApiResponse.success(user)))
-            .orElseThrow(() -> new SimpliXGeneralException(ErrorCode.GEN_NOT_FOUND));
-    }
-}
-```
-
-## Module Architecture
-
-```
-SimpliX Framework
-│
-├── simplix-core ─────────────────── Base library (no auto-config)
-│   │
-│   └── spring-boot-starter-simplix ─ Umbrella starter
-│       │
-│       ├── simplix-auth ──────────── Authentication
-│       ├── simplix-cache ─────────── Caching
-│       ├── simplix-encryption ────── Encryption
-│       ├── simplix-event ─────────── Events
-│       ├── simplix-excel ─────────── Excel/CSV
-│       ├── simplix-file ──────────── File Storage
-│       ├── simplix-email ─────────── Email
-│       ├── simplix-hibernate ─────── L2 Cache
-│       ├── simplix-mybatis ───────── MyBatis
-│       └── simplix-scheduler ─────── Scheduler Logging
-│
-├── simplix-stream ───────────────── SSE/WebSocket streaming
-├── simplix-sync ─────────────────── Multi-instance sync
-└── simplix-license ──────────────── License enforcement
-```
-
-`simplix-stream`, `simplix-sync`, and `simplix-license` are not part of the umbrella starter and must be added as individual dependencies.
-
-## Tutorials
-
-Step-by-step guides to get started with SimpliX:
-
-| Guide | Description |
-|-------|-------------|
-| [Quick Start](docs/ko/quick-start.md) | Project setup and basic configuration |
-| [CRUD Tutorial](docs/ko/crud-tutorial.md) | Entity, Repository, Service, Controller implementation |
-| [Application Setup](spring-boot-starter-simplix/docs/ko/application-setup.md) | Main class and annotation configuration |
-| [Security Integration](docs/ko/security-integration.md) | Spring Security and JWE token authentication |
-
-## Documentation
-
-Each module has its own README with detailed documentation:
-
-- [simplix-core](simplix-core/README.md) - Core utilities and base classes
-- [simplix-auth](simplix-auth/README.md) - Authentication and authorization
-- [simplix-cache](simplix-cache/README.md) - Caching abstraction
-- [simplix-encryption](simplix-encryption/README.md) - Data encryption
-- [simplix-event](simplix-event/README.md) - Event system
-- [simplix-excel](simplix-excel/README.md) - Excel/CSV processing
-- [simplix-file](simplix-file/README.md) - File storage
-- [simplix-email](simplix-email/README.md) - Email service
-- [simplix-hibernate](simplix-hibernate/README.md) - Hibernate L2 cache
-- [simplix-mybatis](simplix-mybatis/README.md) - MyBatis integration
-- [simplix-scheduler](simplix-scheduler/README.md) - Scheduler execution logging
-- [spring-boot-starter-simplix](spring-boot-starter-simplix/README.md) - Umbrella starter
-- [simplix-stream](simplix-stream/README.md) - SSE/WebSocket streaming
-- [simplix-sync](simplix-sync/README.md) - Multi-instance state sync
-- [simplix-license](simplix-license/README.md) - License enforcement
-- [simplix-cli](simplix-cli/README.md) - Code generation command line tool
-
-## Security
-
-SimpliX is built with enterprise security in mind:
-
-| Feature | Description |
-|---------|-------------|
-| **OWASP Top 10** | Protection against common web vulnerabilities |
-| **XSS Prevention** | Built-in HTML sanitization with `HtmlSanitizer` |
-| **SQL Injection** | Parameterized queries and `SqlInjectionValidator` |
-| **Data Encryption** | AES-256 encryption with key rotation support |
-| **Data Masking** | Automatic PII masking in logs (`DataMaskingUtils`, `IpAddressMaskingUtils`) |
-| **JWT/JWE Tokens** | Secure token-based authentication with encryption |
-| **BCrypt Passwords** | Secure password hashing via Spring Security |
-
-> [!WARNING]
-> Never commit `gradle.properties` with your GitHub token to version control. Add it to `.gitignore`.
+The command line tool [`@simplix-boot/cli`](simplix-cli/README.md) is an npm package: it generates the service, REST controller, DTOs and tests of a JPA entity.
 
 ## Requirements
 
-- Java 17+
-- Spring Boot 3.5.x
-- Gradle 8.5+
+Java 17 or later. SimpliX has one release line per Spring Boot generation, and every line receives the same features and fixes.
 
-## Building from Source
+| SimpliX line | Spring Boot | Branch | CLI |
+|---|---|---|---|
+| 2.x | 4 | `main` | `@simplix-boot/cli` |
+| 1.x | 3 | `spring-boot-3x` | `@simplix-boot/cli@spring-boot-3x` |
+
+## Install
+
+The artifacts are published to GitHub Packages under the group `dev.simplecore.simplix`. Add the repository and the starter to `build.gradle`.
+
+```groovy
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://maven.pkg.github.com/simplix-framework/simplix")
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+            password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+}
+
+dependencies {
+    implementation "dev.simplecore.simplix:spring-boot-starter-simplix:${version}"
+}
+```
+
+GitHub Packages asks for credentials even for public packages. Put a personal access token with the `read:packages` scope in `gradle.properties`, and keep that file out of version control.
+
+```properties
+gpr.user=<your GitHub user name>
+gpr.token=<personal access token with read:packages>
+```
+
+## Quick start
+
+1. Set up a project: [Getting started](docs/en/getting-started.md).
+2. Write an entity and let the CLI generate its API: [Building a CRUD API](docs/en/building-a-crud-api.md).
+3. Put it behind a login: [Securing an application](docs/en/securing-an-application.md).
+
+## Documentation
+
+The [documentation home](docs/en/README.md) lists every document by what you want to do. Each module has an introduction of its own, linked in the table above. [Release lines](docs/en/release-lines.md) explains the release lines and where each artifact is published, and the [changelog](docs/en/changelog.md) lists what changed.
+
+## Build from source
 
 ```bash
-# Clone the repository
 git clone https://github.com/simplix-framework/simplix.git
 cd simplix
 
-# Build (skip tests)
+# Build without tests
 ./gradlew clean build -x test
 
 # Build with tests
 ./gradlew build
 
-# Publish to local Maven repository
+# Install into the local Maven repository
 ./gradlew publishToMavenLocal
 ```
 
+Building `simplix-license` needs credentials for the license SDK repository (`accesscore.gpr.user`, `accesscore.gpr.token` in `gradle.properties`).
+
 ## License
 
-This project is licensed under the [SimpleCORE License 1.0 (SCL-1.0)](LICENSE).
+SimpleCORE License 1.0 (SCL-1.0). See [LICENSE](LICENSE) and the [summary](docs/en/license.md).
