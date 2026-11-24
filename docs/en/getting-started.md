@@ -64,6 +64,61 @@ gpr.user=<your GitHub user name>
 gpr.token=<personal access token with read:packages>
 ```
 
+### With Maven
+
+A Maven project inherits `spring-boot-starter-parent`, which manages the versions of the transitive dependencies; without the parent Maven cannot collect them. Declare the same repositories and the dependency in `pom.xml`:
+
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>${spring-boot.version}</version>
+    <relativePath/>
+</parent>
+
+<repositories>
+    <repository>
+        <id>simplix</id>
+        <url>https://maven.pkg.github.com/simplix-framework/simplix</url>
+    </repository>
+    <repository>
+        <id>searchable-jpa</id>
+        <url>https://maven.pkg.github.com/simplix-framework/searchable-jpa</url>
+    </repository>
+    <repository>
+        <id>egovframe</id>
+        <url>https://maven.egovframe.go.kr/maven/</url>
+    </repository>
+</repositories>
+
+<dependencies>
+    <dependency>
+        <groupId>dev.simplecore.simplix</groupId>
+        <artifactId>spring-boot-starter-simplix</artifactId>
+        <version>${version}</version>
+    </dependency>
+</dependencies>
+```
+
+Maven reads the credentials of the two GitHub Packages repositories from `~/.m2/settings.xml`, matched by the repository `id`:
+
+```xml
+<settings>
+    <servers>
+        <server>
+            <id>simplix</id>
+            <username>${env.GITHUB_USERNAME}</username>
+            <password>${env.GITHUB_TOKEN}</password>
+        </server>
+        <server>
+            <id>searchable-jpa</id>
+            <username>${env.GITHUB_USERNAME}</username>
+            <password>${env.GITHUB_TOKEN}</password>
+        </server>
+    </servers>
+</settings>
+```
+
 ## Step 2. Write the application class
 
 ```java

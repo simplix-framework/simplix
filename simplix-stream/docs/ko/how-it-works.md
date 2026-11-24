@@ -97,6 +97,12 @@
 | `StreamAuthorizationService` | `registerAuthorizer(authorizer)` | 빈이 아닌 `ResourceAuthorizer`를 추가합니다 |
 | `SubscriptionKey`, `Subscription`, `StreamSession` | `getParamsHash()`, `getRequestedAt()`, `getDisconnectedAt()` | 키의 매개변수 해시, 구독을 요청한 시각, 세션의 연결이 끊긴 시각을 반환합니다 |
 | `CommandResponse` | `getErrorMessage()` | 관리 명령이 실패한 사유를 반환합니다 |
+| `SimpliXStreamDataCollectorRegistry` | `getCollector(resource)`, `findCollector(resource)`, `hasCollector(resource)` | 리소스 이름의 수집기, `Optional`로 감싼 수집기, 등록 여부를 반환합니다 |
+| `SimpliXStreamDataCollectorRegistry` | `getRegisteredResources()`, `getCollectors()`, `unregister(resource)` | 등록된 리소스 이름 목록과 수집기 목록을 반환합니다. `unregister`는 리소스의 수집기를 제거하고 제거한 수집기 또는 `null`을 반환합니다 |
+| `SimpliXStreamEventSourceRegistry` | `findByResource(resource)`, `findByEventType(eventType)`, `hasEventSource(resource)`, `hasEventSourceForEventType(eventType)` | 리소스 이름이나 이벤트 타입의 이벤트 소스를 조회하고 등록 여부를 반환합니다 |
+| `SimpliXStreamEventSourceRegistry` | `getRegisteredResources()`, `getRegisteredEventTypes()`, `getEventSources()`, `unregister(resource)` | 등록된 리소스 이름, 이벤트 타입, 이벤트 소스 목록을 반환합니다. `unregister`는 리소스의 이벤트 소스를 제거하고 제거한 이벤트 소스 또는 `null`을 반환합니다 |
+| `SubscriptionManager` | `updateSubscriptions(sessionId, subscriptions)`, `clearSubscriptions(sessionId)` | 세션의 구독 목록을 교체하고 `SubscriptionUpdateResult`를 반환합니다. `clearSubscriptions`는 세션의 구독을 모두 해제합니다. 구독 엔드포인트가 `updateSubscriptions`를 호출합니다 |
+| `SubscriptionManager` | `setOnSubscriptionAdded(callback)`, `setOnSubscriptionRemoved(callback)`, `getActualInterval(key, requested)` | 구독 추가와 구독 해제에 모듈이 사용하는 콜백을 등록하고, 구독이 실제로 실행되는 주기를 반환합니다 |
 
 ## 관련 문서
 
