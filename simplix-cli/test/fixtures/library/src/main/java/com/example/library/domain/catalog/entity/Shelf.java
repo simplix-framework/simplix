@@ -67,4 +67,9 @@ public class Shelf extends BaseEntity<String> implements TreeEntity<Shelf, Strin
     public void setId(String id) {
         this.shelfId = id;
     }
+
+    @Override
+    public Comparable<?> getSortKey() {
+        return sortOrder;
+    }
 }

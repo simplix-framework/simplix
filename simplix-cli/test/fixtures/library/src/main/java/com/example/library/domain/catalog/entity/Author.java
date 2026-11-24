@@ -38,4 +38,13 @@ public class Author extends BaseEntity<String> {
     @Column(name = "biography", length = 2000)
     @Comment("A short account of the author's life")
     private String biography;
+    @Override
+    public String getId() {
+        return authorId;
+    }
+
+    @Override
+    public void setId(String id) {
+        this.authorId = id;
+    }
 }
