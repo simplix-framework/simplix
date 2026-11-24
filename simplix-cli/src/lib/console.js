@@ -53,6 +53,19 @@ export const symbols = {
 };
 
 /**
+ * Lets the process finish when the reader of a stream has gone, as in
+ * `simplix-boot generate Book | head`. A command has done its work by the time the failed write is
+ * reported, so the work and the exit code stand; any other stream error is still fatal.
+ *
+ * @param {import('node:stream').Writable} stream
+ */
+export function tolerateClosedReader(stream) {
+  stream.on('error', error => {
+    if (error.code !== 'EPIPE') throw error;
+  });
+}
+
+/**
  * Where a command writes: progress and reports as lines, and a machine-readable result as the one
  * line a script reads.
  *

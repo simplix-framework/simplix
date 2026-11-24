@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { copyFixture, listFiles, read, runCli } from './support/fixture.js';
+import { copyFixture, listFiles, read, runCli, runCliUnread } from './support/fixture.js';
 
 const packageJson = JSON.parse(fs.readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'));
 
@@ -61,6 +61,24 @@ describe('the command line', () => {
 
       assert.strictEqual(result.status, 0, result.stderr);
       assert.match(result.stdout, /Successfully generated CRUD files for Author/);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('finishes its work and keeps its exit code when nothing reads its output', async () => {
+    const root = copyFixture('library');
+    try {
+      const result = await runCliUnread(['generate', 'Author'], root);
+
+      assert.strictEqual(result.stderr, '');
+      assert.strictEqual(result.status, 0);
+      assert.deepStrictEqual(listFiles(path.join(root, 'generated')), [
+        'main/java/com/example/library/web/catalog/controller/AuthorRestController.java',
+        'main/java/com/example/library/web/catalog/dto/AuthorDTOs.java',
+        'main/java/com/example/library/web/catalog/service/AuthorService.java',
+        'test/java/com/example/library/web/catalog/service/AuthorServiceTest.java',
+      ]);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
