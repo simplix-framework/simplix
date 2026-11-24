@@ -46,6 +46,10 @@ public class <%= classPrefix %>Service extends SimpliXBaseService<<%= entityName
 | `fields`, `entityFields` | 분석한 필드 목록 |
 | `idType`, `idFieldName` | 식별자의 타입과 필드 이름 |
 | `hasEmbeddedId`, `embeddedIdField`, `embeddedIdType`, `embeddedIdFields`, `embeddedIdPropertyNames` | 복합 식별자 정보 |
+| `embeddedIdPropertyName1`, `embeddedIdPropertyName2`, `propType1`, `propType2` | 복합 식별자의 첫 번째 속성과 두 번째 속성의 이름과 타입. 해당 속성이 없으면 이름은 `propertyName1`, `propertyName2`입니다 |
+| `embeddedFieldCapitalized`, `embeddedField2Capitalized` | 복합 식별자 필드 이름 뒤에 각 속성 이름을 첫 글자 대문자로 연결한 값. 복합 식별자가 없으면 빈 문자열입니다 |
+| `otherEntityField`, `otherFieldCapitalized` | 식별자도 복합 식별자 필드도 아닌 첫 번째 필드(없으면 `someField`)와 그 이름의 첫 글자를 대문자로 바꾼 값 |
+| `importsArray` | 복합 식별자의 속성에 필요한 import 목록 |
 | `entitySearchFields`, `embeddedIdSearchFields` | 검색 DTO의 필드 |
 | `ymlConfig` | 엔티티 yml 전체 |
 | `dtoExcludeFields` | `dto.excludeFields` |
