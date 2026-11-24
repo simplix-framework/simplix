@@ -1,0 +1,60 @@
+entity: Author
+
+modulePath: catalog
+promoteModule: <__MODIFY__>
+idField: authorId
+nameField: penName
+thymeleafBaseDir: author
+defaultSortField: createdAt
+defaultSortDirection: desc
+
+fields:
+
+  authorId:
+    sortable: true
+    views: [list, detail, edit]
+    required: true
+    unique: true
+    searchOperators: [equals]
+
+  penName:
+    sortable: true
+    views: [list, detail, edit]
+    required: true
+    maxLength: 120
+    searchOperators: [equals, contains]
+
+  biography:
+    sortable: true
+    views: [list, detail, edit]
+    maxLength: 2000
+    searchOperators: [equals, contains]
+
+  createdAt:
+    sortable: true
+    views: [list, detail, edit, batchUpdate]
+    required: true
+    searchOperators: [between, greaterThanOrEqual, lessThanOrEqual]
+
+  updatedAt:
+    sortable: true
+    views: [list, detail, edit, batchUpdate]
+    required: true
+    searchOperators: [between, greaterThanOrEqual, lessThanOrEqual]
+
+  createdBy:
+    sortable: true
+    views: [list, detail, edit]
+    maxLength: 255
+    searchOperators: [equals, contains]
+
+  updatedBy:
+    sortable: true
+    views: [list, detail, edit]
+    maxLength: 255
+    searchOperators: [equals, contains]
+
+  version:
+    sortable: true
+    views: [list, detail]
+    searchOperators: [equals, greaterThan, lessThan]

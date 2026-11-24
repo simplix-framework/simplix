@@ -1,0 +1,981 @@
+package <%= packagePaths['dto'] %>;
+
+<% if (hasEmbeddedId) { %>
+import <%= entityPackage %>.<%= entityName %>.<%= embeddedIdType %>;
+<% } %>
+
+<%
+// Parse import statements for reference entities
+const importedTypes = new Set();
+
+// Helper: Check if a type is a standard Java library type that should NOT be imported as an entity
+function isStandardJavaType(typeName, importPath) {
+    if (!typeName) return false;
+    // Skip java.* types (they are already imported via wildcards)
+    if (importPath && importPath.startsWith('java.')) return true;
+    // Skip common Java types
+    const standardTypes = ['Instant', 'LocalDate', 'LocalDateTime', 'ZonedDateTime', 'Duration',
+                          'BigDecimal', 'BigInteger', 'UUID', 'Optional',
+                          'List', 'Set', 'Map', 'Collection', 'Iterable'];
+    return standardTypes.includes(typeName);
+}
+
+// Import the main entity class for @UniqueFields annotation
+%>
+import <%= entityPackage %>.<%= entityName %>;
+<%
+// Find reference types from entity fields
+fields.forEach(field => {
+    if (field.typeKind === 'entity' || field.isRelation || field.relationType === 'ManyToOne') {
+        const entityType = field.isCollection ? field.actualType : field.type;
+
+        // Skip standard Java types - they should not be treated as entities
+        if (isStandardJavaType(entityType, field.importPath)) {
+            return; // skip this field
+        }
+
+        // Always use the correct domain entity package path
+        let entityImport;
+        if (field.importPath && !field.importPath.includes('jakarta.persistence')) {
+            entityImport = field.importPath;
+        } else {
+            // Default to same module path as current entity
+            // Use entityBasePackage if available, otherwise extract from entityPackage
+            const entityBasePkg = entityBasePackage || entityPackage.substring(0, entityPackage.lastIndexOf('.'));
+            entityImport = `${entityBasePkg}.${modulePath}.${entityType}`;
+        }
+        if (!importedTypes.has(entityType)) {
+            importedTypes.add(entityType); %>
+import <%= entityImport %>;<%
+        }
+    }
+    // Handle enum type
+    else if (field.typeKind === 'enum') {
+        // Use the import path from field analysis
+        if (field.importPath && !importedTypes.has(field.type)) {
+            importedTypes.add(field.type); %>
+import <%= field.importPath %>;<%
+        }
+    }
+    // Handle a value type kept in the row (a record or an embeddable in a JSON column, say)
+    else if (field.typeKind === 'value') {
+        const valueType = field.isCollection ? field.actualType : field.type;
+        if (field.importPath && !importedTypes.has(valueType)) {
+            importedTypes.add(valueType); %>
+import <%= field.importPath %>;<%
+        }
+    }
+}); %>
+import java.util.*;
+import java.time.*;
+import java.math.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.hibernate.validator.constraints.Length;
+import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+
+import dev.simplecore.simplix.core.jackson.annotation.I18nTrans;
+import dev.simplecore.simplix.core.validator.SoftDeleteType;
+import dev.simplecore.simplix.core.validator.Unique;
+import dev.simplecore.simplix.core.validator.UniqueField;
+import dev.simplecore.simplix.core.validator.UniqueFields;
+import dev.simplecore.searchable.core.annotation.SearchableField;
+import dev.simplecore.simplix.core.annotation.FieldLabel;
+
+import static dev.simplecore.searchable.core.condition.operator.SearchOperator.*;
+
+public class <%= classPrefix %>DTOs {
+<%
+// Build i18n field mapping: baseFieldName -> i18nFieldName
+// Example: description -> descriptionI18n
+const i18nFieldMap = new Map();
+entityFields.forEach(field => {
+    if (field.name.endsWith('I18n')) {
+        const baseFieldName = field.name.substring(0, field.name.length - 4);
+        const baseField = entityFields.find(f => f.name === baseFieldName);
+        if (baseField) {
+            i18nFieldMap.set(baseFieldName, field.name);
+        }
+    }
+});
+
+// ============== DERIVED I18N COLUMNS ==============
+// A locale map can be neither pattern-matched nor ordered, so a localized field that a list
+// searches or sorts by carries derived columns beside it: <x>Search folds every language into one
+// normalized string, and one <x>Sort<Lang> per language holds what that language's reader sees.
+// I18nDerivedColumnListener fills them on every write; here they are what the SearchDTO points at.
+//
+// The pairing is the listener's, so the two cannot disagree: the locale map has to be there for a
+// <x>Search or <x>Sort<Lang> field to be claimed as derived. Claiming by suffix alone would sweep
+// up ordinary fields - sortKey, sortOrder, searchTerm.
+const derivedI18nFields = new Map();
+const derivedI18nColumnNames = new Set();
+i18nFieldMap.forEach((i18nFieldName, baseFieldName) => {
+    // The derived columns are answered through the application's rewrite of the search parameters,
+    // which the project configuration names under supportClasses.localizedSearchParams. Without it
+    // they are ordinary columns and the SearchDTO points at the base column.
+    if (!supportClasses.find('localizedSearchParams')) return;
+
+    const searchFieldName = `${baseFieldName}Search`;
+    const sortPrefix = `${baseFieldName}Sort`;
+
+    const search = entityFields.some(f => f.name === searchFieldName && f.type === 'String')
+        ? searchFieldName : null;
+    const sorts = entityFields
+        .filter(f => f.type === 'String'
+            && f.name.startsWith(sortPrefix)
+            && f.name.length > sortPrefix.length)
+        .map(f => ({
+            field: f.name,
+            language: f.name.substring(sortPrefix.length).toLowerCase()
+        }));
+
+    if (!search && sorts.length === 0) return;
+
+    derivedI18nFields.set(baseFieldName, { search, sorts });
+    if (search) derivedI18nColumnNames.add(search);
+    sorts.forEach(sort => derivedI18nColumnNames.add(sort.field));
+});
+
+// ============== TREE ENTITY DETECTION ==============
+// Use hasTreeEntity from generator context (entity implements TreeEntity interface)
+// Fallback to parentId field check if hasTreeEntity is not defined
+const isTreeEntity = typeof hasTreeEntity !== 'undefined' ? hasTreeEntity :
+                     (entityFields.some(f => f.name === 'parentId') ||
+                      (ymlConfig.fields && ymlConfig.fields['parentId']));
+
+// ============== INHERITED FIELD SUPPORT ==============
+// Build entityFields name set for quick lookup
+const entityFieldNames = new Set(entityFields.map(f => f.name));
+
+// Build excluded fields set from generator-simplix.json configuration
+const excludedFieldsSet = new Set(dtoExcludeFields || []);
+
+// Helper: Check if a field should be excluded from DTO generation
+function isExcludedField(fieldName) {
+    // A derived i18n column is never a DTO field of its own. The listener recomputes it from the
+    // locale map on every write, so offering it for edit would offer a value the next save throws
+    // away, and showing it would put normalized search text on a screen. The SearchDTO names the
+    // sort columns explicitly below; nothing else does.
+    return excludedFieldsSet.has(fieldName) || derivedI18nColumnNames.has(fieldName);
+}
+
+// Helper: Check if a field is a self-reference (references the same entity)
+// Note: FK ID fields (like parentId) should NOT be skipped - they need to be in DTOs for input
+// Only the ManyToOne object field (like parent) should be skipped to avoid circular references
+function isSelfReferenceField(fieldName, ymlField) {
+    if (!ymlField?.reference?.entity) return false;
+    if (ymlField.reference.entity !== entityName) return false;
+    // If this field IS the FK ID field (fieldName === idField), don't skip it
+    // FK ID fields like 'parentId' should be included in DTOs for tree structure input
+    if (ymlField.reference.idField === fieldName) return false;
+    return true;
+}
+
+// Helper: Check if entity has explicit ID field for a reference field
+// e.g., if entity has both 'channel' (ManyToOne) and 'channelId' (String), skip generating ID from reference
+function hasExplicitIdField(referenceFieldName) {
+    const expectedIdFieldName = referenceFieldName + 'Id';
+    return entityFields.some(f => f.name === expectedIdFieldName);
+}
+
+// Helper: Check if field name already ends with 'Id' (to avoid 'IdId' pattern)
+function fieldNameEndsWithId(fieldName) {
+    return fieldName.endsWith('Id') && fieldName !== 'Id';
+}
+
+// Helper: whether a referencing field holds the key itself (a scalar column such as grantedBy or
+// userAccountId) rather than an association whose key sits one step further (channel.channelId).
+// The field's own type decides; a name ending in 'Id' is a scalar key whatever the analyzer reports.
+function holdsReferenceKey(fieldName) {
+    if (fieldNameEndsWithId(fieldName)) return true;
+    const entityField = entityFields.find(f => f.name === fieldName);
+    return Boolean(entityField) && entityField.typeKind !== 'entity' && !entityField.isCollection;
+}
+
+// Helper: Get ID field name for reference field (avoids 'IdId' pattern)
+function getReferenceIdFieldName(fieldName, isMultiple) {
+    if (isMultiple) {
+        // For multiple references: field -> fieldIds, fieldId -> fieldIds (not fieldIdIds)
+        return fieldNameEndsWithId(fieldName) ? `${fieldName}s` : `${fieldName}Ids`;
+    } else {
+        // For single reference: field -> fieldId, fieldId -> fieldId (not fieldIdId)
+        return holdsReferenceKey(fieldName) ? fieldName : `${fieldName}Id`;
+    }
+}
+
+// Convert camelCase field name to human-readable comment
+function fieldNameToComment(fieldName) {
+    return fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
+}
+
+// Convert one yml searchOperators entry to its SearchOperator enum constant.
+function toSearchOperator(op) {
+    // yml names are camelCase; the SearchOperator constants are UPPER_SNAKE, with the
+    // inclusive comparisons spelled ..._OR_EQUAL_TO.
+    const aliases = {
+        greaterThanOrEqual: 'GREATER_THAN_OR_EQUAL_TO', greaterThanOrEquals: 'GREATER_THAN_OR_EQUAL_TO',
+        lessThanOrEqual: 'LESS_THAN_OR_EQUAL_TO', lessThanOrEquals: 'LESS_THAN_OR_EQUAL_TO',
+    };
+    if (aliases[op]) return aliases[op];
+    return op.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase();
+}
+
+// ============== THE ENTITY ID'S SEARCH CONTRACT ==============
+// The id never reaches entitySearchFields - prepareSearchFields drops it before the template sees
+// anything - so its yml declaration is read here directly, and the two halves below are added
+// whatever that declaration says. Both are mandatory and the scaffold used to emit neither:
+//
+//   sortable   the frontend's default list sort is `<entityId>.desc`, so without it the very
+//              first request a scaffolded list makes is refused and the screen never loads.
+//   IN         a list's filter FOR this entity resolves the labels of what is selected by asking
+//              this entity's own search for those ids at once (`<entityId>.in=a,b,c`). Left out,
+//              that filter refuses the whole request the moment a value is picked - on every
+//              list that offers it, including other modules', since the filter is shared.
+//
+// The asymmetry that hides it: the same id declared as a FOREIGN key on another entity is
+// routinely {EQUALS, IN} and works, so only the entity's own list carries the defect.
+function idSearchOperators() {
+    const declared = (ymlConfig.fields?.[ymlConfig.idField]?.searchOperators || []).map(toSearchOperator);
+    const operators = ['EQUALS', 'IN'];
+    declared.forEach(op => { if (!operators.includes(op)) operators.push(op); });
+    return operators.join(', ');
+}
+
+// Infer type from YML field configuration or field name pattern
+function inferFieldType(fieldName, ymlField) {
+    // If YML has explicit type, use it
+    if (ymlField?.type) {
+        return ymlField.type;
+    }
+    // Infer from searchOperators pattern
+    if (ymlField?.searchOperators) {
+        const ops = ymlField.searchOperators;
+        if (ops.includes('between')) {
+            return 'Instant'; // Date/time fields typically use between
+        }
+        if (ops.includes('greaterThan') && ops.includes('lessThan') && !ops.includes('contains')) {
+            // Numeric or version field
+            if (fieldName === 'version') return 'Long';
+            return 'Long';
+        }
+    }
+    // Infer from maxLength (String fields)
+    if (ymlField?.maxLength) {
+        return 'String';
+    }
+    // Default to String
+    return 'String';
+}
+
+// Helper: Get all fields for a view, including inherited ones from YML
+function getMergedFieldsForView(viewFilter) {
+    const result = [];
+    const processedFieldNames = new Set();
+
+    // 1. Add all fields from entityFields that match the view filter
+    for (const field of entityFields) {
+        // Skip globally excluded fields
+        if (isExcludedField(field.name)) continue;
+
+        const ymlField = ymlConfig.fields[field.name];
+
+        // Skip self-reference fields (e.g., parent field referencing same entity)
+        if (isSelfReferenceField(field.name, ymlField)) continue;
+
+        if (ymlField && ymlField.views?.includes(viewFilter)) {
+            result.push({
+                ...field,
+                ymlField: ymlField,
+                isInherited: false
+            });
+            processedFieldNames.add(field.name);
+        }
+    }
+
+    // 2. Add fields from ymlConfig that are not in entityFields (inherited fields)
+    for (const [fieldName, ymlField] of Object.entries(ymlConfig.fields || {})) {
+        // Skip globally excluded fields
+        if (isExcludedField(fieldName)) continue;
+
+        // Skip self-reference fields (e.g., parent field referencing same entity)
+        if (isSelfReferenceField(fieldName, ymlField)) continue;
+
+        if (!processedFieldNames.has(fieldName) &&
+            !entityFieldNames.has(fieldName) &&
+            ymlField.views?.includes(viewFilter)) {
+            result.push({
+                name: fieldName,
+                type: inferFieldType(fieldName, ymlField),
+                comment: fieldNameToComment(fieldName),
+                ymlField: ymlField,
+                isInherited: true,
+                isCollection: false
+            });
+        }
+    }
+
+    return result;
+}
+
+// Helper: Format field type for DTO (handle primitives, etc.)
+function formatDtoFieldType(field, ymlField) {
+    let fieldType = ymlField?.type || field.type;
+    if (fieldType === 'boolean') fieldType = 'Boolean';
+    if (fieldType === 'int') fieldType = 'Integer';
+    if (fieldType === 'long') fieldType = 'Long';
+    return fieldType;
+}
+
+// Helper: Get merged search fields including inherited ones from YML
+function getMergedSearchFields() {
+    const result = [];
+    const processedFieldNames = new Set();
+
+    // 1. Add all fields from entitySearchFields
+    if (entitySearchFields && entitySearchFields.length > 0) {
+        for (const field of entitySearchFields) {
+            // Skip globally excluded fields
+            if (isExcludedField(field.name)) continue;
+
+            const ymlField = ymlConfig.fields[field.name];
+
+            // Skip self-reference fields (e.g., parent field referencing same entity)
+            if (isSelfReferenceField(field.name, ymlField)) continue;
+
+            result.push({
+                ...field,
+                isInherited: false
+            });
+            processedFieldNames.add(field.name);
+        }
+    }
+
+    // 2. Add fields from ymlConfig that are not in entityFields and have searchOperators
+    for (const [fieldName, ymlField] of Object.entries(ymlConfig.fields || {})) {
+        // Skip globally excluded fields
+        if (isExcludedField(fieldName)) continue;
+
+        // Skip self-reference fields (e.g., parent field referencing same entity)
+        if (isSelfReferenceField(fieldName, ymlField)) continue;
+
+        if (!processedFieldNames.has(fieldName) &&
+            !entityFieldNames.has(fieldName) &&
+            ymlField.searchOperators && ymlField.searchOperators.length > 0) {
+            result.push({
+                name: fieldName,
+                type: inferFieldType(fieldName, ymlField),
+                comment: fieldNameToComment(fieldName),
+                sortable: ymlField.sortable || false,
+                searchOperators: ymlField.searchOperators,
+                entityField: fieldName,
+                isInherited: true
+            });
+        }
+    }
+
+    return result;
+}
+%>
+
+    //----------------------------------
+    // Search
+    //----------------------------------
+
+    @Getter
+    @Setter
+    public static class <%= classPrefix %>SearchDTO {
+        <% if (hasEmbeddedId) {
+            if (embeddedIdSearchFields && embeddedIdSearchFields.length > 0) {
+                embeddedIdSearchFields.forEach(field => { %>
+        @Schema(description = "<%= field.comment %>")
+		@FieldLabel("{entities.<%= entityName %>.<%= field.name %>}")
+        @SearchableField(entityField = "<%= field.entityField %>", operators = {<%= field.operators %>}<% if (field.sortable) { %>, sortable = true<% } %>)
+        private <%= field.type %> <%= field.name %>;
+                <% });
+            }
+        } else {
+            const idEntityField = entityFields.find(f => f.name === ymlConfig.idField); %>
+        @Schema(description = "<%= idEntityField?.comment?.split(':')[0] || `${entityName} ID` %>")
+		@FieldLabel("{entities.<%= entityName %>.<%= ymlConfig.idField %>}")
+        // sortable because the list's default order is this id descending, and IN because the
+        // filter for this entity resolves the labels of what is selected by asking for those ids
+        // at once. Without either half the list is refused rather than merely narrowed.
+        @SearchableField(operators = {<%= idSearchOperators() %>}, sortable = true)
+        private <%= idEntityField?.type || idType %> <%= ymlConfig.idField %>;
+        <% } %>
+        <%
+        const mergedSearchFields = getMergedSearchFields();
+        mergedSearchFields
+            .filter(field => field.name !== ymlConfig.idField && !hasEmbeddedId)
+            .forEach(field => {
+                const ymlField = ymlConfig.fields[field.name];
+
+                // Convert searchOperators array to uppercase enum constants
+                const operators = field.searchOperators && field.searchOperators.length > 0
+                    ? field.searchOperators.map(toSearchOperator).join(', ')
+                    : '';
+
+                // Handle reference fields
+                let fieldType = field.type;
+                let fieldName = field.name;
+                let entityFieldPath = field.entityField || field.name;
+                let comment = ymlField?.comment || field.comment || fieldNameToComment(field.name);
+
+                // Skip reference handling for inherited fields
+                if (!field.isInherited) {
+                    if (ymlField?.reference) {
+                        // Skip if entity already has explicit ID field (e.g., channelId for channel)
+                        // The explicit ID field will be processed separately
+                        if (hasExplicitIdField(field.name)) {
+                            return; // Skip this reference field to avoid duplicate
+                        }
+                        // For reference fields in search, use ID field
+                        // Use helper to avoid 'IdId' pattern when field already ends with 'Id'
+                        fieldType = ymlField.reference.idType || 'String';
+                        fieldName = getReferenceIdFieldName(field.name, false);
+                        // If field name already ends with 'Id', it's already the FK field - use direct path
+                        // Otherwise, use nested path (e.g., channel.channelId)
+                        if (holdsReferenceKey(field.name)) {
+                            entityFieldPath = field.name; // Direct FK field path
+                        } else {
+                            entityFieldPath = `${field.name}.${ymlField.reference.idField}`;
+                            comment = `${comment} ID`;
+                        }
+                    } else if (field.typeKind === 'enum') {
+                        // Convert enum to String for SearchDTO
+                        fieldType = 'String';
+                    } else if (fieldType === 'boolean') {
+                        // Convert boolean primitive to Boolean wrapper for DTOs
+                        fieldType = 'Boolean';
+                    } else if (fieldType === 'int') {
+                        // Convert int primitive to Integer wrapper for DTOs
+                        fieldType = 'Integer';
+                    }
+                } else {
+                    // For inherited fields, ensure proper type
+                    if (fieldType === 'boolean') fieldType = 'Boolean';
+                    if (fieldType === 'int') fieldType = 'Integer';
+                    if (fieldType === 'long') fieldType = 'Long';
+                }
+                // A localized field is answered by its derived columns rather than by the base
+                // column, which holds only whatever language the record was first saved under.
+                const derived = derivedI18nFields.get(field.name);
+                let searchOperators = operators;
+                // A boolean is filtered, never sorted: the paging query aggregates the sort column
+                // as max(<column>) and PostgreSQL has no max(boolean), so the list answers 500 the
+                // moment anybody sorts by it. The generator drops the flag on entity fields and
+                // warns; this covers the yml-only fields it never sees.
+                let searchSortable = field.sortable && fieldType !== 'Boolean';
+                if (derived) {
+                    if (derived.search) {
+                        // EQUALS cannot survive the move: the folded column holds every language
+                        // at once, so it equals none of them. CONTAINS is the whole point of it.
+                        entityFieldPath = derived.search;
+                        searchOperators = 'CONTAINS';
+                    }
+                    // The order moves onto the reader's language below. Leaving sortable here
+                    // would let a list quietly order by the base column instead, and no screen
+                    // says which language it ordered by.
+                    searchSortable = false;
+                }
+                %>
+        @Schema(description = "<%= comment %>")
+		@FieldLabel("{entities.<%= entityName %>.<%= field.name %>}")
+        @SearchableField(entityField = "<%= entityFieldPath %>", operators = {<%= searchOperators %>}<% if (searchSortable) { %>, sortable = true<% } %><% if (ymlField?.searchKeyword) { %>, keyword = true<% } %>)
+        private <%= fieldType %> <%= fieldName %>;
+<% if (derived && derived.sorts.length > 0) { %>
+        // Sort targets, one per language. A client asks for `sort=<%= field.name %>.asc` as it
+        // always has; LocalizedSearchParams moves that onto the reader's language before the
+        // search layer sees it. Hidden from the schema because no client names them.
+<% derived.sorts.forEach(sort => { %>        @Schema(hidden = true)
+		@FieldLabel("{entities.<%= entityName %>.<%= field.name %>}")
+        @SearchableField(entityField = "<%= sort.field %>", sortable = true)
+        private String <%= sort.field %>;
+
+<% }); } %>
+            <% });
+        %>
+        //----------
+
+        @Schema(description = "Created by")
+        @SearchableField(entityField = "createdBy", operators = {EQUALS, CONTAINS})
+        private String createdBy;
+
+        @Schema(description = "Created at")
+        @SearchableField(entityField = "createdAt", operators = {GREATER_THAN_OR_EQUAL_TO, LESS_THAN_OR_EQUAL_TO, BETWEEN}, sortable = true)
+        private Instant createdAt;
+
+        @Schema(description = "Updated by")
+        @SearchableField(entityField = "updatedBy", operators = {EQUALS, CONTAINS})
+        private String updatedBy;
+
+        @Schema(description = "Updated at")
+        @SearchableField(entityField = "updatedAt", operators = {GREATER_THAN_OR_EQUAL_TO, LESS_THAN_OR_EQUAL_TO, BETWEEN}, sortable = true)
+        private Instant updatedAt;
+    }
+
+    //----------------------------------
+    // Create, Update
+    //----------------------------------
+<%
+// Helper: Collect unique fields for @UniqueFields annotation
+function getUniqueFieldsForCreate() {
+    const uniqueFields = [];
+    const createFields = getMergedFieldsForView('edit');
+    for (let mergedField of createFields) {
+        const field = mergedField;
+        const ymlField = mergedField.ymlField;
+        if (field.name === ymlConfig.idField) continue;
+        if (ymlField?.unique) {
+            // Determine the property name (same logic as field generation)
+            // Use helper to avoid 'IdId' pattern when field already ends with 'Id'
+            let propertyName = field.name;
+            if (!mergedField.isInherited && ymlField?.reference) {
+                propertyName = getReferenceIdFieldName(field.name, ymlField.reference.multiple);
+            }
+            uniqueFields.push({
+                entityField: field.name,
+                property: propertyName
+            });
+        }
+    }
+    return uniqueFields;
+}
+
+// Helper: Check if field is a String type
+function isStringType(fieldType) {
+    return fieldType === 'String' || fieldType === 'java.lang.String';
+}
+
+// Helper: Generate validation annotations for a field
+function getValidationAnnotations(ymlField, fieldType, isCreateDto = true) {
+    const annotations = [];
+
+    // Required validation
+    if (ymlField?.required) {
+        if (isStringType(fieldType)) {
+            annotations.push('@NotBlank');
+        } else {
+            annotations.push('@NotNull');
+        }
+    }
+
+    // Length validation (for String fields)
+    if (ymlField?.maxLength && isStringType(fieldType)) {
+        annotations.push(`@Length(max = ${ymlField.maxLength})`);
+    }
+
+    // Min/Max validation (for numeric fields)
+    if (ymlField?.min !== undefined) {
+        annotations.push(`@Min(${ymlField.min})`);
+    }
+    if (ymlField?.max !== undefined) {
+        annotations.push(`@Max(${ymlField.max})`);
+    }
+
+    // Pattern validation
+    if (ymlField?.pattern) {
+        annotations.push(`@Pattern(regexp = "${ymlField.pattern}")`);
+    }
+
+    return annotations;
+}
+
+const createUniqueFields = getUniqueFieldsForCreate();
+const hasUniqueFields = createUniqueFields.length > 0;
+// Only an entity that declares the soft-delete flag has one; naming it on any other entity makes
+// the uniqueness check query an attribute that does not exist, and every create fails.
+const hasSoftDelete = entityFields.some(f => f.name === 'deleted');
+%>
+    @Data<% if (hasUniqueFields) { %>
+    @UniqueFields({<%
+        createUniqueFields.forEach((uf, index) => { %>
+        @UniqueField(entity = <%= entityName %>.class, field = "<%= uf.entityField %>", property = "<%= uf.property %>",
+                idField = "<%= ymlConfig.idField %>", idProperty = "<%= ymlConfig.idField %>"<% if (hasSoftDelete) { %>,
+                softDeleteField = "deleted", softDeleteType = SoftDeleteType.BOOLEAN<% } %>)<% if (index < createUniqueFields.length - 1) { %>,<% } %><%
+        });
+    %>
+    })<% } %>
+    public static class <%= classPrefix %>CreateDTO {
+        <% if (hasEmbeddedId) { %>
+        <% const idFieldConfig = ymlConfig.fields[ymlConfig.idField]; %>
+        <% } %>
+        <%
+        const createFields = getMergedFieldsForView('edit');
+        for (let mergedField of createFields) {
+            const field = mergedField;
+            const ymlField = mergedField.ymlField;
+            if (field.name === ymlConfig.idField) continue;
+
+            let fieldType = formatDtoFieldType(field, ymlField);
+            let fieldName = field.name;
+            let comment = ymlField?.comment || (field.comment ? field.comment.split(':')[0] : fieldNameToComment(field.name));
+
+            // Skip reference/collection handling for inherited fields
+            if (!mergedField.isInherited) {
+                // For reference field
+                if (ymlField?.reference) {
+                    // Skip if entity already has explicit ID field (e.g., channelId for channel)
+                    // The explicit ID field will be processed separately
+                    if (!ymlField.reference.multiple && hasExplicitIdField(field.name)) {
+                        continue; // Skip this reference field to avoid duplicate
+                    }
+                    const collectionType = ymlField.reference.multiple ? 'Set' : null;
+                    fieldType = collectionType
+                        ? `${collectionType}<${ymlField.reference.idType || 'String'}>`
+                        : ymlField.reference.idType || 'String';
+                    // Use helper to avoid 'IdId' pattern when field already ends with 'Id'
+                    fieldName = getReferenceIdFieldName(field.name, ymlField.reference.multiple);
+                    // Only append ' ID' to comment if field name doesn't already end with 'Id'
+                    if (!holdsReferenceKey(field.name)) {
+                        comment = `${comment} ID`;
+                    }
+                }
+                // For collection field
+                else if (field.isCollection) {
+                    if (field.collectionType === 'Map') {
+                        fieldType = field.type;  // Use original type format like Map<String, String>
+                    } else {
+                        fieldType = `${field.collectionType || 'List'}<${field.actualType || 'String'}>`;
+                    }
+                }
+            }
+
+            // Get validation annotations
+            const validationAnnotations = getValidationAnnotations(ymlField, fieldType, true);
+        %>
+        @Schema(description = "<%= comment %>")
+        @FieldLabel("{entities.<%= entityName %>.<%= field.name %>}")
+<% validationAnnotations.forEach(annotation => { %>        <%= annotation %>
+<% }); %>        private <%- fieldType %> <%= fieldName %>;
+        <% } %>
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    public static class <%= classPrefix %>UpdateDTO extends <%= classPrefix %>CreateDTO {
+        <% if (hasEmbeddedId) {
+            const idFieldInfo = entitySearchFields.find(f => f.name === ymlConfig.idField); %>
+        @Schema(description = "<%= idFieldInfo?.comment || `${entityName} ID` %>")
+		@FieldLabel("{entities.<%= entityName %>.<%= ymlConfig.idField %>}")
+        @NotNull(message = "ID is required")
+        private <%= embeddedIdType %> <%= ymlConfig.idField %>;
+        <% } else {
+            const idFieldInfo = entitySearchFields.find(f => f.name === ymlConfig.idField); %>
+        @Schema(description = "<%= idFieldInfo?.comment || `${entityName} ID` %>")
+		@FieldLabel("{entities.<%= entityName %>.<%= ymlConfig.idField %>}")
+        @NotBlank(message = "ID is required")
+        private <%= idFieldInfo?.type || idType %> <%= ymlConfig.idField %>;
+        <% } %>
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    public static class <%= classPrefix %>UpdateFormDTO extends <%= classPrefix %>UpdateDTO {
+
+        @Schema(description = "Created by")
+        private String createdBy;
+
+        @Schema(description = "Created at")
+        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
+        private Instant createdAt;
+
+        @Schema(description = "Updated by")
+        private String updatedBy;
+
+        @Schema(description = "Updated at")
+        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
+        private Instant updatedAt;
+    }
+
+    @Data
+    public static class <%= classPrefix %>BatchUpdateDTO {
+        <% if (hasEmbeddedId) {
+            const idFieldInfo = entitySearchFields.find(f => f.name === ymlConfig.idField); %>
+        @Schema(description = "<%= idFieldInfo?.comment || `${entityName} ID` %> list")
+        @FieldLabel("{entities.<%= entityName %>.<%= ymlConfig.idField %>}")
+        private Set<<%= embeddedIdType %>> <%= ymlConfig.idField %>s;
+        <% } else {
+            const idFieldInfo = entitySearchFields.find(f => f.name === ymlConfig.idField); %>
+        @Schema(description = "<%= idFieldInfo?.comment || `${entityName} ID` %> list")
+        @FieldLabel("{entities.<%= entityName %>.<%= ymlConfig.idField %>}")
+        private Set<<%= idFieldInfo?.type || idType %>> <%= ymlConfig.idField %>s;
+        <% } %>
+        <%
+        const batchUpdateFields = getMergedFieldsForView('batchUpdate');
+        for (let mergedField of batchUpdateFields) {
+            const field = mergedField;
+            const ymlField = mergedField.ymlField;
+            if (field.name === ymlConfig.idField) continue;
+
+            let fieldType = formatDtoFieldType(field, ymlField);
+            let fieldName = field.name;
+            let comment = ymlField?.comment || (field.comment ? field.comment.split(':')[0] : fieldNameToComment(field.name));
+
+            // Skip reference/collection handling for inherited fields
+            if (!mergedField.isInherited) {
+                // For reference field
+                if (ymlField?.reference) {
+                    // Skip if entity already has explicit ID field (e.g., channelId for channel)
+                    // The explicit ID field will be processed separately
+                    if (!ymlField.reference.multiple && hasExplicitIdField(field.name)) {
+                        continue; // Skip this reference field to avoid duplicate
+                    }
+                    const collectionType = ymlField.reference.multiple ? 'Set' : null;
+                    fieldType = collectionType
+                        ? `${collectionType}<${ymlField.reference.idType || 'String'}>`
+                        : ymlField.reference.idType || 'String';
+                    // Use helper to avoid 'IdId' pattern when field already ends with 'Id'
+                    fieldName = getReferenceIdFieldName(field.name, ymlField.reference.multiple);
+                    // Only append ' ID' to comment if field name doesn't already end with 'Id'
+                    if (!holdsReferenceKey(field.name)) {
+                        comment = `${comment} ID`;
+                    }
+                }
+                // For collection field
+                else if (field.isCollection) {
+                    if (field.collectionType === 'Map') {
+                        fieldType = field.type;  // Use original type format like Map<String, String>
+                    } else {
+                        fieldType = `${field.collectionType || 'List'}<${field.actualType || 'String'}>`;
+                    }
+                }
+            }
+        %>
+        @Schema(description = "<%= comment %>")
+        @FieldLabel("{entities.<%= entityName %>.<%= field.name %>}")
+        private <%- fieldType %> <%= fieldName %>;
+        <% } %>
+    }
+
+    //----------------------------------
+    // Projection
+    //----------------------------------
+
+    @Data
+    public static class <%= classPrefix %>DetailDTO {
+        <%
+        const detailFields = getMergedFieldsForView('detail');
+        // Track already processed field names to avoid duplicates
+        const processedDetailFieldNames = new Set();
+
+        for (let mergedField of detailFields) {
+            const field = mergedField;
+            const ymlField = mergedField.ymlField;
+
+            let fieldType = formatDtoFieldType(field, ymlField);
+            let fieldName = field.name;
+            let comment = ymlField?.comment || (field.comment ? field.comment.split(':')[0] : fieldNameToComment(field.name));
+
+            // For reference fields, check if we need JsonIncludeProperties for Hibernate proxy
+            // Ensure we don't treat standard Java types or String FK fields as reference fields
+            // String FK fields (e.g., contentId) should not have @JsonIncludeProperties
+            const isYmlReferenceField = ymlField?.reference && !ymlField.reference.multiple &&
+                                     !isStandardJavaType(fieldType, field.importPath) &&
+                                     fieldType !== 'String' && !fieldNameEndsWithId(fieldName);
+
+            // Check if Entity field has @JsonIncludeProperties annotation (ManyToOne objects)
+            const hasEntityJsonIncludeProps = field.jsonIncludeProperties && field.jsonIncludeProperties.length > 0;
+            const isManyToOneObject = field.relationType === 'ManyToOne' && field.typeKind === 'entity' &&
+                                      !isStandardJavaType(fieldType, field.importPath);
+
+            // Determine @JsonIncludeProperties value
+            let jsonIncludePropsValue = null;
+            if (hasEntityJsonIncludeProps) {
+                // Use Entity's @JsonIncludeProperties value
+                jsonIncludePropsValue = field.jsonIncludeProperties.map(p => `"${p}"`).join(', ');
+            } else if (isYmlReferenceField) {
+                // Use YML reference idField
+                jsonIncludePropsValue = `"${ymlField.reference.idField}"`;
+            }
+
+            const isReferenceField = isYmlReferenceField || hasEntityJsonIncludeProps || isManyToOneObject;
+
+            // Skip if already processed (avoid duplicates)
+            if (processedDetailFieldNames.has(fieldName)) continue;
+            processedDetailFieldNames.add(fieldName);
+
+            // Skip collection handling for inherited fields
+            if (!mergedField.isInherited) {
+                // For collection field (skip for reference fields already handled)
+                if (field.isCollection && !ymlField?.reference) {
+                    if (field.collectionType === 'Map') {
+                        fieldType = field.type;  // Use original type format like Map<String, String>
+                    } else {
+                        fieldType = `${field.collectionType || 'List'}<${field.actualType || 'String'}>`;
+                    }
+                }
+            }
+
+            // Check for i18n fields
+            const i18nSourceField = i18nFieldMap.get(fieldName);
+            const isI18nField = fieldName.endsWith('I18n');
+        %>
+        @Schema(description = "<%= comment %>")
+<% if (isReferenceField && jsonIncludePropsValue) { %>        @JsonIncludeProperties({<%= jsonIncludePropsValue %>})
+<% } %><% if (i18nSourceField) { %>        @I18nTrans(source="<%= i18nSourceField %>")
+<% } %><% if (isI18nField) { %>        @JsonIgnore
+<% } %>        private <%- fieldType %> <%= fieldName %>;
+        <% } %>
+
+        //----------
+
+        @Schema(description = "Created by")
+        private String createdBy;
+
+        @Schema(description = "Created at")
+        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
+        private Instant createdAt;
+
+        @Schema(description = "Updated by")
+        private String updatedBy;
+
+        @Schema(description = "Updated at")
+        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
+        private Instant updatedAt;
+    }
+
+    @Data
+    public static class <%= classPrefix %>ListDTO {
+        <%
+        const listFields = getMergedFieldsForView('list');
+        // Track already processed field names to avoid duplicates
+        const processedListFieldNames = new Set();
+
+        for (let mergedField of listFields) {
+            const field = mergedField;
+            const ymlField = mergedField.ymlField;
+
+            let fieldType = formatDtoFieldType(field, ymlField);
+            let fieldName = field.name;
+            let comment = ymlField?.comment || (field.comment ? field.comment.split(':')[0] : fieldNameToComment(field.name));
+
+            // For reference fields, check if we need JsonIncludeProperties for Hibernate proxy
+            // Ensure we don't treat standard Java types or String FK fields as reference fields
+            // String FK fields (e.g., contentId) should not have @JsonIncludeProperties
+            const isYmlReferenceField = ymlField?.reference && !ymlField.reference.multiple &&
+                                     !isStandardJavaType(fieldType, field.importPath) &&
+                                     fieldType !== 'String' && !fieldNameEndsWithId(fieldName);
+
+            // Check if Entity field has @JsonIncludeProperties annotation (ManyToOne objects)
+            const hasEntityJsonIncludeProps = field.jsonIncludeProperties && field.jsonIncludeProperties.length > 0;
+            const isManyToOneObject = field.relationType === 'ManyToOne' && field.typeKind === 'entity' &&
+                                      !isStandardJavaType(fieldType, field.importPath);
+
+            // Determine @JsonIncludeProperties value
+            let jsonIncludePropsValue = null;
+            if (hasEntityJsonIncludeProps) {
+                // Use Entity's @JsonIncludeProperties value
+                jsonIncludePropsValue = field.jsonIncludeProperties.map(p => `"${p}"`).join(', ');
+            } else if (isYmlReferenceField) {
+                // Use YML reference idField
+                jsonIncludePropsValue = `"${ymlField.reference.idField}"`;
+            }
+
+            const isReferenceField = isYmlReferenceField || hasEntityJsonIncludeProps || isManyToOneObject;
+
+            // Skip if already processed (avoid duplicates)
+            if (processedListFieldNames.has(fieldName)) continue;
+            processedListFieldNames.add(fieldName);
+
+            // Skip collection handling for inherited fields
+            if (!mergedField.isInherited) {
+                // For collection field (skip for reference fields already handled)
+                if (field.isCollection && !ymlField?.reference) {
+                    if (field.collectionType === 'Map') {
+                        fieldType = field.type;  // Use original type format like Map<String, String>
+                    } else {
+                        fieldType = `${field.collectionType || 'List'}<${field.actualType || 'String'}>`;
+                    }
+                }
+            }
+
+            // Check for i18n fields
+            const i18nSourceField = i18nFieldMap.get(fieldName);
+            const isI18nField = fieldName.endsWith('I18n');
+        %>
+        @Schema(description = "<%= comment %>")
+<% if (isReferenceField && jsonIncludePropsValue) { %>        @JsonIncludeProperties({<%= jsonIncludePropsValue %>})
+<% } %><% if (i18nSourceField) { %>        @I18nTrans(source="<%= i18nSourceField %>")
+<% } %><% if (isI18nField) { %>        @JsonIgnore
+<% } %>        private <%- fieldType %> <%= fieldName %>;
+<%
+            // If this base field has a corresponding I18n field, add it automatically
+            if (i18nSourceField && !processedListFieldNames.has(i18nSourceField)) {
+                processedListFieldNames.add(i18nSourceField);
+                const i18nField = entityFields.find(f => f.name === i18nSourceField);
+                const i18nComment = ymlConfig.fields?.[i18nSourceField]?.comment || (i18nField?.comment ? i18nField.comment.split(':')[0] : fieldNameToComment(i18nSourceField));
+%>
+        @Schema(description = "<%= i18nComment %>")
+        @JsonIgnore
+        private Map<String, String> <%= i18nSourceField %>;
+<%          }
+        } %>
+
+        //----------
+
+        @Schema(description = "Created by")
+        private String createdBy;
+
+        @Schema(description = "Created at")
+        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
+        private Instant createdAt;
+
+        @Schema(description = "Updated by")
+        private String updatedBy;
+
+        @Schema(description = "Updated at")
+        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm")
+        private Instant updatedAt;
+<% if (isTreeEntity) { %>
+
+        //----------
+        // Tree Structure
+
+        @Schema(description = "Child nodes in tree hierarchy")
+        private List<<%= classPrefix %>ListDTO> children;
+<% } %>
+    }
+<% if (hasOrderField) {
+    const orderFieldName = orderField.name;
+    const orderFieldComment = orderField.comment ? orderField.comment.split(':')[0] : fieldNameToComment(orderFieldName);
+    const orderFieldType = orderField.type === 'int' ? 'Integer' : (orderField.type === 'long' ? 'Long' : orderField.type);
+%>
+
+    //----------------------------------
+    // Order Update
+    //----------------------------------
+
+    /**
+     * DTO for updating the display order of <%= entityName %> entities.
+     */
+    @Data
+    public static class <%= classPrefix %>OrderUpdateDTO {
+        <% if (hasEmbeddedId) {
+            const idFieldInfo = entitySearchFields.find(f => f.name === ymlConfig.idField); %>
+        @Schema(description = "<%= idFieldInfo?.comment || `${entityName} ID` %>")
+        @FieldLabel("{entities.<%= entityName %>.<%= ymlConfig.idField %>}")
+        @NotNull(message = "ID is required")
+        private <%= embeddedIdType %> <%= ymlConfig.idField %>;
+        <% } else {
+            const idFieldInfo = entitySearchFields.find(f => f.name === ymlConfig.idField); %>
+        @Schema(description = "<%= idFieldInfo?.comment || `${entityName} ID` %>")
+        @FieldLabel("{entities.<%= entityName %>.<%= ymlConfig.idField %>}")
+        @NotBlank(message = "ID is required")
+        private <%= idFieldInfo?.type || idType %> <%= ymlConfig.idField %>;
+        <% } %>
+
+        @Schema(description = "<%= orderFieldComment %>")
+        @FieldLabel("{entities.<%= entityName %>.<%= orderFieldName %>}")
+        private <%= orderFieldType %> <%= orderFieldName %>;
+    }
+<% } %>
+}

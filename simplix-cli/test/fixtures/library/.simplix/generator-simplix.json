@@ -1,0 +1,35 @@
+{
+  "entity": {
+    "scanPath": "src/main/java",
+    "basePackage": "com.example.library.domain"
+  },
+  "repository": {
+    "scanPath": "src/main/java",
+    "deriveFromEntity": true
+  },
+  "dto": {
+    "excludeFields": [
+      "version",
+      "createdAt",
+      "updatedAt",
+      "createdBy",
+      "updatedBy"
+    ]
+  },
+  "target": {
+    "generatedBasePath": "generated/main/java/com/example/library/web",
+    "basePackage": "com.example.library.web",
+    "targetPath": {
+      "service": "{modulePath}/service",
+      "controllerRest": "{modulePath}/controller",
+      "dto": "{modulePath}/dto"
+    },
+    "testGeneratedBasePath": "generated/test/java/com/example/library/web",
+    "testTargetPath": {
+      "serviceTest": "{modulePath}/service"
+    }
+  },
+  "promote": {
+    "moduleRoot": "modules"
+  }
+}

@@ -1,0 +1,842 @@
+package <%= packagePaths.service %>;
+
+import <%= packagePaths.dto %>.<%= classPrefix %>DTOs.<%= classPrefix %>CreateDTO;
+import <%= packagePaths.dto %>.<%= classPrefix %>DTOs.<%= classPrefix %>UpdateDTO;
+import <%= packagePaths.dto %>.<%= classPrefix %>DTOs.<%= classPrefix %>DetailDTO;
+import <%= packagePaths.dto %>.<%= classPrefix %>DTOs.<%= classPrefix %>ListDTO;
+<% if (hasOrderField) { %>
+import <%= packagePaths.dto %>.<%= classPrefix %>DTOs.<%= classPrefix %>OrderUpdateDTO;
+<% } %>
+import <%= entityPackage %>.<%= entityName %>;
+<% if (hasEmbeddedId) { %>
+import <%= entityPackage %>.<%= entityName %>.<%= embeddedIdType %>;
+<% } %>
+<%
+// Parse import statements for reference entities (excluding self-reference)
+// Only import entity classes for immutable reference field tests
+const importedEntities = new Set();
+
+if (ymlConfig && ymlConfig.fields) {
+    Object.entries(ymlConfig.fields).forEach(([fieldName, ymlField]) => {
+        if (ymlField.reference && ymlField.reference.entity && ymlField.reference.entity !== entityName) {
+            const refEntity = ymlField.reference.entity;
+            const refModulePath = ymlField.reference.modulePath;
+
+            // Import entity class for immutable reference fields (used in test assertions)
+            if (ymlField.immutable && !importedEntities.has(refEntity)) {
+                importedEntities.add(refEntity);
+                if (refModulePath) {
+                    const entityPackagePath = basePackage.replace('.api', '') + '.domain.entity.' + refModulePath.replace(/\//g, '.');
+                    %>
+import <%= entityPackagePath %>.<%= refEntity %>;<%
+                }
+            }
+        }
+    });
+} %>
+
+import dev.simplecore.simplix.core.exception.ErrorCode;
+import dev.simplecore.simplix.core.exception.SimpliXGeneralException;
+import dev.simplecore.simplix.core.tree.repository.SimpliXTreeRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.modelmapper.ModelMapper;
+import org.springframework.context.MessageSource;
+
+import java.time.Instant;
+import java.util.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+<%
+// Build excluded fields set from generator-simplix.json configuration (same as DTO template)
+const excludedFieldsSet = new Set(dtoExcludeFields || []);
+
+// Helper: Check if a field should be excluded from DTO generation
+function isExcludedField(fieldName) {
+    return excludedFieldsSet.has(fieldName);
+}
+%>
+/**
+ * Unit tests for <%= classPrefix %>TreeService
+ * <p>
+ * This test class verifies:
+ * <ul>
+ *   <li>Tree node CRUD operations (createNode, updateNode, deleteNode)</li>
+ *   <li>Tree structure operations (findTree, findSubtree)</li>
+ *   <li>Children validation for delete operations</li>
+ *   <li>Order update operations</li>
+ *   <li>Exception handling</li>
+ * </ul>
+ */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@DisplayName("<%= classPrefix %>TreeService Tests")
+class <%= classPrefix %>TreeServiceTest {
+
+    @Mock
+    private SimpliXTreeRepository<<%= entityName %>, <%= idType %>> treeRepository;
+
+    @Mock
+    private MessageSource messageSource;
+
+    @Mock
+    private ModelMapper modelMapper;
+
+    private <%= classPrefix %>TreeService treeService;
+
+    private <%= entityName %> entity;
+    private <%= entityName %> childEntity;
+    private <%= classPrefix %>CreateDTO createDto;
+    private <%= classPrefix %>UpdateDTO updateDto;
+    <% if (hasEmbeddedId) { %>
+    private <%= embeddedIdType %> embeddedId;
+    <% } else { %>
+    private <%= idType %> testId;
+    private <%= idType %> childId;
+    <% } %>
+
+    @BeforeEach
+    void setUp() {
+        treeService = new <%= classPrefix %>TreeService(
+            treeRepository,
+            modelMapper,
+            messageSource
+        );
+
+        <% if (hasEmbeddedId) { %>
+        // Setup embedded ID
+        embeddedId = new <%= embeddedIdType %>();
+        <% embeddedIdFields.forEach(field => { %>
+        embeddedId.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(<%=
+            field.type === 'String' ? '"test-' + field.name + '"' :
+            field.type === 'Long' ? '1L' :
+            field.type === 'Integer' ? '1' :
+            field.type === 'UUID' ? 'UUID.randomUUID()' :
+            '"test"'
+        %>);
+        <% }); %>
+        <% } else { %>
+        testId = <%= idType === 'String' ? '"test-id-1"' :
+                   idType === 'Long' ? '1L' :
+                   idType === 'Integer' ? '1' :
+                   idType === 'UUID' ? 'UUID.randomUUID()' : '1' %>;
+        childId = <%= idType === 'String' ? '"child-id-1"' :
+                    idType === 'Long' ? '2L' :
+                    idType === 'Integer' ? '2' :
+                    idType === 'UUID' ? 'UUID.randomUUID()' : '2' %>;
+        <% } %>
+
+        // Setup test entity (root node)
+        entity = new <%= entityName %>();
+        <% if (!hasEmbeddedId) { %>entity.setId(testId<% if (idType !== 'String') { %>.toString()<% } %>);<% } %>
+        <% if (hasEmbeddedId) { %>
+        entity.set<%= embeddedIdField.charAt(0).toUpperCase() + embeddedIdField.slice(1) %>(embeddedId);
+        <% } else { %>
+        entity.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);
+        <% } %>
+        entity.setParentId(null); // Root node
+        <%
+        // Set fields that are in 'edit' view (same as CreateDTO)
+        // Skip excluded fields (audit fields like createdBy, updatedBy, etc.)
+        fields.forEach(field => {
+            const ymlField = ymlConfig.fields?.[field.name];
+            if (ymlField?.views?.includes('edit') && field.name !== idFieldName && field.name !== 'parentId' && !field.isRelation && !isExcludedField(field.name)) {
+                if (field.type === 'String') { %>
+        entity.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>("test-<%= field.name %>");
+        <%      } else if (field.type === 'Integer' || field.type === 'int') { %>
+        entity.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(1);
+        <%      } else if (field.type === 'Long' || field.type === 'long') { %>
+        entity.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(1L);
+        <%      } else if (field.type === 'Boolean' || field.type === 'boolean') { %>
+        entity.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(true);
+        <%      }
+            }
+        }); %>
+        entity.setCreatedAt(Instant.now());
+        entity.setUpdatedAt(Instant.now());
+
+        // Setup child entity
+        childEntity = new <%= entityName %>();
+        <% if (!hasEmbeddedId) { %>childEntity.setId(childId<% if (idType !== 'String') { %>.toString()<% } %>);<% } %>
+        childEntity.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(childId);
+        childEntity.setParentId(testId); // Child of test entity
+        <%
+        // Skip excluded fields (audit fields like createdBy, updatedBy, etc.)
+        fields.forEach(field => {
+            const ymlField = ymlConfig.fields?.[field.name];
+            if (ymlField?.views?.includes('edit') && field.name !== idFieldName && field.name !== 'parentId' && !field.isRelation && !isExcludedField(field.name)) {
+                if (field.type === 'String') { %>
+        childEntity.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>("child-<%= field.name %>");
+        <%      } else if (field.type === 'Integer' || field.type === 'int') { %>
+        childEntity.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(2);
+        <%      } else if (field.type === 'Long' || field.type === 'long') { %>
+        childEntity.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(2L);
+        <%      } else if (field.type === 'Boolean' || field.type === 'boolean') { %>
+        childEntity.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(true);
+        <%      }
+            }
+        }); %>
+        childEntity.setCreatedAt(Instant.now());
+        childEntity.setUpdatedAt(Instant.now());
+
+        // Setup DTOs
+        createDto = new <%= classPrefix %>CreateDTO();
+        createDto.setParentId(null); // Root node
+        <%
+        // Skip excluded fields (audit fields like createdBy, updatedBy, etc.)
+        fields.forEach(field => {
+            const ymlField = ymlConfig.fields?.[field.name];
+            if (ymlField?.views?.includes('edit') && field.name !== idFieldName && field.name !== 'parentId' && !field.isRelation && !isExcludedField(field.name)) {
+                if (field.type === 'String') { %>
+        createDto.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>("test-<%= field.name %>");
+        <%      } else if (field.type === 'Integer' || field.type === 'int') { %>
+        createDto.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(1);
+        <%      } else if (field.type === 'Long' || field.type === 'long') { %>
+        createDto.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(1L);
+        <%      } else if (field.type === 'Boolean' || field.type === 'boolean') { %>
+        createDto.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(true);
+        <%      }
+            }
+        }); %>
+
+        updateDto = new <%= classPrefix %>UpdateDTO();
+        <% if (!hasEmbeddedId) { %>updateDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);<% } %>
+        updateDto.setParentId(null); // Keep as root
+        <%
+        // Skip excluded fields (audit fields like createdBy, updatedBy, etc.)
+        fields.forEach(field => {
+            const ymlField = ymlConfig.fields?.[field.name];
+            if (ymlField?.views?.includes('edit') && field.name !== idFieldName && field.name !== 'parentId' && !field.isRelation && !isExcludedField(field.name)) {
+                if (field.type === 'String') { %>
+        updateDto.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>("updated-<%= field.name %>");
+        <%      } else if (field.type === 'Integer' || field.type === 'int') { %>
+        updateDto.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(2);
+        <%      } else if (field.type === 'Long' || field.type === 'long') { %>
+        updateDto.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(2L);
+        <%      } else if (field.type === 'Boolean' || field.type === 'boolean') { %>
+        updateDto.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(false);
+        <%      }
+            }
+        }); %>
+    }
+
+    //----------------------------------
+    // Tree Node CRUD Tests
+    //----------------------------------
+
+    @Test
+    @DisplayName("Should create root node successfully")
+    void testCreateRootNode() {
+        // Given
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);<% } %>
+
+        when(treeRepository.saveAndFlush(any(<%= entityName %>.class))).thenReturn(entity);
+        doAnswer(invocation -> null).when(modelMapper).map(any(), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        <%= classPrefix %>DetailDTO result = treeService.createNode(createDto);
+
+        // Then
+        assertThat(result).isNotNull();
+        <% if (!hasEmbeddedId) { %>
+        assertThat(result.get<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>()).isEqualTo(testId);
+        <% } %>
+        verify(treeRepository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+
+    @Test
+    @DisplayName("Should create child node successfully")
+    void testCreateChildNode() {
+        // Given
+        createDto.setParentId(testId);
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(childId);<% } %>
+        detailDto.setParentId(testId);
+
+        // Mock parent validation
+        when(treeRepository.findById(testId)).thenReturn(Optional.of(entity));
+        when(treeRepository.saveAndFlush(any(<%= entityName %>.class))).thenReturn(childEntity);
+        doAnswer(invocation -> null).when(modelMapper).map(any(), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        <%= classPrefix %>DetailDTO result = treeService.createNode(createDto);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getParentId()).isEqualTo(testId);
+        verify(treeRepository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+
+    @Test
+    @DisplayName("Should handle empty parentId as null for root node")
+    void testCreateNodeWithEmptyParentId() {
+        // Given
+        createDto.setParentId(<%= idType === 'String' ? '""' : 'null' %>); // Empty string for root
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);<% } %>
+        detailDto.setParentId(null);
+
+        when(treeRepository.saveAndFlush(any(<%= entityName %>.class))).thenReturn(entity);
+        doAnswer(invocation -> null).when(modelMapper).map(any(), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        <%= classPrefix %>DetailDTO result = treeService.createNode(createDto);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getParentId()).isNull();
+    }
+
+    @Test
+    @DisplayName("Should update node successfully")
+    void testUpdateNode() {
+        // Given
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);<% } %>
+
+        when(treeRepository.findById(testId)).thenReturn(Optional.of(entity));
+        when(treeRepository.saveAndFlush(any(<%= entityName %>.class))).thenReturn(entity);
+        doAnswer(invocation -> null).when(modelMapper).map(any(), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        <%= classPrefix %>DetailDTO result = treeService.updateNode(entity, updateDto);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(treeRepository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when ID is changed during update")
+    void testUpdateNodeWithChangedId() {
+        // Given
+        <% if (!hasEmbeddedId) { %>
+        updateDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(childId); // Different ID
+        <% } %>
+        // When/Then
+        assertThatThrownBy(() -> treeService.updateNode(entity, updateDto))
+            .isInstanceOf(SimpliXGeneralException.class)
+            .hasMessageContaining("error.id.cannot.change");
+    }
+
+    @Test
+    @DisplayName("Should delete node without children successfully")
+    void testDeleteNodeWithoutChildren() {
+        // Given
+        when(treeRepository.findDirectChildren(testId)).thenReturn(Collections.emptyList());
+        when(treeRepository.findById(testId)).thenReturn(Optional.of(entity));
+        when(treeRepository.findItemWithAllDescendants(testId)).thenReturn(Arrays.asList(entity));
+        doNothing().when(treeRepository).deleteById(testId);
+
+        // When
+        treeService.deleteNode(testId);
+
+        // Then
+        verify(treeRepository, times(1)).findDirectChildren(testId);
+        verify(treeRepository, times(1)).deleteById(testId);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when deleting node with children")
+    void testDeleteNodeWithChildren() {
+        // Given
+        when(treeRepository.findDirectChildren(testId)).thenReturn(Arrays.asList(childEntity));
+        when(messageSource.getMessage(eq("error.tree.has.children"), any(), anyString(), any()))
+            .thenReturn("Cannot delete node with children");
+
+        // When/Then
+        assertThatThrownBy(() -> treeService.deleteNode(testId))
+            .isInstanceOf(SimpliXGeneralException.class)
+            .hasMessageContaining("Cannot delete node with children");
+
+        verify(treeRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("Should batch delete nodes without children")
+    void testBatchDeleteNodesWithoutChildren() {
+        // Given
+        List<<%= idType %>> ids = Arrays.asList(testId, childId);
+        when(treeRepository.findById(testId)).thenReturn(Optional.of(entity));
+        when(treeRepository.findById(childId)).thenReturn(Optional.of(childEntity));
+        when(treeRepository.findDirectChildren(any())).thenReturn(Collections.emptyList());
+        when(treeRepository.findItemWithAllDescendants(any())).thenReturn(Collections.emptyList());
+        doNothing().when(treeRepository).deleteAllById(ids);
+
+        // When
+        treeService.batchDeleteNodes(ids);
+
+        // Then
+        // findDirectChildren is called twice per ID: once in batchDeleteNodes() validation, once in deleteBatch()
+        verify(treeRepository, atLeast(2)).findDirectChildren(any());
+        verify(treeRepository, times(1)).deleteAllById(ids);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when batch deleting node with children")
+    void testBatchDeleteNodesWithChildren() {
+        // Given
+        List<<%= idType %>> ids = Arrays.asList(testId);
+        when(treeRepository.findDirectChildren(testId)).thenReturn(Arrays.asList(childEntity));
+        when(messageSource.getMessage(eq("error.tree.has.children"), any(), anyString(), any()))
+            .thenReturn("Cannot delete node with children");
+
+        // When/Then
+        assertThatThrownBy(() -> treeService.batchDeleteNodes(ids))
+            .isInstanceOf(SimpliXGeneralException.class)
+            .hasMessageContaining("Cannot delete node with children");
+
+        verify(treeRepository, never()).deleteAllById(any());
+    }
+
+    //----------------------------------
+    // Tree Structure Tests
+    //----------------------------------
+
+    @Test
+    @DisplayName("Should find root nodes only")
+    void testFindTreeRootsOnly() {
+        // Given
+        when(treeRepository.findRootItems()).thenReturn(Arrays.asList(entity));
+        <%= classPrefix %>ListDTO listDto = new <%= classPrefix %>ListDTO();
+        <% if (!hasEmbeddedId) { %>listDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);<% } %>
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>ListDTO.class)))
+            .thenReturn(listDto);
+
+        // When
+        List<<%= classPrefix %>ListDTO> result = treeService.findTree(false);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        verify(treeRepository, times(1)).findRootItems();
+    }
+
+    @Test
+    @DisplayName("Should find complete tree hierarchy")
+    void testFindTreeFullHierarchy() {
+        // Given
+        when(treeRepository.findCompleteHierarchy()).thenReturn(Arrays.asList(entity, childEntity));
+        <%= classPrefix %>ListDTO listDto1 = new <%= classPrefix %>ListDTO();
+        <% if (!hasEmbeddedId) { %>listDto1.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);<% } %>
+        <%= classPrefix %>ListDTO listDto2 = new <%= classPrefix %>ListDTO();
+        <% if (!hasEmbeddedId) { %>listDto2.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(childId);<% } %>
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>ListDTO.class)))
+            .thenReturn(listDto1, listDto2);
+
+        // When
+        List<<%= classPrefix %>ListDTO> result = treeService.findTree(true);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(2);
+        verify(treeRepository, times(1)).findCompleteHierarchy();
+    }
+
+    @Test
+    @DisplayName("Should find direct children of a node")
+    void testFindTreeDirectChildren() {
+        // Given
+        when(treeRepository.findDirectChildren(testId)).thenReturn(Arrays.asList(childEntity));
+        <%= classPrefix %>ListDTO listDto = new <%= classPrefix %>ListDTO();
+        <% if (!hasEmbeddedId) { %>listDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(childId);<% } %>
+        listDto.setParentId(testId);
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>ListDTO.class)))
+            .thenReturn(listDto);
+
+        // When
+        List<<%= classPrefix %>ListDTO> result = treeService.findTree(testId, false);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        verify(treeRepository, times(1)).findDirectChildren(testId);
+    }
+
+    @Test
+    @DisplayName("Should find all descendants of a node")
+    void testFindTreeAllDescendants() {
+        // Given
+        when(treeRepository.findItemWithAllDescendants(testId)).thenReturn(Arrays.asList(childEntity));
+        <%= classPrefix %>ListDTO listDto = new <%= classPrefix %>ListDTO();
+        <% if (!hasEmbeddedId) { %>listDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(childId);<% } %>
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>ListDTO.class)))
+            .thenReturn(listDto);
+
+        // When
+        List<<%= classPrefix %>ListDTO> result = treeService.findTree(testId, true);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        verify(treeRepository, times(1)).findItemWithAllDescendants(testId);
+    }
+<% if (hasOrderField) {
+    const orderFieldName = orderField.name;
+    const upperOrderFieldName = orderFieldName.charAt(0).toUpperCase() + orderFieldName.slice(1);
+    const upperIdFieldName = ymlConfig.idField.charAt(0).toUpperCase() + ymlConfig.idField.slice(1);
+%>
+
+    //----------------------------------
+    // Order Update Tests
+    //----------------------------------
+
+    @Test
+    @DisplayName("Should update sibling node orders successfully")
+    void testUpdateOrders() {
+        // Given
+        <%= classPrefix %>OrderUpdateDTO orderDto1 = new <%= classPrefix %>OrderUpdateDTO();
+        orderDto1.set<%= upperIdFieldName %>(testId);
+        orderDto1.set<%= upperOrderFieldName %>(2);
+
+        when(treeRepository.findById(testId)).thenReturn(Optional.of(entity));
+        when(treeRepository.saveAndFlush(any(<%= entityName %>.class))).thenReturn(entity);
+        <%= classPrefix %>ListDTO listDto = new <%= classPrefix %>ListDTO();
+        <% if (!hasEmbeddedId) { %>listDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);<% } %>
+        listDto.set<%= upperOrderFieldName %>(2);
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>ListDTO.class)))
+            .thenReturn(listDto);
+
+        // When
+        List<<%= classPrefix %>ListDTO> result = treeService.updateOrders(null, Arrays.asList(orderDto1));
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        verify(treeRepository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when updating order for node with wrong parent")
+    void testUpdateOrdersWithWrongParent() {
+        // Given
+        <%= classPrefix %>OrderUpdateDTO orderDto = new <%= classPrefix %>OrderUpdateDTO();
+        orderDto.set<%= upperIdFieldName %>(childId);
+        orderDto.set<%= upperOrderFieldName %>(1);
+
+        // childEntity has parentId = testId, but we're trying to update under null parent
+        when(treeRepository.findById(childId)).thenReturn(Optional.of(childEntity));
+        when(messageSource.getMessage(eq("error.tree.invalid.parent"), any(), anyString(), any()))
+            .thenReturn("Node does not belong to parent");
+
+        // When/Then
+        assertThatThrownBy(() -> treeService.updateOrders(null, Arrays.asList(orderDto)))
+            .isInstanceOf(SimpliXGeneralException.class)
+            .hasMessageContaining("Node does not belong to parent");
+    }
+
+    @Test
+    @DisplayName("Should skip non-existent entities in order update")
+    void testUpdateOrdersSkipsNonExistent() {
+        // Given
+        <%= classPrefix %>OrderUpdateDTO orderDto = new <%= classPrefix %>OrderUpdateDTO();
+        orderDto.set<%= upperIdFieldName %>(<%= idType === 'String' ? '"non-existent-id"' : '999L' %>);
+        orderDto.set<%= upperOrderFieldName %>(1);
+
+        when(treeRepository.findById(any())).thenReturn(Optional.empty());
+
+        // When
+        List<<%= classPrefix %>ListDTO> result = treeService.updateOrders(null, Arrays.asList(orderDto));
+
+        // Then
+        assertThat(result).isEmpty();
+        verify(treeRepository, never()).save(any());
+    }
+<% } %>
+
+    //----------------------------------
+    // Parent Change Validation Tests
+    //----------------------------------
+
+    @Test
+    @DisplayName("Should update node successfully when parentId changes to valid parent")
+    void testUpdateNodeWithValidParentChange() {
+        // Given
+        <%= idType %> newParentId = <%= idType === 'String' ? '"new-parent-id"' :
+                                       idType === 'Long' ? '100L' :
+                                       idType === 'Integer' ? '100' : '100' %>;
+        <%= entityName %> newParent = new <%= entityName %>();
+        <% if (!hasEmbeddedId) { %>newParent.setId(newParentId<% if (idType !== 'String') { %>.toString()<% } %>);<% } %>
+        newParent.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(newParentId);
+
+        entity.setParentId(null); // Currently a root node
+        updateDto.setParentId(newParentId); // Move to new parent
+
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);<% } %>
+
+        when(treeRepository.findById(testId)).thenReturn(Optional.of(entity));
+        when(treeRepository.findById(newParentId)).thenReturn(Optional.of(newParent));
+        when(treeRepository.findItemWithAllDescendants(testId)).thenReturn(Collections.emptyList());
+        when(treeRepository.saveAndFlush(any(<%= entityName %>.class))).thenReturn(entity);
+        doAnswer(invocation -> null).when(modelMapper).map(any(), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        <%= classPrefix %>DetailDTO result = treeService.updateNode(entity, updateDto);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(treeRepository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when moving to non-existent parent")
+    void testUpdateNodeWithNonExistentParent() {
+        // Given
+        <%= idType %> nonExistentParentId = <%= idType === 'String' ? '"non-existent-parent"' :
+                                              idType === 'Long' ? '999L' :
+                                              idType === 'Integer' ? '999' : '999' %>;
+        entity.setParentId(null);
+        updateDto.setParentId(nonExistentParentId);
+
+        when(treeRepository.findById(nonExistentParentId)).thenReturn(Optional.empty());
+        when(messageSource.getMessage(eq("error.entity.not.found"), any(), anyString(), any()))
+            .thenReturn("Parent not found");
+
+        // When/Then
+        assertThatThrownBy(() -> treeService.updateNode(entity, updateDto))
+            .isInstanceOf(SimpliXGeneralException.class)
+            .hasMessageContaining("Parent not found");
+
+        verify(treeRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when moving node to its own descendant (circular reference)")
+    void testUpdateNodeWithCircularReference() {
+        // Given
+        // entity (testId) is parent of childEntity (childId)
+        // Trying to move entity under childEntity would create circular reference
+        entity.setParentId(null);
+        updateDto.setParentId(childId); // Try to set child as parent
+
+        // Mock for new parent lookup
+        when(treeRepository.findById(childId)).thenReturn(Optional.of(childEntity));
+        // Mock for ancestor lookup: childEntity -> entity (testId) -> null
+        when(treeRepository.findById(testId)).thenReturn(Optional.of(entity));
+        // When/Then
+        assertThatThrownBy(() -> treeService.updateNode(entity, updateDto))
+            .isInstanceOf(SimpliXGeneralException.class)
+            .hasMessageContaining("error.tree.circular.reference");
+
+        verify(treeRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("Should update node successfully when moving to root (parentId null)")
+    void testUpdateNodeMoveToRoot() {
+        // Given
+        childEntity.setParentId(testId); // Currently has parent
+        <%= classPrefix %>UpdateDTO childUpdateDto = new <%= classPrefix %>UpdateDTO();
+        childUpdateDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(childId);
+        childUpdateDto.setParentId(null); // Move to root
+
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(childId);<% } %>
+
+        when(treeRepository.findById(childId)).thenReturn(Optional.of(childEntity));
+        when(treeRepository.saveAndFlush(any(<%= entityName %>.class))).thenReturn(childEntity);
+        doAnswer(invocation -> null).when(modelMapper).map(any(), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        <%= classPrefix %>DetailDTO result = treeService.updateNode(childEntity, childUpdateDto);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(treeRepository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+<% if (idType === 'String') { %>
+
+    @Test
+    @DisplayName("Should handle empty string parentId as null (move to root)")
+    void testUpdateNodeWithEmptyParentId() {
+        // Given
+        childEntity.setParentId(testId); // Currently has parent
+        <%= classPrefix %>UpdateDTO childUpdateDto = new <%= classPrefix %>UpdateDTO();
+        childUpdateDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(childId);
+        childUpdateDto.setParentId(""); // Empty string should be treated as null
+
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(childId);<% } %>
+
+        when(treeRepository.findById(childId)).thenReturn(Optional.of(childEntity));
+        when(treeRepository.saveAndFlush(any(<%= entityName %>.class))).thenAnswer(invocation -> {
+            <%= entityName %> savedEntity = invocation.getArgument(0);
+            // Verify parentId is set to null (not empty string)
+            assertThat(savedEntity.getParentId()).isNull();
+            return savedEntity;
+        });
+        doAnswer(invocation -> null).when(modelMapper).map(any(), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        <%= classPrefix %>DetailDTO result = treeService.updateNode(childEntity, childUpdateDto);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(treeRepository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+<% } %>
+<%
+// Generate Immutable Reference Field Tests
+const immutableFields = [];
+if (ymlConfig && ymlConfig.fields) {
+    Object.entries(ymlConfig.fields).forEach(([fieldName, field]) => {
+        if (field.reference && !field.reference.multiple && field.reference.entity !== entityName && field.immutable) {
+            immutableFields.push({ fieldName, field });
+        }
+    });
+}
+
+if (immutableFields.length > 0) { %>
+
+    //----------------------------------
+    // Immutable Reference Field Tests
+    //----------------------------------
+<%
+    immutableFields.forEach(({ fieldName, field }) => {
+        const upperFieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        const idFieldNameRef = field.reference.idField;
+        const upperIdFieldNameRef = idFieldNameRef.charAt(0).toUpperCase() + idFieldNameRef.slice(1);
+        const refEntity = field.reference.entity;
+        const refIdType = field.reference.idType || 'String';
+%>
+
+    @Test
+    @DisplayName("Should throw exception when <%= fieldName %>Id is changed during update")
+    void testUpdateNodeWith<%= upperFieldName %>Changed() {
+        // Given
+        <%= refIdType %> original<%= upperFieldName %>Id = <%= refIdType === 'String' ? '"' + fieldName + '-1"' : '1L' %>;
+        <%= refIdType %> new<%= upperFieldName %>Id = <%= refIdType === 'String' ? '"' + fieldName + '-2"' : '2L' %>;
+
+        <%= refEntity %> <%= _.camelCase(fieldName) %> = new <%= refEntity %>();
+        <%= _.camelCase(fieldName) %>.set<%= upperIdFieldNameRef %>(original<%= upperFieldName %>Id);
+        entity.set<%= upperFieldName %>(<%= _.camelCase(fieldName) %>);
+        updateDto.set<%= upperIdFieldNameRef %>(new<%= upperFieldName %>Id);
+
+        // When/Then
+        assertThatThrownBy(() -> treeService.updateNode(entity, updateDto))
+            .isInstanceOf(SimpliXGeneralException.class)
+            .hasMessageContaining("error.<%= _.snakeCase(fieldName) %>.cannot.change");
+
+        verify(treeRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when <%= fieldName %>Id is changed from null to value")
+    void testUpdateNodeWith<%= upperFieldName %>FromNullToValue() {
+        // Given
+        entity.set<%= upperFieldName %>(null);
+        updateDto.set<%= upperIdFieldNameRef %>(<%= refIdType === 'String' ? '"' + fieldName + '-1"' : '1L' %>);
+
+        // When/Then
+        assertThatThrownBy(() -> treeService.updateNode(entity, updateDto))
+            .isInstanceOf(SimpliXGeneralException.class)
+            .hasMessageContaining("error.<%= _.snakeCase(fieldName) %>.cannot.change");
+
+        verify(treeRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when <%= fieldName %>Id is changed from value to null")
+    void testUpdateNodeWith<%= upperFieldName %>FromValueToNull() {
+        // Given
+        <%= refEntity %> <%= _.camelCase(fieldName) %> = new <%= refEntity %>();
+        <%= _.camelCase(fieldName) %>.set<%= upperIdFieldNameRef %>(<%= refIdType === 'String' ? '"' + fieldName + '-1"' : '1L' %>);
+        entity.set<%= upperFieldName %>(<%= _.camelCase(fieldName) %>);
+        updateDto.set<%= upperIdFieldNameRef %>(null);
+
+        // When/Then
+        assertThatThrownBy(() -> treeService.updateNode(entity, updateDto))
+            .isInstanceOf(SimpliXGeneralException.class)
+            .hasMessageContaining("error.<%= _.snakeCase(fieldName) %>.cannot.change");
+
+        verify(treeRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("Should update node successfully when <%= fieldName %>Id is same")
+    void testUpdateNodeWith<%= upperFieldName %>Same() {
+        // Given
+        <%= refIdType %> <%= _.camelCase(fieldName) %>Id = <%= refIdType === 'String' ? '"' + fieldName + '-1"' : '1L' %>;
+        <%= refEntity %> <%= _.camelCase(fieldName) %> = new <%= refEntity %>();
+        <%= _.camelCase(fieldName) %>.set<%= upperIdFieldNameRef %>(<%= _.camelCase(fieldName) %>Id);
+        entity.set<%= upperFieldName %>(<%= _.camelCase(fieldName) %>);
+        updateDto.set<%= upperIdFieldNameRef %>(<%= _.camelCase(fieldName) %>Id);
+
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);<% } %>
+
+        when(treeRepository.findById(testId)).thenReturn(Optional.of(entity));
+        when(treeRepository.saveAndFlush(any(<%= entityName %>.class))).thenReturn(entity);
+        doAnswer(invocation -> null).when(modelMapper).map(any(), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        <%= classPrefix %>DetailDTO result = treeService.updateNode(entity, updateDto);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(treeRepository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+<%
+    });
+}
+%>
+
+    //----------------------------------
+    // Helper Method Tests
+    //----------------------------------
+
+    @Test
+    @DisplayName("Should find entity by ID")
+    void testFindById() {
+        // Given
+        when(treeRepository.findById(testId)).thenReturn(Optional.of(entity));
+
+        // When
+        Optional<<%= entityName %>> result = treeService.findById(testId);
+
+        // Then
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(entity);
+    }
+
+    @Test
+    @DisplayName("Should return empty when entity not found")
+    void testFindByIdNotFound() {
+        // Given
+        when(treeRepository.findById(testId)).thenReturn(Optional.empty());
+
+        // When
+        Optional<<%= entityName %>> result = treeService.findById(testId);
+
+        // Then
+        assertThat(result).isEmpty();
+    }
+}

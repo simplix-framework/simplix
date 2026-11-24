@@ -1,0 +1,46 @@
+{
+  "name": "@simplix-boot/cli",
+  "version": "2.0.0-SNAPSHOT",
+  "description": "Command line tool that generates SimpliX Spring Boot code (services, controllers, DTOs, tests) from JPA entities",
+  "type": "module",
+  "bin": {
+    "simplix-boot": "bin/simplix-boot.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "templates",
+    "LICENSE_KO"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "prepack": "node scripts/license-files.mjs copy",
+    "postpack": "node scripts/license-files.mjs remove",
+    "prepublishOnly": "node scripts/assert-release-version.mjs"
+  },
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "js-yaml": "^4.1.0",
+    "lodash": "^4.17.21"
+  },
+  "keywords": [
+    "simplix",
+    "spring-boot",
+    "jpa",
+    "crud",
+    "code-generator",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/simplix-framework/simplix.git",
+    "directory": "simplix-cli"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,517 @@
+package <%= packagePaths['controllerRest'] %>;
+
+import dev.simplecore.simplix.web.controller.SimpliXBaseController;
+import dev.simplecore.simplix.web.controller.SimpliXStandardApi;
+<%
+// The classes of the application this controller calls; the project configuration names them
+// under supportClasses.
+const messages = ymlConfig.notFoundMessageKey ? supportClasses.require('messages', 'notFoundMessageKey') : null;
+const searchFigures = (ymlConfig.statusCounts || []).length > 0 || (ymlConfig.aggregates || []).length > 0
+    ? supportClasses.require('searchFigures', 'statusCounts or aggregates')
+    : null;
+// The order the list opens in. Refused here, before anything is written, when it names the id or a
+// field the search DTO cannot order by; SimpliX Meta refuses the same at runtime.
+const defaultSort = ymlConfig.defaultSort;
+if (defaultSort) {
+    const sortField = defaultSort.field;
+    const sortDirection = defaultSort.direction || 'desc';
+    if (!sortField) throw new Error(`${entityName}.yml defaultSort has no field`);
+    if (sortField === ymlConfig.idField) throw new Error(`${entityName}.yml defaultSort names the id field ${sortField}`);
+    if (!(ymlConfig.fields && ymlConfig.fields[sortField] && ymlConfig.fields[sortField].sortable === true)) {
+        throw new Error(`${entityName}.yml defaultSort names ${sortField}, which is not a sortable field`);
+    }
+    if (sortDirection !== 'asc' && sortDirection !== 'desc') {
+        throw new Error(`${entityName}.yml defaultSort direction must be asc or desc, not ${sortDirection}`);
+    }
+}
+-%>
+<% if (defaultSort) { -%>
+import dev.simplecore.simplix.web.controller.SimpliXDefaultSort;
+<% } -%>
+<% if ((ymlConfig.statusCounts || []).length > 0 || (ymlConfig.aggregates || []).length > 0 || ymlConfig.timeAxisField) { -%>
+import dev.simplecore.simplix.web.controller.SimpliXListFigures;
+<% } -%>
+import dev.simplecore.simplix.core.model.SimpliXApiResponse;
+<% if (ymlConfig.notFoundMessageKey) { -%>
+import <%= messages.fqn %>;
+<% } -%>
+import <%= packagePaths['dto'] %>.<%= classPrefix %>DTOs.*;
+import <%= entityPackage %>.<%= entityName %>;
+<% if (hasEmbeddedId) { %>
+import <%= entityPackage %>.<%= entityName %>.<%= embeddedIdType %>;
+import java.util.stream.Collectors;
+<% } %>
+import <%= packagePaths['service'] %>.<%= classPrefix %>Service;
+<% if (hasTreeEntity) { %>
+import <%= packagePaths['service'] %>.<%= classPrefix %>TreeService;
+import dev.simplecore.simplix.core.exception.SimpliXGeneralException;
+<% } %>
+import dev.simplecore.searchable.core.condition.SearchCondition;
+import dev.simplecore.searchable.openapi.annotation.SearchableParams;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
+<% if (exportConfig.enabled) { -%>
+import dev.simplecore.simplix.excel.export.ExportFormat;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+<% } -%>
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+<% const statusCountFields = ymlConfig.statusCounts || []; const aggregateItems = ymlConfig.aggregates || []; %>
+<% if (statusCountFields.length > 0 || aggregateItems.length > 0) { %>
+import <%= searchFigures.fqn %>.AggregateValueDTO;
+import <%= searchFigures.fqn %>.ValueCountDTO;
+<% } %>
+<% if (ymlConfig.timeAxisField) { %>
+import dev.simplecore.searchable.core.service.bucket.TimeWindowParams;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.Instant;
+<% } %>
+<%
+function generatePathVariableParams() {
+    if (hasEmbeddedId) {
+        return embeddedIdFields.map(function(field, index) {
+            return `@PathVariable String ${field.name}${index < embeddedIdFields.length - 1 ? ',' : ''}`;
+        }).join(' ');
+    } else {
+        return `@PathVariable ${idType} ${ymlConfig.idField}`;
+    }
+}
+%>
+/**
+ * REST Controller for <%= entityComment.split(':')[0] %>.
+ * <p>
+ * Provides CRUD operations and search functionality for <%= entityName %> entities.
+ *
+ * @see <%= classPrefix %>Service
+ * @see <%= entityName %>
+ */
+@RestController
+@RequestMapping("/<%= templatePath %>")
+@Tag(name = "<%= packagePaths['controllerRest'].substring(basePackage.length + 1).replace(/\.controller$/, '') %>.<%= classPrefix %>", description = "<%= entityComment.split(':')[0] %>")
+<% if (defaultSort) { -%>
+@SimpliXDefaultSort(field = "<%= defaultSort.field %>", direction = "<%= defaultSort.direction || 'desc' %>")
+<% } -%>
+<% if ((ymlConfig.statusCounts || []).length > 0 || (ymlConfig.aggregates || []).length > 0 || ymlConfig.timeAxisField) { -%>
+@SimpliXListFigures(statusCounts = {<%- (ymlConfig.statusCounts || []).map(f => `"${f}"`).join(', ') %>}, aggregates = {<%- (ymlConfig.aggregates || []).map(a => `@SimpliXListFigures.Figure(field = "${a.field}", op = "${a.op}")`).join(', ') %>}<% if (ymlConfig.timeAxisField) { %>, timeAxis = "<%= ymlConfig.timeAxisField %>"<% } %>)
+<% } -%>
+public class <%= controllerName %> extends SimpliXBaseController<<%= entityName %>, <%= idType %>> {
+
+    private final <%= classPrefix %>Service service;
+<% if (hasTreeEntity) { %>
+    private final <%= classPrefix %>TreeService treeService;
+<% } %>
+
+    /**
+     * Constructs a new <%= controllerName %>.
+     *
+     * @param service the service for handling <%= entityName %> operations
+<% if (hasTreeEntity) { %>
+     * @param treeService the tree service for handling tree-specific <%= entityName %> operations
+<% } %>     */
+<% if (hasTreeEntity) { %>
+    public <%= controllerName %>(<%= classPrefix %>Service service, <%= classPrefix %>TreeService treeService) {
+        super(service);
+        this.service = service;
+        this.treeService = treeService;
+    }
+<% } else { %>
+    public <%= controllerName %>(<%= classPrefix %>Service service) {
+        super(service);
+        this.service = service;
+    }
+<% } %>
+
+    /**
+     * Creates a new <%= entityName %> entity.
+     *
+     * @param createDto the DTO containing data for the new <%= entityName %>
+     * @return response containing the created <%= classPrefix %>DetailDTO
+     */
+    @PostMapping("/create")
+    @Operation(summary = "Create <%= entityName %>", description = "Creates a new <%= entityName %>")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'create')")
+    public SimpliXApiResponse<<%= classPrefix %>DetailDTO> create(@RequestBody @Validated <%= classPrefix %>CreateDTO createDto) {
+<% if (hasTreeEntity) { %>
+        return SimpliXApiResponse.success(treeService.createNode(createDto));
+<% } else { %>
+        return SimpliXApiResponse.success(service.create(createDto));
+<% } %>
+    }
+
+    /**
+     * Updates an existing <%= entityName %> entity.
+     *<% if (hasEmbeddedId) { %><% embeddedIdFields.forEach(function(field) { %>
+     * @param <%= field.name %> <%= field.comment %><% }); %><% } else { %>
+     * @param <%= ymlConfig.idField %> the ID of the <%= entityName %> to update<% } %>
+     * @param updateDto the DTO containing updated data
+     * @return response containing the updated <%= classPrefix %>DetailDTO, or failure if not found
+     */
+    @PutMapping("/{<%= hasEmbeddedId ? embeddedIdFields.map(f => f.name).join('}__{') : ymlConfig.idField %>}")
+    @Operation(summary = "Update <%= entityName %>", description = "Updates existing <%= entityName %>")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'edit')<%= ymlConfig.ownerPermission ? " or @" + classPrefixLowerFirst + "Service.hasOwnerPermission('edit', #" + ymlConfig.idField + ", #updateDto)" : '' %>")
+    public SimpliXApiResponse<<%= classPrefix %>DetailDTO> update(<%= generatePathVariableParams() %>, @RequestBody @Validated <%= classPrefix %>UpdateDTO updateDto) {
+        <% if (hasEmbeddedId) { %>
+        <%= idType %> <%= ymlConfig.idField %> = (new <%= embeddedIdType %>()).fromPathVariables(<%= embeddedIdFields.map(f => f.name).join(', ') %>);
+        updateDto.set<%= capitalizeFirstLetter(ymlConfig.idField || 'id') %>(<%= ymlConfig.idField %>);
+        <% } %>
+
+<% if (hasTreeEntity) { %>
+        return treeService.findById(<%= ymlConfig.idField %>)
+                .map(entity -> SimpliXApiResponse.success(treeService.updateNode(entity, updateDto)))
+                .orElse(SimpliXApiResponse.failure(null, <%- ymlConfig.notFoundMessageKey ? messages.name + '.get("' + ymlConfig.notFoundMessageKey + '")' : '"' + entityName + ' not found"' %>));
+<% } else { %>
+        return service.findById(<%= ymlConfig.idField %>)
+                .map(entity -> SimpliXApiResponse.success(service.update(entity, updateDto)))
+                .orElse(SimpliXApiResponse.failure(null, <%- ymlConfig.notFoundMessageKey ? messages.name + '.get("' + ymlConfig.notFoundMessageKey + '")' : '"' + entityName + ' not found"' %>));
+<% } %>
+    }
+
+    /**
+     * Updates multiple <%= entityName %> entities in a single operation.
+     *
+     * @param updateDtos set of DTOs containing update data
+     * @return response containing the list of updated <%= classPrefix %>DetailDTOs
+     */
+    @PatchMapping
+    @Operation(summary = "Update Multiple <%= entityName %>", description = "Updates multiple existing <%= entityName %>")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'edit')")
+    public SimpliXApiResponse<List<<%= classPrefix %>DetailDTO>> multiUpdate(@RequestBody Set<<%= classPrefix %>UpdateDTO> updateDtos) {
+<% if (hasTreeEntity) { %>
+        // TreeService doesn't support multiUpdate - use service instead
+        List<<%= classPrefix %>DetailDTO> updatedItems = service.multiUpdate(updateDtos);
+<% } else { %>
+        List<<%= classPrefix %>DetailDTO> updatedItems = service.multiUpdate(updateDtos);
+<% } %>
+
+        return SimpliXApiResponse.success(updatedItems);
+    }
+
+    /**
+     * Deletes a <%= entityName %> by its ID.
+     *<% if (hasEmbeddedId) { %><% embeddedIdFields.forEach(function(field) { %>
+     * @param <%= field.name %> <%= field.comment %><% }); %><% } else { %>
+     * @param <%= ymlConfig.idField %> the ID of the <%= entityName %> to delete<% } %>
+     * @return response with success or failure message
+     */
+    @DeleteMapping("/{<%= hasEmbeddedId ? embeddedIdFields.map(f => f.name).join('}__{') : ymlConfig.idField %>}")
+    @Operation(summary = "Delete <%= entityName %>", description = "Deletes <%= entityName %> by ID")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'delete')")
+    public SimpliXApiResponse<Void> delete(<%= generatePathVariableParams() %>) {
+        <% if (hasEmbeddedId) { %><%= idType %> <%= ymlConfig.idField %> = (new <%= embeddedIdType %>()).fromPathVariables(<%= embeddedIdFields.map(f => f.name).join(', ') %>);<% } %>
+<% if (hasTreeEntity) { %>
+        if (!service.existsById(<%= ymlConfig.idField %>)) {
+            return SimpliXApiResponse.failure(null, <%- ymlConfig.notFoundMessageKey ? messages.name + '.get("' + ymlConfig.notFoundMessageKey + '")' : '"' + entityName + ' not found"' %>);
+        }
+        try {
+            treeService.deleteNode(<%= ymlConfig.idField %>);
+            return SimpliXApiResponse.success(null, "<%= entityName %> deleted successfully");
+        } catch (SimpliXGeneralException e) {
+            return SimpliXApiResponse.failure(null, e.getMessage());
+        }
+<% } else { %>
+        if (!service.existsById(<%= ymlConfig.idField %>)) {
+            return SimpliXApiResponse.failure(null, <%- ymlConfig.notFoundMessageKey ? messages.name + '.get("' + ymlConfig.notFoundMessageKey + '")' : '"' + entityName + ' not found"' %>);
+        }
+        service.delete(<%= ymlConfig.idField %>);
+
+        return SimpliXApiResponse.success(null, "<%= entityName %> deleted successfully");
+<% } %>
+    }
+
+    /**
+     * Retrieves a <%= entityName %> by its ID.
+     *<% if (hasEmbeddedId) { %><% embeddedIdFields.forEach(function(field) { %>
+     * @param <%= field.name %> <%= field.comment %><% }); %><% } else { %>
+     * @param <%= ymlConfig.idField %> the ID of the <%= entityName %> to retrieve<% } %>
+     * @return response containing the <%= classPrefix %>DetailDTO, or failure if not found
+     */
+    @GetMapping("/{<%= hasEmbeddedId ? embeddedIdFields.map(f => f.name).join('}__{') : ymlConfig.idField %>}")
+    @Operation(summary = "Get <%= entityName %>", description = "Retrieves <%= entityName %> by ID")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'view')<%= ymlConfig.ownerPermission ? " or @" + classPrefixLowerFirst + "Service.hasOwnerPermission('view', #" + ymlConfig.idField + ", null)" : '' %>")
+    public SimpliXApiResponse<<%= classPrefix %>DetailDTO> get(<%= generatePathVariableParams() %>) {
+        <% if (hasEmbeddedId) { %>
+        <%= idType %> <%= ymlConfig.idField %> = (new <%= embeddedIdType %>()).fromPathVariables(<%= embeddedIdFields.map(f => f.name).join(', ') %>);
+        <% } %>
+
+        return service.findById(<%= ymlConfig.idField %>, <%= classPrefix %>DetailDTO.class)
+                .map(result -> SimpliXApiResponse.success(result))
+                .orElse(SimpliXApiResponse.failure(null, <%- ymlConfig.notFoundMessageKey ? messages.name + '.get("' + ymlConfig.notFoundMessageKey + '")' : '"' + entityName + ' not found"' %>));
+    }
+
+    /**
+     * Retrieves a <%= entityName %> for update purposes.
+     *<% if (hasEmbeddedId) { %><% embeddedIdFields.forEach(function(field) { %>
+     * @param <%= field.name %> <%= field.comment %><% }); %><% } else { %>
+     * @param <%= ymlConfig.idField %> the ID of the <%= entityName %> to retrieve<% } %>
+     * @return response containing the <%= classPrefix %>UpdateDTO, or failure if not found
+     */
+    @GetMapping("/{<%= hasEmbeddedId ? embeddedIdFields.map(f => f.name).join('}__{') : ymlConfig.idField %>}/edit")
+    @Operation(summary = "Get <%= entityName %> for Update", description = "Retrieves <%= entityName %> by ID for update purposes")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'view')<%= ymlConfig.ownerPermission ? " or @" + classPrefixLowerFirst + "Service.hasOwnerPermission('edit', #" + ymlConfig.idField + ", null)" : '' %>")
+    public SimpliXApiResponse<<%= classPrefix %>UpdateFormDTO> updateForm(<%= generatePathVariableParams() %>) {
+        <% if (hasEmbeddedId) { %>
+        <%= idType %> <%= ymlConfig.idField %> = (new <%= embeddedIdType %>()).fromPathVariables(<%= embeddedIdFields.map(f => f.name).join(', ') %>);
+        <% } %>
+
+        return service.findById(<%= ymlConfig.idField %>, <%= classPrefix %>UpdateFormDTO.class)
+                .map(result -> SimpliXApiResponse.success(result))
+                .orElse(SimpliXApiResponse.failure(null, <%- ymlConfig.notFoundMessageKey ? messages.name + '.get("' + ymlConfig.notFoundMessageKey + '")' : '"' + entityName + ' not found"' %>));
+    }
+
+    /**
+     * Batch updates multiple <%= entityName %> entities.
+     *
+     * @param batchUpdateDto the DTO containing batch update data
+     * @return response with success or failure message
+     */
+    @PatchMapping("/batch")
+    @Operation(summary = "Batch Update <%= entityName %>s", description = "Updates multiple <%= entityName %>s")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'edit')")
+    public SimpliXApiResponse<Void> batchUpdate(@RequestBody @Validated <%= classPrefix %>BatchUpdateDTO batchUpdateDto) {
+        service.batchUpdate(batchUpdateDto);
+        return SimpliXApiResponse.success(null, "<%= entityName %>s updated successfully");
+    }
+
+    /**
+     * Deletes multiple <%= entityName %> entities by their IDs.
+     *<% if (hasEmbeddedId) { %>
+     * @param compositeIds list of composite key strings<% } else { %>
+     * @param <%= ymlConfig.idField %>s list of IDs to delete<% } %>
+     * @return response with success or failure message
+     */
+    @DeleteMapping("/batch")
+    @Operation(summary = "Delete multiple <%= entityName %>s", description = "Deletes multiple <%= entityName %> by their IDs")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'delete')")
+    public SimpliXApiResponse<Void> batchDelete(<% if (hasEmbeddedId) { %>@RequestParam List<String> compositeIds) {
+        List<<%= idType %>> <%= ymlConfig.idField %>s = compositeIds.stream()
+                .map(compositeId -> (new <%= embeddedIdType %>()).fromCompositeId(compositeId))
+                .collect(Collectors.toList());<% } else { %>@RequestParam List<<%= idType %>> <%= ymlConfig.idField %>s) {<% } %>
+<% if (hasTreeEntity) { %>
+        try {
+            treeService.batchDeleteNodes(<%= ymlConfig.idField %>s);
+            return SimpliXApiResponse.success(null, "<%= entityName %>s deleted successfully");
+        } catch (SimpliXGeneralException e) {
+            return SimpliXApiResponse.failure(null, e.getMessage());
+        }
+<% } else { %>
+        service.batchDelete(<%= ymlConfig.idField %>s);
+
+        return SimpliXApiResponse.success(null, "<%= entityName %>s deleted successfully");
+<% } %>
+    }
+<% if (hasOrderField) { %>
+
+    //----------------------------------
+    // Order Update
+    //----------------------------------
+<% if (hasTreeEntity) { %>
+
+    /**
+     * Updates the order of sibling nodes under a specific parent.
+     *
+     * @param parentId the parent node ID (empty string or null for root level)
+     * @param orderUpdateDtos list of DTOs containing the IDs and new order values
+     * @return response containing the list of updated <%= classPrefix %>ListDTOs
+     */
+    @PatchMapping("/order")
+    @Operation(summary = "Update <%= entityName %> Orders", description = "Updates the order of sibling <%= entityName %> entities under a parent")
+    @SimpliXStandardApi
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'edit')")
+    public SimpliXApiResponse<List<<%= classPrefix %>ListDTO>> updateTreeOrder(
+            @RequestParam(required = false) <%= idType %> parentId,
+            @RequestBody @Validated List<<%= classPrefix %>OrderUpdateDTO> orderUpdateDtos) {
+        try {
+            List<<%= classPrefix %>ListDTO> updatedEntities = treeService.updateOrders(parentId, orderUpdateDtos);
+            return SimpliXApiResponse.success(updatedEntities, "<%= entityName %> orders updated successfully");
+        } catch (SimpliXGeneralException e) {
+            return SimpliXApiResponse.failure(null, e.getMessage());
+        }
+    }
+<% } else { %>
+
+    /**
+     * Updates the order of multiple <%= entityName %> entities.
+     *
+     * @param orderUpdateDtos list of DTOs containing the IDs and new order values
+     * @return response containing the list of updated <%= classPrefix %>DetailDTOs
+     */
+    @PatchMapping("/order")
+    @Operation(summary = "Update <%= entityName %> Orders", description = "Updates the order of multiple <%= entityName %> entities")
+    @SimpliXStandardApi
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'edit')")
+    public SimpliXApiResponse<List<<%= classPrefix %>DetailDTO>> updateOrder(
+            @RequestBody @Validated List<<%= classPrefix %>OrderUpdateDTO> orderUpdateDtos) {
+        List<<%= classPrefix %>DetailDTO> updatedEntities = service.updateOrders(orderUpdateDtos);
+        return SimpliXApiResponse.success(updatedEntities, "<%= entityName %> orders updated successfully");
+    }
+<% } %>
+<% } %>
+<% if (hasTreeEntity) { %>
+
+    //----------------------------------
+    // Tree Operations
+    //----------------------------------
+
+    /**
+     * Retrieves the tree structure starting from root nodes.
+     *
+     * @param fullTree if true, returns full tree with all descendants; if false, returns only root nodes
+     * @return response containing the list of <%= classPrefix %>ListDTO representing the tree structure
+     */
+    @GetMapping("/tree")
+    @Operation(summary = "Get <%= entityName %> Tree", description = "Retrieves the tree structure of <%= entityName %> entities")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'list')")
+    public SimpliXApiResponse<List<<%= classPrefix %>ListDTO>> getTree(
+            @RequestParam(value = "fullTree", defaultValue = "false") boolean fullTree) {
+        List<<%= classPrefix %>ListDTO> tree = treeService.findTree(fullTree);
+        return SimpliXApiResponse.success(tree);
+    }
+
+    /**
+     * Retrieves the subtree starting from a specific node.
+     *
+     * @param <%= ymlConfig.idField %> the root node ID to start from
+     * @param fullTree if true, returns full subtree with all descendants; if false, returns only immediate children
+     * @return response containing the list of <%= classPrefix %>ListDTO representing the subtree
+     */
+    @GetMapping("/tree/{<%= ymlConfig.idField %>}")
+    @Operation(summary = "Get <%= entityName %> Subtree", description = "Retrieves the subtree of <%= entityName %> entities starting from a specific node")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'list')")
+    public SimpliXApiResponse<List<<%= classPrefix %>ListDTO>> getSubtree(
+            @PathVariable <%= idType %> <%= ymlConfig.idField %>,
+            @RequestParam(value = "fullTree", defaultValue = "false") boolean fullTree) {
+        List<<%= classPrefix %>ListDTO> subtree = treeService.findTree(<%= ymlConfig.idField %>, fullTree);
+        return SimpliXApiResponse.success(subtree);
+    }
+<% } %>
+
+    //----------------------------------
+    // Searchable JPA
+    //----------------------------------
+
+    /**
+     * Searches <%= entityName %> entities using GET method.
+     *
+     * @param params map of search parameters
+     * @return response containing a page of <%= classPrefix %>ListDTO
+     */
+    @GetMapping("/search")
+    @Operation(summary = "Search <%= entityName %> list (GET)", description = "Searches <%= entityName %> with various conditions using GET method")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'list')")
+    public SimpliXApiResponse<Page<<%= classPrefix %>ListDTO>> simpleSearch(@RequestParam(required = false) @SearchableParams(<%= classPrefix %>SearchDTO.class) Map<String, String> params) {
+        return SimpliXApiResponse.success(service.search(params));
+    }
+
+<% if (exportConfig.enabled) { %>
+    /**
+     * Downloads every entry the list's search parameters match as CSV or Excel.
+     *
+     * <p>Writes the file to the response rather than returning an envelope: the body is the file,
+     * streamed page by page through simplix-excel. Errors still reach the global handler as
+     * exceptions.
+     *
+     * @param params map of search parameters, the same the list takes
+     * @param format the file kind, CSV when absent
+     * @param response where the file is written
+     * @throws IOException when the response cannot be written
+     */
+    @GetMapping("/export")
+    @Operation(summary = "Export <%= entityName %> list",
+            description = "Downloads every <%= entityName %> the search conditions match as a CSV or XLSX file")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'export')")
+    public void export(
+            @RequestParam(required = false) @SearchableParams(<%= classPrefix %>SearchDTO.class) Map<String, String> params,
+            @RequestParam(defaultValue = "CSV") ExportFormat format,
+            HttpServletResponse response) throws IOException {
+        service.export(params, format, response);
+    }
+
+<% } %>
+<% if (ymlConfig.timeAxisField) { %>
+    /**
+     * Counts <%= entityName %> per slice of a time window, for the strip above the list.
+     *
+     * <p>Takes the same search parameters the list does, so the strip thins when the list is
+     * narrowed rather than showing a shape the rows below it do not have.
+     *
+     * @param from the first instant in the window, inclusive
+     * @param to the instant the window ends at, exclusive
+     * @param buckets how many slices to divide the window into
+     * @param params map of search parameters
+     * @return response containing one count per bucket, oldest first
+     */
+    @GetMapping("/counts")
+    @Operation(summary = "Count <%= entityName %> per time bucket", description = "Counts <%= entityName %> per slice of a time window under the same search conditions")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'list')")
+    public SimpliXApiResponse<List<Long>> counts(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+            @RequestParam int buckets,
+            @RequestParam(required = false) @SearchableParams(<%= classPrefix %>SearchDTO.class) Map<String, String> params) {
+        return SimpliXApiResponse.success(
+                service.countBuckets(TimeWindowParams.strip(params), from, to, buckets));
+    }
+
+<% } %>
+<% if (statusCountFields.length > 0) { %>
+    /**
+     * Counts <%= entityName %> per value of one field, for the cards above the list.
+     *
+     * <p>Takes the same search parameters the list does, so a card's count is the number of rows
+     * the list shows once that value is picked.
+     *
+     * @param field the field to count by: <%= statusCountFields.join(', ') %>
+     * @param params map of search parameters
+     * @return response containing one count per value, every enum constant in declaration order
+     */
+    @GetMapping("/status-counts")
+    @Operation(summary = "Count <%= entityName %> per value", description = "Counts <%= entityName %> per value of one field under the same search conditions as the list")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'list')")
+    public SimpliXApiResponse<List<ValueCountDTO>> statusCounts(
+            @RequestParam String field,
+            @RequestParam(required = false) @SearchableParams(<%= classPrefix %>SearchDTO.class) Map<String, String> params) {
+        return SimpliXApiResponse.success(service.statusCounts(field, params));
+    }
+
+<% } %>
+<% if (aggregateItems.length > 0) { %>
+    /**
+     * Computes <%= entityName %> figures, for the cards above the list.
+     *
+     * <p>Takes the same search parameters the list does, so a figure covers the rows the list shows.
+     *
+     * @param params map of search parameters
+     * @return response containing <%= aggregateItems.map(a => `${a.op} of ${a.field}`).join(', ') %>, in that order
+     */
+    @GetMapping("/aggregates")
+    @Operation(summary = "Compute <%= entityName %> figures", description = "Computes sums and counts over <%= entityName %> under the same search conditions as the list")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'list')")
+    public SimpliXApiResponse<List<AggregateValueDTO>> aggregates(
+            @RequestParam(required = false) @SearchableParams(<%= classPrefix %>SearchDTO.class) Map<String, String> params) {
+        return SimpliXApiResponse.success(service.aggregates(params));
+    }
+
+<% } %>
+    /**
+     * Searches <%= entityName %> entities using POST method.
+     *
+     * @param searchCondition the search conditions for filtering
+     * @return response containing a page of <%= classPrefix %>ListDTO
+     */
+    @PostMapping("/search")
+    @Operation(summary = "Search <%= entityName %> list (POST)", description = "Searches <%= entityName %> with various conditions using POST method")
+    @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'list')")
+    public SimpliXApiResponse<Page<<%= classPrefix %>ListDTO>> search(@RequestBody @Validated SearchCondition<<%= classPrefix %>SearchDTO> searchCondition) {
+        return SimpliXApiResponse.success(service.search(searchCondition));
+    }
+}
