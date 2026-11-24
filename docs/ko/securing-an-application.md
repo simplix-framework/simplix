@@ -173,3 +173,5 @@ curl -X POST -H "Authorization: Bearer <access token>" http://localhost:8080/aut
 
 - [simplix-auth](../../simplix-auth/README.ko.md): 키 교체, OAuth2 로그인, 토큰 블랙리스트
 - [simplix-encryption](../../simplix-encryption/README.ko.md): 저장하는 개인정보의 암호화
+- [경로 보호](../../simplix-auth/docs/ko/securing-paths.md): 웹 로그인, CSRF, 직접 정의하는 규칙
+- [소셜 계정 로그인](../../simplix-auth/docs/ko/signing-in-with-social-accounts.md): OAuth2 제공자

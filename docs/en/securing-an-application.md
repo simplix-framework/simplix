@@ -173,3 +173,5 @@ Revoked tokens are refused only when the blacklist is on (`simplix.auth.token.en
 
 - [simplix-auth](../../simplix-auth/README.md): key rotation, OAuth2 login, the token blacklist
 - [simplix-encryption](../../simplix-encryption/README.md): encrypting personal data at rest
+- [Securing paths](../../simplix-auth/docs/en/securing-paths.md): the web login, CSRF and rules of your own
+- [Signing in with social accounts](../../simplix-auth/docs/en/signing-in-with-social-accounts.md): OAuth2 providers
