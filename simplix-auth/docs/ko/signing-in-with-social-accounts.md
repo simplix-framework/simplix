@@ -96,6 +96,22 @@ public class LibraryOAuth2Service implements OAuth2AuthenticationService {
 
 `OAuth2UserInfo`는 모든 제공자에서 같은 형태입니다: `provider`, `providerId`, `email`, `emailVerified`, `name`, `firstName`, `lastName`, `profileImageUrl`, `locale`, 원본 `attributes`.
 
+### `OAuth2AuthenticationService`의 메서드
+
+| 메서드 | 기본 동작 | 호출 시점 |
+|---|---|---|
+| `authenticateOAuth2User(userInfo)` | 필수 | 소셜 로그인마다 호출됩니다. 제공자와 제공자 ID로 사용자를 찾고, 신규 사용자의 처리 방식을 결정한 뒤 토큰을 발급할 `UserDetails`를 반환합니다 |
+| `authenticateOAuth2User(userInfo, intent)` | 위 메서드를 호출 | 같은 시점에 요청의 `OAuth2Intent`와 함께 호출됩니다. `LOGIN`은 기존 사용자만 로그인시키고, `REGISTER`는 이미 등록된 계정을 거부하며, `AUTO`는 로그인하거나 새로 생성합니다 |
+| `linkSocialAccount(userId, userInfo)` | 필수 | 로그인한 사용자가 계정에 제공자를 추가할 때 |
+| `unlinkSocialAccount(userId, provider)` | 필수 | 사용자가 제공자를 제거할 때. 마지막 로그인 수단이면 거부하세요 |
+| `getLinkedProviders(userId)` | 필수 | 계정에 연결된 제공자를 조회할 때 |
+| `findUserIdByProviderConnection(provider, providerId)` | `null` 반환 | 소셜 로그인한 사용자가 다른 제공자를 연결할 때 내부 사용자 ID를 찾기 위해 호출됩니다 |
+| `findUserIdByEmail(email)` | `null` 반환 | 연결 기록이 없을 때 위 조회의 대체 수단으로 호출됩니다 |
+| `loadUserDetailsByUserId(userId)` | `null` 반환 | 계정 연결 후 새 토큰을 발급할 때 |
+| `onAuthenticationSuccess(user, socialInfo, ipAddress, userAgent)` | 동작 없음 | 소셜 로그인 성공 후. 로그인 이력 기록이나 이벤트 발행에 사용하세요 |
+
+계정 연결 기능을 제공하는 애플리케이션은 조회 메서드 세 개를 재정의해야 합니다. 기본 구현으로는 연결 흐름에서 사용자를 찾을 수 없습니다.
+
 ## 3단계. 제공자로 이동
 
 | 링크 | 동작 |
