@@ -57,6 +57,7 @@ SQLite처럼 한 번에 한 writer만 허용하는 데이터베이스는 다른 
 | `PendingEviction` | `getEntityClass()` | 레코드에 저장된 클래스 이름으로 엔티티 클래스를 로드합니다 |
 | `PendingEviction` | `getEntityClassName()`, `getEntityId()`, `getRegion()`, `getOperation()`, `isEvictQueryCache()`, `getTimestamp()` | 엔티티 클래스 이름, 단건 대상일 때의 ID, 리전, 작업 종류, 쿼리 캐시 동시 제거 여부, 캐시 제거를 수집한 시각을 반환합니다 |
 | `PendingEvictionCompletedEvent` | `getPendingEvictions()` | 트랜잭션의 캐시 제거 목록을 반환합니다 |
+| `HibernateCacheHolder` | `getCache()`, `setCache(cache)`, `isReset()` | 모듈이 보관하는 Hibernate `Cache`에 대한 정적 접근입니다. 모듈이 시작할 때 한 번 설정하며, Spring 컨텍스트 밖의 코드는 `getCache()`로 조회합니다 |
 
 ## 관련 문서
 

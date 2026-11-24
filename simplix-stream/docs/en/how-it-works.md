@@ -103,6 +103,14 @@ The guides show the methods a task needs. The types they name also have these pu
 | `SimpliXStreamEventSourceRegistry` | `getRegisteredResources()`, `getRegisteredEventTypes()`, `getEventSources()`, `unregister(resource)` | return the registered resource names, event types and event sources, and remove the event source of a resource, returning it or `null` |
 | `SubscriptionManager` | `updateSubscriptions(sessionId, subscriptions)`, `clearSubscriptions(sessionId)` | replace the subscription list of a session, returning the `SubscriptionUpdateResult`, and remove every subscription of a session; the subscription endpoint calls the first |
 | `SubscriptionManager` | `setOnSubscriptionAdded(callback)`, `setOnSubscriptionRemoved(callback)`, `getActualInterval(key, requested)` | register the callbacks the module uses for added and removed subscriptions, and return the interval a subscription runs at |
+| `StreamStatisticsService` | `getStats`, `getSessionStatsByState`, `getTopResources`, `getServerStats`, `getSessions`, `getSessionDetails`, `getSubscriptionsByResource` | return the numbers and lists of the global endpoints of the admin API; inject the service to read them in code |
+| `SchedulerManager` | `getScheduler`, `getAllSchedulers`, `getSchedulerCount`, `getLocalSubscribers`, `getLocalSubscriberCount`, `isLeader`, `isDistributedMode` | read the running collections, their subscribers on this instance and the mode |
+| `SchedulerManager` | `triggerNow`, `stopScheduler`, `forceStopScheduler` | run a collection at once and stop one; the admin API calls them |
+| `SchedulerManager` | `addSubscriber`, `removeSubscriber`, `asSubscriberLookup` | the calls of the module when subscriptions change |
+| `SubscriptionScheduler` | `getSubscribers`, `getSubscriberCount`, `hasSubscribers`, `getIntervalMs`, `isActive`, `getExecutionCount`, `getSuccessCount`, `getErrorCount`, `getConsecutiveErrors`, `getLastSuccessAt`, `getLastError` | the subscribers, the interval, the state, the counters, the time of the last success and the last error of a collection, as the admin API reports them |
+| `SubscriptionScheduler` | `addSubscriber`, `removeSubscriber`, `recordSuccess`, `recordError`, `setScheduledFuture` | the calls of the module while a collection runs |
+| `StreamServerManager` | `getActiveServers`, `getServer`, `getActiveServerCount`, `isRunning` | read the instances registered in the database and whether this manager runs |
+| `StreamServerManager` | `registerInstance`, `unregisterInstance`, `updateStats`, `handleDeadServer`, `setOnDeadServerDetected` | the calls of the module at start, at stop, with each heartbeat and when an instance is found dead |
 
 ## Related documents
 
