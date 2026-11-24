@@ -1,0 +1,937 @@
+package <%= packagePaths.service %>;
+
+import <%= packagePaths.dto %>.<%= classPrefix %>DTOs.<%= classPrefix %>CreateDTO;
+import <%= packagePaths.dto %>.<%= classPrefix %>DTOs.<%= classPrefix %>UpdateDTO;
+import <%= packagePaths.dto %>.<%= classPrefix %>DTOs.<%= classPrefix %>DetailDTO;
+<%
+// Check if batch update is supported for import
+const hasBatchUpdateFieldsForImport = fields.some(field => {
+    const ymlField = ymlConfig.fields?.[field.name];
+    return ymlField?.views?.includes('batchUpdate');
+});
+if (hasBatchUpdateFieldsForImport) { %>
+import <%= packagePaths.dto %>.<%= classPrefix %>DTOs.<%= classPrefix %>BatchUpdateDTO;
+<% } %>
+import <%= entityPackage %>.<%= entityName %>;
+<% if (hasEmbeddedId) { %>
+import <%= entityPackage %>.<%= entityName %>.<%= embeddedIdType %>;
+<% } %>
+import <%= packagePaths.repository %>.<%= entityName %>Repository;
+<%
+// Parse import statements for reference entities (excluding self-reference)
+// Only import services for ManyToMany references (multiple: true) since ManyToOne uses FK ID directly
+const importedServices = new Set();
+
+// Find ManyToMany reference types from yml configuration and generate imports if different package
+if (ymlConfig && ymlConfig.fields) {
+    Object.entries(ymlConfig.fields).forEach(([fieldName, ymlField]) => {
+        // Only generate service imports for ManyToMany references (multiple: true)
+        if (ymlField.reference && ymlField.reference.entity && ymlField.reference.entity !== entityName && ymlField.reference.multiple) {
+            const refEntity = ymlField.reference.entity;
+            const refModulePath = ymlField.reference.modulePath;
+
+            if (!importedServices.has(refEntity)) {
+                importedServices.add(refEntity);
+                if (refModulePath && refModulePath !== modulePath) {
+                    // Different package - generate import
+                    const servicePackage = basePackage + '.web.' + refModulePath.replace(/\//g, '.') + '.service';
+                    %>
+import <%= servicePackage %>.<%= refEntity %>Service;<%
+                }
+            }
+        }
+    });
+} %>
+
+import dev.simplecore.simplix.core.exception.SimpliXGeneralException;
+import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+<% const statusCountFields = ymlConfig.statusCounts || []; const aggregateItems = ymlConfig.aggregates || []; const hasFigures = statusCountFields.length > 0 || aggregateItems.length > 0; const figureScope = ymlConfig.figureScope && ymlConfig.figureScope.method; const scopeMayMatchNothing = !!(ymlConfig.figureScope && ymlConfig.figureScope.mayMatchNothing); const scopedValue = scopeMayMatchNothing ? 'Optional.of(new HashMap<String, String>())' : 'new HashMap<String, String>()'; %>
+<% if (ymlConfig.timeAxisField) { %>
+import dev.simplecore.searchable.core.service.bucket.TimeBucketCounter;
+<% } %>
+<% if (hasFigures) { %>
+import dev.simplecore.searchable.core.service.aggregate.SearchAggregator;
+import dev.simplecore.searchable.core.service.aggregate.SearchAggregator.AggregateValue;
+import dev.simplecore.searchable.core.service.aggregate.SearchAggregator.ValueCount;
+import dev.simplecore.simplix.core.exception.SimpliXGeneralException;
+<% } %>
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.MessageSource;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+<%
+// Build excluded fields set from generator-simplix.json configuration (same as DTO template)
+const excludedFieldsSet = new Set(dtoExcludeFields || []);
+
+// Helper: Check if a field should be excluded from DTO generation
+function isExcludedField(fieldName) {
+    return excludedFieldsSet.has(fieldName);
+}
+
+// Helper: Check if field name already ends with 'Id' (to avoid 'IdId' pattern)
+function fieldNameEndsWithId(fieldName) {
+    return fieldName.endsWith('Id') && fieldName !== 'Id';
+}
+
+// Helper: whether a referencing field holds the key itself (a scalar column such as grantedBy)
+// rather than an association whose key sits one step further; the field's own type decides.
+function holdsReferenceKey(fieldName) {
+    if (fieldNameEndsWithId(fieldName)) return true;
+    const entityField = fields.find(f => f.name === fieldName);
+    return Boolean(entityField) && entityField.typeKind !== 'entity' && !entityField.isCollection;
+}
+
+// Helper: Get DTO setter name for reference field (avoids 'IdId' pattern)
+function getDtoSetterName(fieldName, hasReference, isMultiple) {
+    if (!hasReference) {
+        return fieldName;
+    }
+    if (isMultiple) {
+        return fieldNameEndsWithId(fieldName) ? `${fieldName}s` : `${fieldName}Ids`;
+    } else {
+        return holdsReferenceKey(fieldName) ? fieldName : `${fieldName}Id`;
+    }
+}
+// Helper: For primitive boolean fields with 'is' prefix, Lombok strips 'is' in the setter
+// e.g., primitive `boolean isOnline` -> setter: `setOnline(boolean)` (not `setIsOnline`)
+// But boxed `Boolean isOnline` -> setter: `setIsOnline(Boolean)` (keeps 'is' prefix)
+// This helper is ONLY for entity setters, not DTO setters (DTOs use boxed Boolean)
+function getEntitySetterSuffix(field) {
+    if (field.type === 'boolean' && field.name.startsWith('is') && field.name.length > 2) {
+        return field.name.charAt(2).toUpperCase() + field.name.slice(3);
+    }
+    return field.name.charAt(0).toUpperCase() + field.name.slice(1);
+}
+%>
+/**
+ * Unit tests for <%= classPrefix %>Service
+ *
+ * This test class verifies:
+ * - CRUD operations (Create, Read, Update, Delete)
+ * - Search and pagination functionality
+ * - Batch update operations
+ * - Exception handling
+ * - Data validation
+ */
+@ExtendWith(MockitoExtension.class)
+@DisplayName("<%= classPrefix %>Service Tests")
+class <%= classPrefix %>ServiceTest {
+
+    @Mock
+    private <%= entityName %>Repository repository;
+
+    @Mock
+    private EntityManager entityManager;
+
+    @Mock
+    private MessageSource messageSource;
+
+    @Mock
+    private ModelMapper modelMapper;
+<% if (ymlConfig.timeAxisField) { %>
+    @Mock
+    private TimeBucketCounter timeBucketCounter;
+<% } %>
+<% if (hasFigures) { %>
+    @Mock
+    private SearchAggregator searchAggregator;
+<% } %>
+    <%
+    // Add mocks for reference services (only for ManyToMany - ManyToOne uses FK ID directly)
+    const addedServices = new Set();
+    fields.forEach(field => {
+        // Only add mocks for ManyToMany relationships (collection references)
+        if (field.relationType === 'ManyToMany' || (field.isCollection && field.typeKind === 'entity')) {
+            const entityType = field.actualType || field.type;
+            if (!addedServices.has(entityType) && entityType !== entityName) {
+                addedServices.add(entityType); %>
+    @Mock
+    private ObjectProvider<<%= entityType %>Service> <%= _.camelCase(entityType) %>ServiceProvider;
+    <%      }
+        }
+    });
+    // Also check yml configuration for ManyToMany references
+    if (ymlConfig && ymlConfig.fields) {
+        Object.values(ymlConfig.fields).forEach(field => {
+            if (field.reference && field.reference.entity && field.reference.multiple && !addedServices.has(field.reference.entity) && field.reference.entity !== entityName) {
+                addedServices.add(field.reference.entity); %>
+    @Mock
+    private ObjectProvider<<%= field.reference.entity %>Service> <%= _.camelCase(field.reference.entity) %>ServiceProvider;
+    <%      }
+        });
+    } %>
+
+    private <%= classPrefix %>Service service;
+
+    private <%= entityName %> entity;
+    private <%= classPrefix %>CreateDTO createDto;
+    private <%= classPrefix %>UpdateDTO updateDto;
+    <% if (hasEmbeddedId) { %>
+    private <%= embeddedIdType %> embeddedId;
+    <% } else { %>
+    private <%= idType %> testId;
+    <% } %>
+
+    @BeforeEach
+    void setUp() {
+        service = new <%= classPrefix %>Service(
+            repository,
+            entityManager<%
+        Array.from(addedServices).forEach(entityType => { %>,
+            <%= _.camelCase(entityType) %>ServiceProvider<%
+        }); %>,
+            messageSource<% if (ymlConfig.timeAxisField) { %>,
+            timeBucketCounter<% } %><% if (hasFigures) { %>,
+            searchAggregator<% } %>
+        );
+
+        // Inject ModelMapper using reflection since it's not in the constructor
+        ReflectionTestUtils.setField(service, "modelMapper", modelMapper);
+
+        <% if (hasEmbeddedId) { %>
+        // Setup embedded ID
+        embeddedId = new <%= embeddedIdType %>();
+        <% embeddedIdFields.forEach(field => { %>
+        embeddedId.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(<%=
+            field.type === 'String' ? '"test-' + field.name + '"' :
+            field.type === 'Long' ? '1L' :
+            field.type === 'Integer' ? '1' :
+            field.type === 'UUID' ? 'UUID.randomUUID()' :
+            '"test"'
+        %>);
+        <% }); %>
+        <% } else { %>
+        testId = <%= idType === 'String' ? 'UUID.randomUUID().toString()' :
+                   idType === 'Long' ? '1L' :
+                   idType === 'Integer' ? '1' :
+                   idType === 'UUID' ? 'UUID.randomUUID()' : '1' %>;
+        <% } %>
+
+        // Setup test entity
+        entity = new <%= entityName %>();
+        <% if (!hasEmbeddedId) { %>entity.setId(testId<% if (idType !== 'String') { %>.toString()<% } %>);<% } %>
+        <% if (hasEmbeddedId) { %>
+        entity.set<%= embeddedIdField.charAt(0).toUpperCase() + embeddedIdField.slice(1) %>(embeddedId);
+        <% } else { %>
+        entity.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);
+        <% } %>
+        <%
+        // Set fields that are in 'edit' view (same as CreateDTO)
+        // Skip excluded fields (audit fields like createdBy, updatedBy, etc.)
+        fields.forEach(field => {
+            const ymlField = ymlConfig.fields?.[field.name];
+            const setterSuffix = getEntitySetterSuffix(field);
+            if (ymlField?.views?.includes('edit') && field.name !== idFieldName && !field.isRelation && !isExcludedField(field.name)) {
+                if (field.type === 'String') { %>
+        entity.set<%= setterSuffix %>("test-<%= field.name %>");
+        <%      } else if (field.type === 'Integer' || field.type === 'int') { %>
+        entity.set<%= setterSuffix %>(1);
+        <%      } else if (field.type === 'Long' || field.type === 'long') { %>
+        entity.set<%= setterSuffix %>(1L);
+        <%      } else if (field.type === 'Boolean' || field.type === 'boolean') { %>
+        entity.set<%= setterSuffix %>(true);
+        <%      }
+            }
+        }); %>
+        entity.setCreatedAt(Instant.now());
+        entity.setUpdatedAt(Instant.now());
+
+        // Setup DTOs
+        createDto = new <%= classPrefix %>CreateDTO();
+        <%
+        // Set DTO fields
+        // Skip excluded fields (audit fields like createdBy, updatedBy, etc.)
+        fields.forEach(field => {
+            const ymlField = ymlConfig.fields?.[field.name];
+            if (ymlField?.views?.includes('edit') && field.name !== idFieldName && !field.isRelation && !isExcludedField(field.name)) {
+                // For reference fields, use getDtoSetterName to avoid 'IdId' pattern
+                const hasReference = ymlField?.reference && !ymlField.reference.multiple;
+                const setterName = getDtoSetterName(field.name, hasReference, false);
+                const upperSetterName = setterName.charAt(0).toUpperCase() + setterName.slice(1);
+                if (field.type === 'String') { %>
+        createDto.set<%= upperSetterName %>("test-<%= field.name %>");
+        <%      } else if (field.type === 'Integer' || field.type === 'int') { %>
+        createDto.set<%= upperSetterName %>(1);
+        <%      } else if (field.type === 'Long' || field.type === 'long') { %>
+        createDto.set<%= upperSetterName %>(1L);
+        <%      } else if (field.type === 'Boolean' || field.type === 'boolean') { %>
+        createDto.set<%= upperSetterName %>(true);
+        <%      }
+            }
+        }); %>
+
+        updateDto = new <%= classPrefix %>UpdateDTO();
+        <% if (!hasEmbeddedId) { %>updateDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);<% } %>
+        <%
+        // Skip excluded fields (audit fields like createdBy, updatedBy, etc.)
+        fields.forEach(field => {
+            const ymlField = ymlConfig.fields?.[field.name];
+            if (ymlField?.views?.includes('edit') && field.name !== idFieldName && !field.isRelation && !isExcludedField(field.name)) {
+                // For reference fields, use getDtoSetterName to avoid 'IdId' pattern
+                const hasReference = ymlField?.reference && !ymlField.reference.multiple;
+                const setterName = getDtoSetterName(field.name, hasReference, false);
+                const upperSetterName = setterName.charAt(0).toUpperCase() + setterName.slice(1);
+                if (field.type === 'String') { %>
+        updateDto.set<%= upperSetterName %>("updated-<%= field.name %>");
+        <%      } else if (field.type === 'Integer' || field.type === 'int') { %>
+        updateDto.set<%= upperSetterName %>(2);
+        <%      } else if (field.type === 'Long' || field.type === 'long') { %>
+        updateDto.set<%= upperSetterName %>(2L);
+        <%      } else if (field.type === 'Boolean' || field.type === 'boolean') { %>
+        updateDto.set<%= upperSetterName %>(false);
+        <%      }
+            }
+        }); %>
+    }
+
+    @Test
+    @DisplayName("Should create entity successfully")
+    void testCreate() {
+        // Given
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId<% if (idType !== 'String') { %>.toString()<% } %>);<% } %>
+
+        when(repository.saveAndFlush(any(<%= entityName %>.class))).thenReturn(entity);
+        when(repository.findById(any())).thenReturn(Optional.of(entity));
+        doAnswer(invocation -> {
+            // Simulate mapping from DTO to entity
+            return null;
+        }).when(modelMapper).map(any(), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        <%= classPrefix %>DetailDTO result = service.create(createDto);
+
+        // Then
+        assertThat(result).isNotNull();
+        <% if (hasEmbeddedId) { %>
+        assertThat(result.get<%= embeddedIdField.charAt(0).toUpperCase() + embeddedIdField.slice(1) %>()).isEqualTo(embeddedId);
+        <% } else { %>
+        assertThat(result.get<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>()).isEqualTo(testId<% if (idType !== 'String') { %>.toString()<% } %>);
+        <% } %>
+        verify(repository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+
+    @Test
+    @DisplayName("Should find entity by ID")
+    void testFindById() {
+        // Given
+        when(repository.findById(<% if (hasEmbeddedId) { %>embeddedId<% } else { %>testId<% } %>))
+            .thenReturn(Optional.of(entity));
+
+        // When
+        Optional<<%= entityName %>> result = service.findById(<% if (hasEmbeddedId) { %>embeddedId<% } else { %>testId<% } %>);
+
+        // Then
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(entity);
+        verify(repository, times(1)).findById(<% if (hasEmbeddedId) { %>embeddedId<% } else { %>testId<% } %>);
+    }
+
+    @Test
+    @DisplayName("Should return empty when entity not found")
+    void testFindByIdNotFound() {
+        // Given
+        when(repository.findById(<% if (hasEmbeddedId) { %>embeddedId<% } else { %>testId<% } %>))
+            .thenReturn(Optional.empty());
+
+        // When
+        Optional<<%= entityName %>> result = service.findById(<% if (hasEmbeddedId) { %>embeddedId<% } else { %>testId<% } %>);
+
+        // Then
+        assertThat(result).isEmpty();
+        verify(repository, times(1)).findById(<% if (hasEmbeddedId) { %>embeddedId<% } else { %>testId<% } %>);
+    }
+
+    @Test
+    @DisplayName("Should update entity successfully")
+    void testUpdate() {
+        // Given
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId<% if (idType !== 'String') { %>.toString()<% } %>);<% } %>
+
+        when(repository.saveAndFlush(any(<%= entityName %>.class))).thenReturn(entity);
+        when(repository.findById(any())).thenReturn(Optional.of(entity));
+        doAnswer(invocation -> {
+            // Simulate mapping from DTO to entity
+            return null;
+        }).when(modelMapper).map(any(), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        <%= classPrefix %>DetailDTO result = service.update(entity, updateDto);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(repository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+
+    @Test
+    @DisplayName("Should handle entity update with save")
+    void testUpdateWithSave() {
+        // Given
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId<% if (idType !== 'String') { %>.toString()<% } %>);<% } %>
+
+        when(repository.saveAndFlush(any(<%= entityName %>.class))).thenReturn(entity);
+        when(repository.findById(any())).thenReturn(Optional.of(entity));
+        doAnswer(invocation -> {
+            return null;
+        }).when(modelMapper).map(any(), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        <%= classPrefix %>DetailDTO result = service.update(entity, updateDto);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(repository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+
+    <% if (!hasEmbeddedId) { %>
+    @Test
+    @DisplayName("Should refuse an update that changes the ID")
+    void testUpdateRefusesChangedId() {
+        // Given
+        updateDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(<%= idType === 'String' ? 'UUID.randomUUID().toString()' :
+                   idType === 'Long' ? '2L' :
+                   idType === 'Integer' ? '2' :
+                   idType === 'UUID' ? 'UUID.randomUUID()' : '2' %>);
+
+        // When/Then: the message is the key a placeholder names, resolved only at the HTTP layer
+        assertThatThrownBy(() -> service.update(entity, updateDto))
+            .isInstanceOf(SimpliXGeneralException.class)
+            .hasMessageContaining("error.id.cannot.change");
+
+        verify(repository, never()).saveAndFlush(any(<%= entityName %>.class));
+    }
+    <% } %>
+
+    @Test
+    @DisplayName("Should delete entity successfully")
+    void testDelete() {
+        // Given
+        <% if (idType === 'String') { %>
+        String deleteId = testId;
+        <% } else { %>
+        String deleteId = testId.toString();
+        <% } %>
+        doNothing().when(repository).deleteById(deleteId);
+
+        // When
+        service.delete(deleteId);
+
+        // Then
+        verify(repository, times(1)).deleteById(deleteId);
+    }
+
+    @Test
+    @DisplayName("Should handle batch delete")
+    void testBatchDelete() {
+        // Given
+        <% if (idType === 'String') { %>
+        List<String> deleteIds = Arrays.asList(testId, UUID.randomUUID().toString());
+        <% } else { %>
+        List<String> deleteIds = Arrays.asList(testId.toString(), String.valueOf(<%= idType === 'Integer' ? 'new Random().nextInt(1000) + 1' : idType === 'Long' ? 'new Random().nextLong()' : '999L' %>));
+        <% } %>
+        doNothing().when(repository).deleteById(any());
+
+        // When
+        service.batchDelete(deleteIds);
+
+        // Then
+        // SimpliXBaseService calls deleteById for each ID
+        verify(repository, times(deleteIds.size())).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("Should find all entities with pagination")
+    void testFindAllWithPagination() {
+        // Given
+        List<<%= entityName %>> entities = Arrays.asList(entity);
+        Page<<%= entityName %>> page = new PageImpl<>(entities, PageRequest.of(0, 10), 1);
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId<% if (idType !== 'String') { %>.toString()<% } %>);<% } %>
+
+        when(repository.findAll(any(Pageable.class))).thenReturn(page);
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        Page<<%= classPrefix %>DetailDTO> result = service.findAll(PageRequest.of(0, 10), <%= classPrefix %>DetailDTO.class);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent()).hasSize(1);
+        verify(repository, times(1)).findAll(any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("Should find all entities")
+    void testFindAll() {
+        // Given
+        List<<%= entityName %>> entities = Arrays.asList(entity);
+        <%= classPrefix %>DetailDTO detailDto = new <%= classPrefix %>DetailDTO();
+        <% if (!hasEmbeddedId) { %>detailDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId<% if (idType !== 'String') { %>.toString()<% } %>);<% } %>
+
+        when(repository.findAll()).thenReturn(entities);
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(detailDto);
+
+        // When
+        List<<%= classPrefix %>DetailDTO> result = service.findAll(<%= classPrefix %>DetailDTO.class);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        verify(repository, times(1)).findAll();
+    }
+
+    // Note: SimpliXBaseService doesn't have a count() method
+    // Count functionality is not available in the base service
+
+    @Test
+    @DisplayName("Should check if entity exists by ID")
+    void testExistsById() {
+        // Given
+        when(repository.existsById(<% if (idType === 'String') { %>testId<% } else { %>testId.toString()<% } %>)).thenReturn(true);
+
+        // When
+        boolean result = service.existsById(<% if (idType === 'String') { %>testId<% } else { %>testId.toString()<% } %>);
+
+        // Then
+        assertThat(result).isTrue();
+        verify(repository, times(1)).existsById(<% if (idType === 'String') { %>testId<% } else { %>testId.toString()<% } %>);
+    }
+
+    <%
+    // Check if batch update is supported
+    const hasBatchUpdateFields = fields.some(field => {
+        const ymlField = ymlConfig.fields?.[field.name];
+        return ymlField?.views?.includes('batchUpdate');
+    });
+
+    if (hasBatchUpdateFields) { %>
+    @Test
+    @DisplayName("Should perform batch update successfully")
+    void testBatchUpdate() {
+        // Given
+        Set<String> ids = new HashSet<>(Arrays.asList(<% if (idType === 'String') { %>testId<% } else { %>testId.toString()<% } %>));
+        List<<%= entityName %>> entities = Arrays.asList(entity);
+        when(repository.findAllById(ids)).thenReturn(entities);
+        when(repository.saveAll(anyList())).thenReturn(entities);
+
+        // When
+        <%= classPrefix %>BatchUpdateDTO batchDto = new <%= classPrefix %>BatchUpdateDTO();
+        batchDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>s(ids);
+        <%
+        // Set batch update fields
+        // Skip excluded fields (audit fields like createdBy, updatedBy, etc.)
+        fields.forEach(field => {
+            const ymlField = ymlConfig.fields?.[field.name];
+            if (ymlField?.views?.includes('batchUpdate') && !field.isRelation && !isExcludedField(field.name)) {
+                if (field.type === 'String') { %>
+        batchDto.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>("batch-<%= field.name %>");
+        <%      } else if (field.type === 'Integer' || field.type === 'int') { %>
+        batchDto.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(99);
+        <%      } else if (field.type === 'Long' || field.type === 'long') { %>
+        batchDto.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(99L);
+        <%      } else if (field.type === 'Boolean' || field.type === 'boolean') { %>
+        batchDto.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(true);
+        <%      }
+            }
+        }); %>
+
+        service.batchUpdate(batchDto);
+
+        // Then
+        verify(repository, times(1)).findAllById(ids);
+        verify(repository, times(1)).saveAll(anyList());
+    }
+
+    @Test
+    @DisplayName("Should handle empty batch update")
+    void testBatchUpdateWithEmptyIds() {
+        // Given
+        Set<String> emptyIds = Collections.emptySet();
+        <%= classPrefix %>BatchUpdateDTO batchDto = new <%= classPrefix %>BatchUpdateDTO();
+        batchDto.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>s(emptyIds);
+
+        // When
+        service.batchUpdate(batchDto);
+
+        // Then
+        verify(repository, never()).findAllById(anyList());
+        verify(repository, never()).saveAll(anyList());
+    }
+    <% } %>
+<%
+// Generate auto-increment tests if sortOrderConfig is present
+if (ymlConfig && ymlConfig.sortOrderConfig && ymlConfig.sortOrderConfig.autoIncrement) {
+    const field = ymlConfig.sortOrderConfig.field;
+    const upperField = field.charAt(0).toUpperCase() + field.slice(1);
+    const scopeFields = ymlConfig.sortOrderConfig.scopeFields || [];
+    const gap = ymlConfig.sortOrderConfig.gap || 100;
+
+    if (scopeFields.length === 0) {
+        // Global scope tests
+%>
+
+    // =====================================
+    // Auto-increment <%= field %> Tests
+    // =====================================
+
+    @Test
+    @DisplayName("Should auto-increment <%= field %> when null")
+    void testCreate_AutoIncrements<%= upperField %>WhenNull() {
+        // Given
+        int currentMax = 500;
+        when(repository.findMax<%= upperField %>()).thenReturn(currentMax);
+        when(repository.saveAndFlush(any(<%= entityName %>.class))).thenAnswer(invocation -> {
+            <%= entityName %> savedEntity = invocation.getArgument(0);
+            assertThat(savedEntity.get<%= upperField %>()).isEqualTo(currentMax + <%= gap %>);
+            savedEntity.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);
+            return savedEntity;
+        });
+        when(repository.findById(any())).thenReturn(Optional.of(entity));
+        doAnswer(invocation -> {
+            <%= entityName %> target = invocation.getArgument(1);
+            target.set<%= upperField %>(null);
+            return null;
+        }).when(modelMapper).map(any(<%= classPrefix %>CreateDTO.class), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(new <%= classPrefix %>DetailDTO());
+
+        createDto.set<%= upperField %>(null);
+
+        // When
+        service.create(createDto);
+
+        // Then
+        verify(repository, times(1)).findMax<%= upperField %>();
+        verify(repository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+
+    @Test
+    @DisplayName("Should auto-increment <%= field %> when zero")
+    void testCreate_AutoIncrements<%= upperField %>WhenZero() {
+        // Given
+        int currentMax = 300;
+        when(repository.findMax<%= upperField %>()).thenReturn(currentMax);
+        when(repository.saveAndFlush(any(<%= entityName %>.class))).thenAnswer(invocation -> {
+            <%= entityName %> savedEntity = invocation.getArgument(0);
+            assertThat(savedEntity.get<%= upperField %>()).isEqualTo(currentMax + <%= gap %>);
+            savedEntity.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);
+            return savedEntity;
+        });
+        when(repository.findById(any())).thenReturn(Optional.of(entity));
+        doAnswer(invocation -> {
+            <%= entityName %> target = invocation.getArgument(1);
+            target.set<%= upperField %>(0);
+            return null;
+        }).when(modelMapper).map(any(<%= classPrefix %>CreateDTO.class), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(new <%= classPrefix %>DetailDTO());
+
+        createDto.set<%= upperField %>(0);
+
+        // When
+        service.create(createDto);
+
+        // Then
+        verify(repository, times(1)).findMax<%= upperField %>();
+    }
+
+    @Test
+    @DisplayName("Should preserve explicit <%= field %> value")
+    void testCreate_PreservesExplicit<%= upperField %>() {
+        // Given
+        int explicitValue = 999;
+        when(repository.saveAndFlush(any(<%= entityName %>.class))).thenAnswer(invocation -> {
+            <%= entityName %> savedEntity = invocation.getArgument(0);
+            assertThat(savedEntity.get<%= upperField %>()).isEqualTo(explicitValue);
+            savedEntity.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);
+            return savedEntity;
+        });
+        when(repository.findById(any())).thenReturn(Optional.of(entity));
+        doAnswer(invocation -> {
+            <%= entityName %> target = invocation.getArgument(1);
+            target.set<%= upperField %>(explicitValue);
+            return null;
+        }).when(modelMapper).map(any(<%= classPrefix %>CreateDTO.class), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(new <%= classPrefix %>DetailDTO());
+
+        createDto.set<%= upperField %>(explicitValue);
+
+        // When
+        service.create(createDto);
+
+        // Then
+        verify(repository, never()).findMax<%= upperField %>();
+    }
+
+    @Test
+    @DisplayName("Should set <%= field %> to <%= gap %> for first entity")
+    void testCreate_FirstEntityGets<%= gap %>() {
+        // Given
+        when(repository.findMax<%= upperField %>()).thenReturn(0);
+        when(repository.saveAndFlush(any(<%= entityName %>.class))).thenAnswer(invocation -> {
+            <%= entityName %> savedEntity = invocation.getArgument(0);
+            assertThat(savedEntity.get<%= upperField %>()).isEqualTo(<%= gap %>);
+            savedEntity.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);
+            return savedEntity;
+        });
+        when(repository.findById(any())).thenReturn(Optional.of(entity));
+        doAnswer(invocation -> {
+            <%= entityName %> target = invocation.getArgument(1);
+            target.set<%= upperField %>(null);
+            return null;
+        }).when(modelMapper).map(any(<%= classPrefix %>CreateDTO.class), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(new <%= classPrefix %>DetailDTO());
+
+        createDto.set<%= upperField %>(null);
+
+        // When
+        service.create(createDto);
+
+        // Then
+        verify(repository, times(1)).findMax<%= upperField %>();
+    }
+<%  } else {
+        // Scoped tests
+        const firstScopeField = scopeFields[0];
+        const upperFirstScopeField = firstScopeField.charAt(0).toUpperCase() + firstScopeField.slice(1);
+        const methodSuffix = scopeFields.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join('And');
+%>
+
+    // =====================================
+    // Auto-increment <%= field %> Tests (Scoped by <%= scopeFields.join(', ') %>)
+    // =====================================
+
+    @Test
+    @DisplayName("Should auto-increment <%= field %> when null (scoped)")
+    void testCreate_AutoIncrements<%= upperField %>WhenNull_Scoped() {
+        // Given
+        int currentMax = 500;
+        String scopeId = UUID.randomUUID().toString();
+        when(repository.findMax<%= upperField %>By<%= methodSuffix %>(scopeId)).thenReturn(currentMax);
+        when(repository.saveAndFlush(any(<%= entityName %>.class))).thenAnswer(invocation -> {
+            <%= entityName %> savedEntity = invocation.getArgument(0);
+            assertThat(savedEntity.get<%= upperField %>()).isEqualTo(currentMax + <%= gap %>);
+            savedEntity.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);
+            return savedEntity;
+        });
+        when(repository.findById(any())).thenReturn(Optional.of(entity));
+        doAnswer(invocation -> {
+            <%= entityName %> target = invocation.getArgument(1);
+            target.set<%= upperField %>(null);
+            return null;
+        }).when(modelMapper).map(any(<%= classPrefix %>CreateDTO.class), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(new <%= classPrefix %>DetailDTO());
+
+        createDto.set<%= upperField %>(null);
+        createDto.set<%= upperFirstScopeField %>(scopeId);
+
+        // When
+        service.create(createDto);
+
+        // Then
+        verify(repository, times(1)).findMax<%= upperField %>By<%= methodSuffix %>(scopeId);
+        verify(repository, times(1)).saveAndFlush(any(<%= entityName %>.class));
+    }
+
+    @Test
+    @DisplayName("Should auto-increment <%= field %> when zero (scoped)")
+    void testCreate_AutoIncrements<%= upperField %>WhenZero_Scoped() {
+        // Given
+        int currentMax = 300;
+        String scopeId = UUID.randomUUID().toString();
+        when(repository.findMax<%= upperField %>By<%= methodSuffix %>(scopeId)).thenReturn(currentMax);
+        when(repository.saveAndFlush(any(<%= entityName %>.class))).thenAnswer(invocation -> {
+            <%= entityName %> savedEntity = invocation.getArgument(0);
+            assertThat(savedEntity.get<%= upperField %>()).isEqualTo(currentMax + <%= gap %>);
+            savedEntity.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);
+            return savedEntity;
+        });
+        when(repository.findById(any())).thenReturn(Optional.of(entity));
+        doAnswer(invocation -> {
+            <%= entityName %> target = invocation.getArgument(1);
+            target.set<%= upperField %>(0);
+            return null;
+        }).when(modelMapper).map(any(<%= classPrefix %>CreateDTO.class), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(new <%= classPrefix %>DetailDTO());
+
+        createDto.set<%= upperField %>(0);
+        createDto.set<%= upperFirstScopeField %>(scopeId);
+
+        // When
+        service.create(createDto);
+
+        // Then
+        verify(repository, times(1)).findMax<%= upperField %>By<%= methodSuffix %>(scopeId);
+    }
+
+    @Test
+    @DisplayName("Should preserve explicit <%= field %> value (scoped)")
+    void testCreate_PreservesExplicit<%= upperField %>_Scoped() {
+        // Given
+        int explicitValue = 999;
+        String scopeId = UUID.randomUUID().toString();
+        when(repository.saveAndFlush(any(<%= entityName %>.class))).thenAnswer(invocation -> {
+            <%= entityName %> savedEntity = invocation.getArgument(0);
+            assertThat(savedEntity.get<%= upperField %>()).isEqualTo(explicitValue);
+            savedEntity.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);
+            return savedEntity;
+        });
+        when(repository.findById(any())).thenReturn(Optional.of(entity));
+        doAnswer(invocation -> {
+            <%= entityName %> target = invocation.getArgument(1);
+            target.set<%= upperField %>(explicitValue);
+            return null;
+        }).when(modelMapper).map(any(<%= classPrefix %>CreateDTO.class), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(new <%= classPrefix %>DetailDTO());
+
+        createDto.set<%= upperField %>(explicitValue);
+        createDto.set<%= upperFirstScopeField %>(scopeId);
+
+        // When
+        service.create(createDto);
+
+        // Then
+        verify(repository, never()).findMax<%= upperField %>By<%= methodSuffix %>(anyString());
+    }
+
+    @Test
+    @DisplayName("Should skip auto-increment when scope field is null")
+    void testCreate_SkipsAutoIncrementWhenScopeNull() {
+        // Given
+        when(repository.saveAndFlush(any(<%= entityName %>.class))).thenAnswer(invocation -> {
+            <%= entityName %> savedEntity = invocation.getArgument(0);
+            savedEntity.set<%= idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1) %>(testId);
+            return savedEntity;
+        });
+        when(repository.findById(any())).thenReturn(Optional.of(entity));
+        doAnswer(invocation -> {
+            <%= entityName %> target = invocation.getArgument(1);
+            target.set<%= upperField %>(null);
+            return null;
+        }).when(modelMapper).map(any(<%= classPrefix %>CreateDTO.class), any(<%= entityName %>.class));
+        when(modelMapper.map(any(<%= entityName %>.class), eq(<%= classPrefix %>DetailDTO.class)))
+            .thenReturn(new <%= classPrefix %>DetailDTO());
+
+        createDto.set<%= upperField %>(null);
+        createDto.set<%= upperFirstScopeField %>(null);
+
+        // When
+        service.create(createDto);
+
+        // Then
+        verify(repository, never()).findMax<%= upperField %>By<%= methodSuffix %>(anyString());
+    }
+<%  }
+} %>
+<% if (statusCountFields.length > 0) { %>
+    @Test
+    @DisplayName("statusCounts - refuses a field the list does not count by")
+    void statusCounts_unknownField_refused() {
+        assertThatThrownBy(() -> service.statusCounts("notAListedField", Map.of()))
+                .isInstanceOf(SimpliXGeneralException.class)
+                .hasMessageContaining("error.search.countFieldUnknown");
+        verifyNoInteractions(searchAggregator);
+    }
+
+    @Test
+    @DisplayName("statusCounts - names an enum value by its constant")
+    void statusCounts_listedField_namesEachValue() {
+<% if (figureScope) { -%>
+        service = spy(service);
+        doReturn(<%- scopedValue %>).when(service).<%= figureScope %>(any());
+<% } -%>
+        when(searchAggregator.countByValue(eq(<%= entityName %>.class), eq(repository), any(), eq("<%= statusCountFields[0] %>")))
+                .thenReturn(List.of(new ValueCount(Thread.State.NEW, 3L)));
+
+        assertThat(service.statusCounts("<%= statusCountFields[0] %>", Map.of("field", "<%= statusCountFields[0] %>")))
+                .singleElement()
+                .satisfies(count -> {
+                    assertThat(count.value()).isEqualTo("NEW");
+                    assertThat(count.count()).isEqualTo(3L);
+                });
+    }
+<% } %>
+<% if (aggregateItems.length > 0) { %>
+    @Test
+    @DisplayName("aggregates - asks for every listed figure in order")
+    void aggregates_asksForEveryListedFigure() {
+<% if (figureScope) { -%>
+        service = spy(service);
+        doReturn(<%- scopedValue %>).when(service).<%= figureScope %>(any());
+<% } -%>
+        when(searchAggregator.aggregate(eq(<%= entityName %>.class), eq(repository), any(), anyList()))
+                .thenAnswer(call -> ((List<SearchAggregator.Aggregate>) call.getArgument(3)).stream()
+                        .map(a -> new AggregateValue(a.field(), a.op().wireName(), 0L)).toList());
+
+        assertThat(service.aggregates(Map.of()))
+                .extracting(figure -> figure.field() + ":" + figure.op())
+                .containsExactly(<%- aggregateItems.map(a => `"${a.field}:${a.op}"`).join(', ') %>);
+    }
+<% } %>
+<% if (figureScope) { %>
+    @Test
+    @DisplayName("figures - are read under the scope the list is forced to")
+    void figures_readUnderTheForcedScope() {
+        service = spy(service);
+        doReturn(<%- scopedValue %>).when(service).<%= figureScope %>(any());
+<% if (statusCountFields.length > 0) { -%>
+        service.statusCounts("<%= statusCountFields[0] %>", Map.of("field", "<%= statusCountFields[0] %>"));
+<% } -%>
+<% if (aggregateItems.length > 0) { -%>
+        service.aggregates(Map.of());
+<% } -%>
+        verify(service, times(<%= (statusCountFields.length > 0 ? 1 : 0) + (aggregateItems.length > 0 ? 1 : 0) %>)).<%= figureScope %>(any());
+    }
+<% if (scopeMayMatchNothing) { %>
+    @Test
+    @DisplayName("figures - a caller who reaches no row reads empty figures without a query")
+    void figures_emptyScopeReadsNothing() {
+        service = spy(service);
+        doReturn(Optional.empty()).when(service).<%= figureScope %>(any());
+<% if (statusCountFields.length > 0) { -%>
+        assertThat(service.statusCounts("<%= statusCountFields[0] %>", Map.of())).isEmpty();
+<% } -%>
+<% if (aggregateItems.length > 0) { -%>
+        assertThat(service.aggregates(Map.of()))
+                .extracting(figure -> figure.field() + ":" + figure.op())
+                .containsExactly(<%- aggregateItems.map(a => `"${a.field}:${a.op}"`).join(', ') %>);
+<% } -%>
+        verifyNoInteractions(searchAggregator);
+    }
+<% } %>
+<% } %>
+}

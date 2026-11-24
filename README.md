@@ -38,6 +38,12 @@ The following modules are published separately and are not bundled in the umbrel
 | **simplix-sync** | Multi-instance state sync and lightweight pub/sub |
 | **simplix-license** | License registration, activation, heartbeat, and feature/quota gating |
 
+The command line tool is published to npm as `@simplix-boot/cli`, with the framework version:
+
+| Tool | Description |
+|------|-------------|
+| **simplix-cli** | Generates services, REST controllers, DTOs and tests from JPA entities, with built-in templates a project can replace |
+
 ## Quick Start
 
 ### 1. Add Dependency
@@ -200,6 +206,7 @@ Each module has its own README with detailed documentation:
 - [simplix-stream](simplix-stream/README.md) - SSE/WebSocket streaming
 - [simplix-sync](simplix-sync/README.md) - Multi-instance state sync
 - [simplix-license](simplix-license/README.md) - License enforcement
+- [simplix-cli](simplix-cli/README.md) - Code generation command line tool
 
 ## Security
 

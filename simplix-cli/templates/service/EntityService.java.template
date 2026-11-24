@@ -1,0 +1,790 @@
+package <%= packagePaths['service'] %>;
+
+import <%= packagePaths['dto'] %>.<%= classPrefix %>DTOs.*;
+import <%= entityPackage %>.<%= entityName %>;
+<% if (hasEmbeddedId) { %>
+import <%= entityPackage %>.<%= entityName %>.<%= embeddedIdType %>;
+<% } %>
+import <%= packagePaths.repository %>.<%= entityName %>Repository;
+<%
+// A list's cards: counts per enum value (statusCounts: [field, ...]) and figures over fields
+// (aggregates: [{ field, op }]), both read under the list's own search parameters.
+const statusCountFields = ymlConfig.statusCounts || [];
+const aggregateItems = ymlConfig.aggregates || [];
+const hasFigures = statusCountFields.length > 0 || aggregateItems.length > 0;
+// The method a customised service forces the caller's scope with (figureScope: { method,
+// mayMatchNothing }): it takes the client's parameters and returns them scoped, as a Map, or as an
+// Optional that is empty when the caller reaches no row (mayMatchNothing: true). The figures are
+// read under it, so a card never counts rows the list hides.
+const figureScope = ymlConfig.figureScope && ymlConfig.figureScope.method;
+const needsTypedRepository = ymlConfig.timeAxisField || hasFigures;
+// The class of the application that holds the figure DTOs and the scope wrapper; the project
+// configuration names it under supportClasses.searchFigures.
+const searchFigures = hasFigures || (ymlConfig.timeAxisField && figureScope)
+    ? supportClasses.require('searchFigures', hasFigures ? 'statusCounts or aggregates' : 'timeAxisField with figureScope')
+    : null;
+%>
+<% if (hasFigures) { %>
+import dev.simplecore.searchable.core.service.aggregate.SearchAggregator;
+import <%= searchFigures.fqn %>;
+import <%= searchFigures.fqn %>.AggregateValueDTO;
+import <%= searchFigures.fqn %>.ValueCountDTO;
+<% } %>
+<% if (ymlConfig.timeAxisField) { %>
+<% if (figureScope && !hasFigures) { %>
+import <%= searchFigures.fqn %>;
+<% } %>
+import dev.simplecore.searchable.core.service.bucket.TimeBucketCounter;
+
+import java.time.Instant;
+<% } %>
+<%
+// Parse import statements for reference entities (excluding self-reference)
+// Only import services for ManyToMany references (multiple: true) since ManyToOne uses FK ID directly
+const importedServices = new Set();
+const importedDTOs = new Set();
+
+// Find ManyToMany reference types from yml configuration and generate imports if different package
+let hasManyToManyRefs = false;
+if (ymlConfig && ymlConfig.fields) {
+    Object.entries(ymlConfig.fields).forEach(([fieldName, ymlField]) => {
+        // Only generate service imports for ManyToMany references (multiple: true)
+        if (ymlField.reference && ymlField.reference.entity && ymlField.reference.entity !== entityName && ymlField.reference.multiple) {
+            hasManyToManyRefs = true;
+            const refEntity = ymlField.reference.entity;
+            const refModulePath = ymlField.reference.modulePath;
+
+            if (!importedServices.has(refEntity)) {
+                importedServices.add(refEntity);
+                if (refModulePath && refModulePath !== modulePath) {
+                    // Different package - generate import
+                    const servicePackage = basePackage + '.' + refModulePath.replace(/\//g, '.') + '.service';
+                    %>
+import <%= servicePackage %>.<%= refEntity %>Service;<%
+                } else { %>
+// <%= refEntity %>Service will be available in same package<%
+                }
+            }
+        }
+    });
+}
+// Also check entity fields for ManyToMany relations
+if (!hasManyToManyRefs && fields) {
+    hasManyToManyRefs = fields.some(f => f.relationType === 'ManyToMany' || (f.isCollection && f.typeKind === 'entity'));
+}
+if (hasManyToManyRefs) { %>
+import org.springframework.beans.factory.ObjectProvider;
+<% }
+
+// Import entity classes used in getReference() for @MapsId/@OneToOne entity reference fields
+const importedEntityRefs = new Set();
+if (ymlConfig && ymlConfig.fields && fields) {
+    Object.entries(ymlConfig.fields).forEach(([fieldName, ymlField]) => {
+        if (ymlField.reference && !ymlField.reference.multiple && ymlField.reference.entity !== entityName) {
+            const entityField = fields.find(f => f.name === fieldName);
+            if (entityField && entityField.typeKind === 'entity' &&
+                (entityField.relationType === 'OneToOne' || entityField.relationType === 'ManyToOne')) {
+                const refEntity = ymlField.reference.entity;
+                if (!importedEntityRefs.has(refEntity) && entityField.importPath) {
+                    importedEntityRefs.add(refEntity); %>
+import <%= entityField.importPath %>;
+<%              }
+            }
+        }
+    });
+} %>
+
+<%
+// ============== LOCALIZED FIELDS ==============
+// Fields a list searches and sorts through the columns derived from a locale map. The pairing is
+// I18nDerivedColumnListener's, and the DTO template repeats it to point the SearchDTO at those
+// columns: a <x>I18n map beside a <x> base column, with at least one <x>Search or <x>Sort<Lang>
+// following. The two templates cannot share this - EJS is rendered here without a filename, so
+// there is no partial to include - which is why the listener, not either template, is the
+// pairing's original.
+//
+// The rewrite is the application's: the project configuration names the class that moves a search
+// over a localized field onto its derived columns under supportClasses.localizedSearchParams.
+// Without it a localized field is searched and sorted as the plain column it also is.
+const localizedSearchParams = supportClasses.find('localizedSearchParams');
+const localizedFields = (localizedSearchParams ? entityFields : [])
+    .filter(field => field.name.endsWith('I18n')
+        && entityFields.some(base => base.name === field.name.slice(0, -4) && base.type === 'String'))
+    .map(field => field.name.slice(0, -4))
+    .filter(root => entityFields.some(derived => derived.type === 'String'
+        && (derived.name === `${root}Search`
+            || (derived.name.startsWith(`${root}Sort`) && derived.name.length > `${root}Sort`.length))))
+    // Only a field this surface's yml declares reaches its SearchDTO; a second surface over the
+    // same entity (a self-scoped portal list) that leaves the name out has nothing to rewrite.
+    .filter(root => Boolean(ymlConfig.fields && ymlConfig.fields[root]));
+
+const localizedFieldArgs = localizedFields.map(root => `"${root}"`).join(', ');
+if (localizedFields.length > 0) { %>
+import <%= localizedSearchParams.fqn %>;
+<% } %>
+import dev.simplecore.simplix.core.exception.ErrorCode;
+import dev.simplecore.simplix.core.exception.SimpliXGeneralException;
+import dev.simplecore.simplix.web.service.SimpliXBaseService;
+import dev.simplecore.searchable.core.condition.SearchCondition;
+import dev.simplecore.searchable.core.condition.parser.SearchableParamsParser;
+import org.springframework.context.MessageSource;
+import org.springframework.data.domain.Page;
+<% if (exportConfig.enabled) { -%>
+import dev.simplecore.simplix.excel.export.SearchExport;
+import dev.simplecore.simplix.excel.export.ExportFormat;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+<% } -%>
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityManager;
+import java.util.*;
+
+/**
+ * Service class for managing <%= entityName %> entities.
+ * Provides business logic for CRUD operations, batch processing, and search functionality for <%= entityName %> entities.
+<% if (hasEmbeddedId) { %>
+ * This entity uses a composite key (<%= embeddedIdType %>).
+<% } %>
+ */
+@Service
+@Transactional(readOnly = true)
+public class <%= classPrefix %>Service extends SimpliXBaseService<<%= entityName %>, <%= idType %>> {
+    <%
+    // Helper: Check if a type is a standard Java library type that should NOT be treated as an entity
+    function isStandardJavaType(typeName) {
+        if (!typeName) return false;
+        // Skip java.* types
+        if (typeName.startsWith('java.')) return true;
+        // Skip common Java types
+        const standardTypes = ['Instant', 'LocalDate', 'LocalDateTime', 'ZonedDateTime', 'Duration',
+                              'BigDecimal', 'BigInteger', 'UUID', 'Optional',
+                              'List', 'Set', 'Map', 'Collection', 'Iterable', 'String', 'Integer', 'Long', 'Boolean'];
+        return standardTypes.includes(typeName);
+    }
+
+    // Helper: Check if field name already ends with 'Id' (to avoid 'IdId' pattern)
+    function fieldNameEndsWithId(fieldName) {
+        return fieldName.endsWith('Id') && fieldName !== 'Id';
+    }
+
+    // Helper: Get Lombok setter suffix for entity fields
+    // For primitive boolean fields with 'is' prefix, Lombok strips 'is': isOnline -> setOnline()
+    // For all other fields, the setter is the capitalized field name: name -> setName()
+    function getEntitySetterSuffix(field) {
+        if (field.type === 'boolean' && field.name.startsWith('is') && field.name.length > 2) {
+            return field.name.charAt(2).toUpperCase() + field.name.slice(3);
+        }
+        return field.name.charAt(0).toUpperCase() + field.name.slice(1);
+    }
+
+    // Helper: Check if a reference field is an entity object (OneToOne/ManyToOne) vs a String FK ID field
+    function isEntityReferenceField(fieldName) {
+        const entityField = fields.find(f => f.name === fieldName);
+        return entityField && entityField.typeKind === 'entity' &&
+               (entityField.relationType === 'OneToOne' || entityField.relationType === 'ManyToOne');
+    }
+
+    // Helper: whether a reference is written through the create and update DTOs. Those DTOs carry
+    // the fields whose views include 'edit'; a reference shown only on the list or the detail is
+    // read-only, so nothing hands it to saveAndGetProjection and its DTO has no getter to read it from.
+    function isWrittenReference(field) {
+        return Boolean(field.reference && field.reference.entity !== entityName && field.views?.includes('edit'));
+    }
+
+    // Helper: whether a referencing field holds the key itself (a scalar column such as grantedBy)
+    // rather than an association whose key sits one step further; the field's own type decides.
+    function holdsReferenceKey(fieldName) {
+        if (fieldNameEndsWithId(fieldName)) return true;
+        const entityField = fields.find(f => f.name === fieldName);
+        return Boolean(entityField) && entityField.typeKind !== 'entity' && !entityField.isCollection;
+    }
+
+    // Helper: Get DTO field name for reference field (avoids 'IdId' pattern)
+    function getDtoFieldName(fieldName, isCollection) {
+        if (isCollection) {
+            return fieldNameEndsWithId(fieldName) ? `${fieldName}s` : `${fieldName}Ids`;
+        } else {
+            return holdsReferenceKey(fieldName) ? fieldName : `${fieldName}Id`;
+        }
+    }
+
+    // Reference service member variables (only for ManyToMany - ManyToOne uses FK ID directly)
+    const addedServices = new Set();
+    fields.forEach(field => {
+        const ymlField = ymlConfig.fields?.[field.name];
+        // Only add service providers for ManyToMany relationships (collection references)
+        if (field.relationType === 'ManyToMany' || (field.isCollection && field.typeKind === 'entity')) {
+            const entityType = field.actualType || field.type;
+            // Skip self-reference fields and standard Java types
+            if (!addedServices.has(entityType) && entityType !== entityName && !isStandardJavaType(entityType)) {
+                addedServices.add(entityType); %>
+    private final ObjectProvider<<%= entityType %>Service> <%= _.camelCase(entityType + 'Service') %>Provider;
+    <% }
+        }
+    });
+
+    // Find additional ManyToMany reference types from yml configuration (excluding self-reference)
+    if (ymlConfig && ymlConfig.fields) {
+        Object.values(ymlConfig.fields).forEach(field => {
+            // Only generate for ManyToMany references (multiple: true)
+            if (field.reference && field.reference.entity && field.reference.multiple && !addedServices.has(field.reference.entity) && field.reference.entity !== entityName) {
+                addedServices.add(field.reference.entity); %>
+    private final ObjectProvider<<%= field.reference.entity %>Service> <%= _.camelCase(field.reference.entity + 'Service') %>Provider;
+    <% }
+        });
+    } %>
+    private final MessageSource messageSource;
+<% if (needsTypedRepository) { %>
+    private final <%= entityName %>Repository repository;
+<% } %>
+<% if (ymlConfig.timeAxisField) { %>
+    private final TimeBucketCounter timeBucketCounter;
+<% } %>
+<% if (hasFigures) { %>
+    private final SearchAggregator searchAggregator;
+<% } %>
+    /**
+     * Constructs a new <%= classPrefix %>Service with required dependencies.
+     *
+     * @param repository The repository for <%= entityName %> entities
+     * @param entityManager JPA EntityManager for database operations<%
+     Array.from(addedServices).forEach(entity => { %>
+     * @param <%= _.camelCase(entity + 'Service') %>Provider Provider for <%= entity %> service<%
+     }); %>
+     * @param messageSource Message source for i18n error messages<% if (ymlConfig.timeAxisField) { %>
+     * @param timeBucketCounter Counts the same rows per slice of time, for the range selector<% } %><% if (hasFigures) { %>
+     * @param searchAggregator Counts and sums the same rows, for the cards above the list<% } %>
+     */
+    public <%= classPrefix %>Service(
+        <%= entityName %>Repository repository,
+        EntityManager entityManager<%
+        Array.from(addedServices).forEach(entity => { %>,
+        ObjectProvider<<%= entity %>Service> <%= _.camelCase(entity + 'Service') %>Provider<%
+        }); %>,
+        MessageSource messageSource<% if (ymlConfig.timeAxisField) { %>,
+        TimeBucketCounter timeBucketCounter<% } %><% if (hasFigures) { %>,
+        SearchAggregator searchAggregator<% } %>
+    ) {
+        super(repository, entityManager);
+        <% Array.from(addedServices).forEach(entity => { %>
+        this.<%= _.camelCase(entity + 'Service') %>Provider = <%= _.camelCase(entity + 'Service') %>Provider;<%
+        }); %>
+        this.messageSource = messageSource;
+<% if (needsTypedRepository) { %>
+        this.repository = repository;
+<% } %>
+<% if (ymlConfig.timeAxisField) { %>
+        this.timeBucketCounter = timeBucketCounter;
+<% } %>
+<% if (hasFigures) { %>
+        this.searchAggregator = searchAggregator;
+<% } %>
+    }
+<% if (ymlConfig.timeAxisField) { %>
+    /** The field a window over this record is measured on. */
+    private static final String TIME_AXIS_FIELD = "<%= ymlConfig.timeAxisField %>";
+
+    /**
+     * Counts entries per slice of a window, under the conditions the list is currently read with.
+     *
+     * @param params Map of search parameters, the window keys already removed
+     * @param from the first instant in the window, inclusive
+     * @param to the instant the window ends at, exclusive
+     * @param buckets how many slices to divide the window into
+     * @return one count per bucket, oldest first
+     */
+    public List<Long> countBuckets(Map<String, String> params, Instant from, Instant to, int buckets) {
+<% if (figureScope) { -%>
+        // The strip counts the rows the list can show, so the caller's scope is forced as the list forces it.
+        return <%= searchFigures.name %>.scoped(<%= figureScope %>(new LinkedHashMap<>(params == null ? Map.of() : params)))
+                .map(scoped -> timeBucketCounter.count(<%= entityName %>.class, repository, bucketCondition(scoped),
+                        TIME_AXIS_FIELD, from, to, buckets))
+                .orElseGet(() -> Collections.nCopies(buckets, 0L));
+<% } else { -%>
+        return timeBucketCounter.count(<%= entityName %>.class, repository, bucketCondition(params == null ? Map.of() : params),
+                TIME_AXIS_FIELD, from, to, buckets);
+<% } -%>
+    }
+
+    private SearchCondition<<%= classPrefix %>SearchDTO> bucketCondition(Map<String, String> params) {
+        return new SearchableParamsParser<<%= classPrefix %>SearchDTO>(<%= classPrefix %>SearchDTO.class)
+<% if (localizedFields.length > 0) { %>                .convert(<%= localizedSearchParams.name %>.rewrite(params, <%= localizedFieldArgs %>));
+<% } else { %>                .convert(params);
+<% } -%>
+    }
+<% } %>
+<% if (statusCountFields.length > 0) { %>
+    /** The fields the list's cards count rows by. */
+    private static final Set<String> STATUS_COUNT_FIELDS = Set.of(<%- statusCountFields.map(f => `"${f}"`).join(', ') %>);
+
+    /**
+     * Counts entries per value of one field, under the conditions the list is currently read with.
+     *
+     * @param field one of the fields the entity's generator input lists under {@code statusCounts}
+     * @param params Map of search parameters, {@code field} among them or not
+     * @return one count per value, every enum constant in declaration order
+     */
+    public List<ValueCountDTO> statusCounts(String field, Map<String, String> params) {
+        if (!STATUS_COUNT_FIELDS.contains(field)) {
+            throw new SimpliXGeneralException(ErrorCode.GEN_BAD_REQUEST, "{error.search.countFieldUnknown}", null);
+        }
+        Map<String, String> filters = new LinkedHashMap<>(params == null ? Map.of() : params);
+        filters.remove("field");
+<% if (figureScope) { -%>
+        return <%= searchFigures.name %>.scoped(<%= figureScope %>(filters))
+                .map(scoped -> searchAggregator.countByValue(<%= entityName %>.class, repository, figureCondition(scoped), field)
+                        .stream().map(ValueCountDTO::of).toList())
+                .orElseGet(List::of);
+<% } else { -%>
+        return searchAggregator.countByValue(<%= entityName %>.class, repository, figureCondition(filters), field)
+                .stream().map(ValueCountDTO::of).toList();
+<% } -%>
+    }
+<% } %>
+<% if (aggregateItems.length > 0) { %>
+    /** The figures the list's cards show, in the order they are returned. */
+    private static final List<SearchAggregator.Aggregate> AGGREGATES = List.of(<% aggregateItems.forEach((a, i) => { %>
+            new SearchAggregator.Aggregate("<%= a.field %>", SearchAggregator.Op.parse("<%= a.op %>"))<%= i < aggregateItems.length - 1 ? ',' : '' %><% }); %>);
+
+    /**
+     * Computes the list's figures, under the conditions the list is currently read with.
+     *
+     * @param params Map of search parameters
+     * @return one value per figure the entity's generator input lists under {@code aggregates}
+     */
+    public List<AggregateValueDTO> aggregates(Map<String, String> params) {
+<% if (figureScope) { -%>
+        return <%= searchFigures.name %>.scoped(<%= figureScope %>(params == null ? Map.of() : params))
+                .map(scoped -> searchAggregator.aggregate(<%= entityName %>.class, repository,
+                                figureCondition(scoped), AGGREGATES)
+                        .stream().map(AggregateValueDTO::of).toList())
+                .orElseGet(() -> AGGREGATES.stream().map(AggregateValueDTO::empty).toList());
+<% } else { -%>
+        return searchAggregator.aggregate(<%= entityName %>.class, repository,
+                        figureCondition(params == null ? Map.of() : params), AGGREGATES)
+                .stream().map(AggregateValueDTO::of).toList();
+<% } -%>
+    }
+<% } %>
+<% if (hasFigures) { %>
+    private SearchCondition<<%= classPrefix %>SearchDTO> figureCondition(Map<String, String> params) {
+        return new SearchableParamsParser<<%= classPrefix %>SearchDTO>(<%= classPrefix %>SearchDTO.class)
+<% if (localizedFields.length > 0) { %>                .convert(<%= localizedSearchParams.name %>.rewrite(params, <%= localizedFieldArgs %>));
+<% } else { %>                .convert(params);
+<% } -%>
+    }
+<% } %>
+
+    /**
+     * Creates a new <%= entityName %> entity from the provided DTO.
+     *
+     * @param createDTO DTO containing the data for the new <%= entityName %>
+     * @return <%= classPrefix %>DetailDTO of the created entity
+     * @throws SimpliXGeneralException with ErrorCode.GEN_NOT_FOUND if the saved entity cannot be retrieved
+     */
+    @Transactional
+    public <%= classPrefix %>DetailDTO create(<%= classPrefix %>CreateDTO createDTO) {
+        <%= entityName %> entity = new <%= entityName %>();
+        modelMapper.map(createDTO, entity);
+<%
+// Generate auto-increment sortOrder logic if sortOrderConfig is present
+if (ymlConfig && ymlConfig.sortOrderConfig && ymlConfig.sortOrderConfig.autoIncrement) {
+    const field = ymlConfig.sortOrderConfig.field;
+    const upperField = field.charAt(0).toUpperCase() + field.slice(1);
+    const scopeFields = ymlConfig.sortOrderConfig.scopeFields || [];
+    const gap = ymlConfig.sortOrderConfig.gap || 100;
+
+    if (scopeFields.length === 0) {
+        // Global scope - no condition needed
+%>
+        // Auto-increment <%= field %> if not explicitly provided
+        if (entity.get<%= upperField %>() == null || entity.get<%= upperField %>() == 0) {
+            <%= entityName %>Repository typedRepository = (<%= entityName %>Repository) repository;
+            Integer max<%= upperField %> = typedRepository.findMax<%= upperField %>();
+            entity.set<%= upperField %>(max<%= upperField %> + <%= gap %>);
+        }
+<%  } else {
+        // Scoped - check if scope field is provided
+        const firstScopeField = scopeFields[0];
+        const upperFirstScopeField = firstScopeField.charAt(0).toUpperCase() + firstScopeField.slice(1);
+        const methodSuffix = scopeFields.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join('And');
+        const getterArgs = scopeFields.map(f => `createDTO.get${f.charAt(0).toUpperCase() + f.slice(1)}()`).join(', ');
+%>
+        // Auto-increment <%= field %> if not explicitly provided (scoped by <%= scopeFields.join(', ') %>)
+        if (entity.get<%= upperField %>() == null || entity.get<%= upperField %>() == 0) {
+            if (createDTO.get<%= upperFirstScopeField %>() != null) {
+                <%= entityName %>Repository typedRepository = (<%= entityName %>Repository) repository;
+                Integer max<%= upperField %> = typedRepository.findMax<%= upperField %>By<%= methodSuffix %>(<%= getterArgs %>);
+                entity.set<%= upperField %>(max<%= upperField %> + <%= gap %>);
+            }
+        }
+<%  }
+} %>
+        return saveAndGetProjection(entity<%
+        Object.entries(ymlConfig.fields || {}).forEach(([fieldName, field]) => {
+            // Skip self-reference fields (e.g., parent referencing same entity)
+            if (isWrittenReference(field)) {
+                const entityField = fields.find(f => f.name === fieldName);
+                const isCollection = entityField && (entityField.isCollection || entityField.type?.startsWith('Set<') || entityField.type?.startsWith('List<') || entityField.relationType === 'ManyToMany');
+                // Use getDtoFieldName helper to avoid 'IdId' pattern
+                const dtoFieldName = getDtoFieldName(fieldName, isCollection);
+                %>, createDTO.get<%= dtoFieldName.charAt(0).toUpperCase() + dtoFieldName.slice(1) %>()<%
+            }
+        }); %>);
+    }
+
+    /**
+     * Updates an existing <%= entityName %> entity with the provided DTO data.
+     *
+     * @param entity The existing <%= entityName %> entity to update
+     * @param updateDto DTO containing the updated data
+     * @return <%= classPrefix %>DetailDTO of the updated entity
+     * @throws SimpliXGeneralException with ErrorCode.GEN_CONFLICT if the <%= ymlConfig.idField %> is changed, or ErrorCode.GEN_NOT_FOUND if the saved entity cannot be retrieved
+     */
+    @Transactional
+    public <%= classPrefix %>DetailDTO update(<%= entityName %> entity, <%= classPrefix %>UpdateDTO updateDto) {
+        if (!Objects.equals(entity.get<%= capitalizeFirstLetter(ymlConfig.idField) %>(), updateDto.get<%= capitalizeFirstLetter(ymlConfig.idField) %>())) {
+            throw new SimpliXGeneralException(ErrorCode.GEN_CONFLICT, "{error.id.cannot.change}", null);
+        }
+        modelMapper.map(updateDto, entity);
+        return saveAndGetProjection(entity<%
+        Object.entries(ymlConfig.fields || {}).forEach(([fieldName, field]) => {
+            // Skip self-reference fields (e.g., parent referencing same entity)
+            if (isWrittenReference(field)) {
+                const entityField = fields.find(f => f.name === fieldName);
+                const isCollection = entityField && (entityField.isCollection || entityField.type?.startsWith('Set<') || entityField.type?.startsWith('List<') || entityField.relationType === 'ManyToMany');
+                // Use getDtoFieldName helper to avoid 'IdId' pattern
+                const dtoFieldName = getDtoFieldName(fieldName, isCollection);
+                %>, updateDto.get<%= dtoFieldName.charAt(0).toUpperCase() + dtoFieldName.slice(1) %>()<%
+            }
+        }); %>);
+    }
+
+    /**
+     * Deletes a <%= entityName %> entity by its ID.
+     *
+     * @param <%= ymlConfig.idField %> The ID of the <%= entityName %> to delete
+     */
+    @Transactional
+    public void delete(<%= idType %> <%= ymlConfig.idField %>) {
+        deleteById(<%= ymlConfig.idField %>);
+    }
+
+    /**
+     * Deletes multiple <%= entityName %> entities by their IDs.
+     *
+     * @param <%= ymlConfig.idField %>s List of <%= entityName %> IDs to delete
+     */
+    @Transactional
+    public void batchDelete(List<<%= idType %>> <%= ymlConfig.idField %>s) {
+        deleteAllByIds(<%= ymlConfig.idField %>s);
+    }
+
+    /**
+     * Searches for <%= entityName %> entities using provided search parameters.
+     *
+<% if (localizedFields.length > 0) { %>     * <p>A sort over a localized name is moved onto the column of the language the caller is
+     * reading, and the term typed into its filter is folded the way the stored value was. Without
+     * the first the list orders by whichever language the record happened to be created in;
+     * without the second a term whose case differs matches nothing.
+     *
+<% } %>     * @param params Map of search parameters and their values
+     * @return Page of <%= classPrefix %>ListDTO matching the search criteria
+     */
+    public Page<<%= classPrefix %>ListDTO> search(Map<String, String> params) {
+        SearchCondition<<%= classPrefix %>SearchDTO> searchCondition =
+                new SearchableParamsParser<<%= classPrefix %>SearchDTO>(<%= classPrefix %>SearchDTO.class)
+<% if (localizedFields.length > 0) { %>                        .convert(<%= localizedSearchParams.name %>.rewrite(params, <%= localizedFieldArgs %>));
+<% } else { %>                        .convert(params);
+<% } %>        return findAllWithSearch(searchCondition, <%= classPrefix %>ListDTO.class);
+    }
+
+    /**
+     * Searches for <%= entityName %> entities using a SearchCondition object.
+     *
+     * @param searchCondition Search conditions for filtering <%= entityName %> entities
+     * @return Page of <%= classPrefix %>ListDTO matching the search criteria
+     */
+    public Page<<%= classPrefix %>ListDTO> search(SearchCondition<<%= classPrefix %>SearchDTO> searchCondition) {
+        return findAllWithSearch(searchCondition, <%= classPrefix %>ListDTO.class);
+    }
+
+<% if (exportConfig.enabled) { %>
+    /**
+     * Writes every entry the list's search parameters match, so the file holds what the list
+     * shows under the same filters and order rather than only its first page.
+     *
+     * @param params the list's search parameters; {@code page} and {@code size} are ignored
+     * @param format the file kind
+     * @param response where the file is written
+     * @throws IOException when the response cannot be written
+     */
+    public void export(Map<String, String> params, ExportFormat format, HttpServletResponse response)
+            throws IOException {
+        SearchExport.of(<%= exportConfig.dto %>.class, filters -> search(filters)<%= exportConfig.mapper %>)
+                .baseName("<%= exportConfig.baseName %>")
+                .write(params, format, response);
+    }
+
+<% } %>
+    /**
+     * Updates multiple <%= entityName %> entities in a single operation.
+     *
+     * @param updateDtos Set of DTOs containing update data for multiple <%= entityName %>s
+     * @return List of <%= classPrefix %>DetailDTO for the updated entities
+     * @throws SimpliXGeneralException with ErrorCode.GEN_CONFLICT or ErrorCode.GEN_NOT_FOUND propagated from update()
+     */
+    @Transactional
+    public List<<%= classPrefix %>DetailDTO> multiUpdate(Set<<%= classPrefix %>UpdateDTO> updateDtos) {
+        List<<%= classPrefix %>DetailDTO> updatedEntities = new ArrayList<>();
+
+        for (<%= classPrefix %>UpdateDTO updateDto : updateDtos) {
+            if (updateDto.get<%= ymlConfig.idField.charAt(0).toUpperCase() + ymlConfig.idField.slice(1) %>() == null) {
+                continue;
+            }
+
+            Optional<<%= entityName %>> entityOpt = findById(updateDto.get<%= ymlConfig.idField.charAt(0).toUpperCase() + ymlConfig.idField.slice(1) %>());
+            if (entityOpt.isPresent()) {
+                <%= entityName %> entity = entityOpt.get();
+                <%= classPrefix %>DetailDTO updatedEntity = update(entity, updateDto);
+                updatedEntities.add(updatedEntity);
+            }
+        }
+
+        return updatedEntities;
+    }
+
+    /**
+     * Performs batch updates on multiple <%= entityName %> entities.
+     *
+     * @param dto DTO containing the batch update data and target IDs<% const hasBatchUpdateFields = fields.some(field => { const ymlField = ymlConfig.fields?.[field.name]; return ymlField?.views?.includes('batchUpdate'); }); if (!hasBatchUpdateFields) { %>
+     * @throws UnsupportedOperationException always, as no fields are configured for batch update<% } %>
+     */
+    @Transactional
+    public void batchUpdate(<%= classPrefix %>BatchUpdateDTO dto) {
+        <% if (hasBatchUpdateFields) { %>List<<%= entityName %>> entities = findAllById(dto.get<%= ymlConfig.idField.charAt(0).toUpperCase() + ymlConfig.idField.slice(1) %>s());
+
+        if (!entities.isEmpty()) {
+            entities.forEach(entity -> {
+                <% fields.forEach(field => {
+                    // Process only fields allowed for batchUpdate from yml configuration
+                    const ymlField = ymlConfig.fields?.[field.name];
+                    if (!ymlField?.views?.includes('batchUpdate')) return;
+
+                    const upperFieldName = field.name.charAt(0).toUpperCase() + field.name.slice(1);
+                    if (field.typeKind === 'entity' || field.isRelation || field.relationType === 'ManyToOne') {
+                        const idFieldName = ymlField.reference.idField;
+                        const upperIdFieldName = idFieldName.charAt(0).toUpperCase() + idFieldName.slice(1);
+                        if (field.isCollection || field.relationType === 'ManyToMany') { %>
+                if (dto.get<%= upperIdFieldName %>s() != null) {
+                    <%
+                    const collectionImpl = field.collectionType === 'List' ? 'ArrayList' : 'HashSet';
+                    const entityType = field.isCollection ? field.actualType : field.type;
+                    %>
+                    entity.set<%= upperFieldName %>(new <%= collectionImpl %><>(<%= _.camelCase(entityType + 'Service') %>Provider.getIfAvailable().findAllById(dto.get<%= upperIdFieldName %>s())));
+                }
+                <%      } else { %>
+                if (dto.get<%= upperIdFieldName %>() != null) {
+                    entity.set<%= upperIdFieldName %>(dto.get<%= upperIdFieldName %>());
+                }
+                <%      }
+                    } else {
+                        const setterSuffix = getEntitySetterSuffix(field); %>
+                if (dto.get<%= upperFieldName %>() != null) {
+                    entity.set<%= setterSuffix %>(dto.get<%= upperFieldName %>());
+                }
+                <% }}); %>
+            });
+
+            saveAll(entities);
+        }<% } else {
+		%>// TODO: No fields configured for batch update - consider removing this method if not needed
+		throw new UnsupportedOperationException("Unimplemented method 'batchUpdate'");<% } %>
+    }
+
+    //----------------------------------
+
+    /**
+     * Saves a <%= entityName %> entity and returns its projection.
+     * Handles the relationships with other entities.
+     *
+     * @param entity The <%= entityName %> entity to save<%
+     Object.entries(ymlConfig.fields || {}).forEach(([fieldName, field]) => {
+         // Skip self-reference fields
+         // Use fieldName (not reference.idField) to avoid duplicate parameter names when multiple fields reference same entity
+         if (isWrittenReference(field)) {
+             if (field.reference.multiple) { %>
+     * @param <%= fieldName %>Ids The <%= field.reference.entity %> IDs to set (for <%= fieldName %>)<%
+             } else { %>
+     * @param <%= fieldName %> The <%= field.reference.entity %> ID to set<%
+             }
+         }
+     }); %>
+     * @return <%= classPrefix %>DetailDTO of the saved entity
+     * @throws SimpliXGeneralException with ErrorCode.GEN_NOT_FOUND if the saved entity cannot be retrieved
+     */
+    private <%= classPrefix %>DetailDTO saveAndGetProjection(<%= entityName %> entity<%
+    Object.entries(ymlConfig.fields || {}).forEach(([fieldName, field]) => {
+        // Skip self-reference fields
+        // Use fieldName (not reference.idField) to avoid duplicate parameter names when multiple fields reference same entity
+        if (isWrittenReference(field)) {
+            if (field.reference.multiple) { %>, Set<String> <%= fieldName %>Ids<% }
+            else { %>, String <%= fieldName %><% }
+        }
+    });
+    %>) {
+        <% if (Object.values(ymlConfig.fields || {}).some(f => isWrittenReference(f))) { %>
+        //----------------------------------
+        // Many-to-one relationships
+        //----------------------------------
+        <%
+        Object.entries(ymlConfig.fields || {}).forEach(([fieldName, field]) => {
+            // Skip self-reference fields
+            // Use fieldName for parameter name to avoid duplicates when multiple fields reference same entity
+            if (isWrittenReference(field) && !field.reference.multiple) {
+                const serviceVar = _.camelCase(field.reference.entity);
+                const upperFieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+                const isEntityRef = isEntityReferenceField(fieldName);
+                if (isEntityRef) {
+        %>
+        // <%= field.reference.entity %> - entity reference (@OneToOne/@MapsId or @ManyToOne object)
+        if (<%= fieldName %> != null) {
+            entity.set<%= upperFieldName %>(entityManager.getReference(<%= field.reference.entity %>.class, <%= fieldName %>));
+        }
+                <%  } else { %>
+        // <%= field.reference.entity %> - set FK ID field directly
+        if (<%= fieldName %> != null) {
+            entity.set<%= upperFieldName %>(<%= fieldName %>);
+        }
+                <%  }
+            }
+        }); %>
+
+        //----------------------------------
+        // Many-to-many relationships
+        //----------------------------------
+        <%
+        Object.entries(ymlConfig.fields || {}).forEach(([fieldName, field]) => {
+            // Skip self-reference fields
+            // Use fieldName for parameter name to avoid duplicates when multiple fields reference same entity
+            if (isWrittenReference(field) && field.reference.multiple) {
+                const serviceVar = _.camelCase(field.reference.entity);
+                const upperFieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        %>
+        // <%= field.reference.entity %> (via <%= fieldName %>)
+        if (<%= fieldName %>Ids != null) {
+            <%= field.reference.entity %>Service <%= serviceVar %>Service = <%= serviceVar %>ServiceProvider.getIfAvailable();
+            if (<%= serviceVar %>Service != null) {
+                <%
+                const entityField = fields.find(f => f.name === fieldName);
+                const collectionImpl = entityField?.collectionType === 'List' ? 'ArrayList' : 'HashSet';
+                %>
+                entity.set<%= upperFieldName %>(new <%= collectionImpl %><>(<%= serviceVar %>Service.findAllById(<%= fieldName %>Ids)));
+            }
+        }
+                <%
+            }
+        }); %>
+        <% } %>
+
+        <%= entityName %> savedEntity = saveAndFlush(entity);
+        // A formula, a join-derived name and the auditing fields are filled when the row is read, so
+        // the row just written is read again before it is answered.
+        entityManager.refresh(savedEntity);
+        return findById(savedEntity.get<%= capitalizeFirstLetter(ymlConfig.idField || 'id') %>(), <%= classPrefix %>DetailDTO.class)
+            .orElseThrow(() -> new SimpliXGeneralException(ErrorCode.GEN_NOT_FOUND, "Failed to retrieve saved entity", null));
+    }
+
+    //----------------------------------
+<% if (hasOrderField) {
+    const orderFieldName = orderField.name;
+    const upperOrderFieldName = orderFieldName.charAt(0).toUpperCase() + orderFieldName.slice(1);
+    const upperIdFieldName = ymlConfig.idField.charAt(0).toUpperCase() + ymlConfig.idField.slice(1);
+%>
+
+    /**
+     * Updates the order of a <%= entityName %> entity.
+     *
+     * @param orderUpdateDto DTO containing the ID and new order value
+     * @return <%= classPrefix %>DetailDTO of the updated entity
+     * @throws SimpliXGeneralException with ErrorCode.GEN_NOT_FOUND if the entity is not found
+     */
+    @Transactional
+    public <%= classPrefix %>DetailDTO updateOrder(<%= classPrefix %>OrderUpdateDTO orderUpdateDto) {
+        <%= entityName %> entity = findById(orderUpdateDto.get<%= upperIdFieldName %>())
+            .orElseThrow(() -> new SimpliXGeneralException(ErrorCode.GEN_NOT_FOUND, "<%= entityName %> not found", null));
+
+        entity.set<%= upperOrderFieldName %>(orderUpdateDto.get<%= upperOrderFieldName %>());
+
+        return saveAndGetProjection(entity<%
+        Object.entries(ymlConfig.fields || {}).forEach(([fieldName, field]) => {
+            // Skip self-reference fields (e.g., parent referencing same entity)
+            if (isWrittenReference(field)) {
+                if (field.reference.multiple) { %>, null<% }
+                else { %>, null<% }
+            }
+        }); %>);
+    }
+
+    /**
+     * Updates the order of multiple <%= entityName %> entities.
+     *
+     * @param orderUpdateDtos List of DTOs containing the IDs and new order values
+     * @return List of <%= classPrefix %>DetailDTO of the updated entities
+     * @throws SimpliXGeneralException with ErrorCode.GEN_NOT_FOUND if any entity is not found
+     */
+    @Transactional
+    public List<<%= classPrefix %>DetailDTO> updateOrders(List<<%= classPrefix %>OrderUpdateDTO> orderUpdateDtos) {
+        List<<%= classPrefix %>DetailDTO> updatedEntities = new ArrayList<>();
+
+        for (<%= classPrefix %>OrderUpdateDTO orderUpdateDto : orderUpdateDtos) {
+            if (orderUpdateDto.get<%= upperIdFieldName %>() == null) {
+                continue;
+            }
+
+            <%= entityName %> entity = findById(orderUpdateDto.get<%= upperIdFieldName %>())
+                .orElseThrow(() -> new SimpliXGeneralException(ErrorCode.GEN_NOT_FOUND, "<%= entityName %> not found with ID: " + orderUpdateDto.get<%= upperIdFieldName %>(), null));
+
+            entity.set<%= upperOrderFieldName %>(orderUpdateDto.get<%= upperOrderFieldName %>());
+            <%= classPrefix %>DetailDTO updatedEntity = saveAndGetProjection(entity<%
+            Object.entries(ymlConfig.fields || {}).forEach(([fieldName, field]) => {
+                // Skip self-reference fields (e.g., parent referencing same entity)
+                if (isWrittenReference(field)) {
+                    if (field.reference.multiple) { %>, null<% }
+                    else { %>, null<% }
+                }
+            }); %>);
+            updatedEntities.add(updatedEntity);
+        }
+
+        return updatedEntities;
+    }
+<% } %>
+
+    /**
+     * Checks if the current user has the specified permission for the entity.
+     *
+     * @param permission The permission to check (e.g., "view", "edit", "delete")
+     * @param <%= ymlConfig.idField %> The ID of the entity to check permissions for. Can be null for new entities
+     * @param dto The DTO object containing entity data. Used when <%= ymlConfig.idField %> is null
+     * @return true if the user has the permission, false otherwise
+     * @throws UnsupportedOperationException as this method is not yet implemented
+     */
+    @Override
+    public boolean hasOwnerPermission(String permission, <%= idType %> <%= ymlConfig.idField %>, Object dto) {
+        // // Example implementation
+        // <%= entityName %> entity = new <%= entityName %>();
+        // if (<%= ymlConfig.idField %> != null) {
+        //     entity = findById(<%= ymlConfig.idField %>).orElseThrow(() -> new RuntimeException("<%= entityName %> not found"));
+        // } else {
+        //     modelMapper.map(dto, entity);
+        // }
+
+        // TODO: Implement dynamic permission checking based on entity fields
+        // Use entity field analysis to determine ownership field dynamically
+
+        throw new UnsupportedOperationException("Unimplemented method 'hasPermission'");
+    }
+}

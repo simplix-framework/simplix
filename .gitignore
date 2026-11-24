@@ -72,6 +72,7 @@ out/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
+!/simplix-cli/bin/
 
 ### NetBeans ###
 /nbproject/private/

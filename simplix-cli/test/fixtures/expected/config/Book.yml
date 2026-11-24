@@ -1,0 +1,125 @@
+entity: Book
+
+modulePath: catalog
+promoteModule: <__MODIFY__>
+idField: bookId
+nameField: title
+thymeleafBaseDir: book
+defaultSortField: createdAt
+defaultSortDirection: desc
+
+fields:
+
+  bookId:
+    sortable: true
+    views: [list, detail, edit]
+    required: true
+    unique: true
+    searchOperators: [equals]
+
+  title:
+    sortable: true
+    views: [list, detail, edit]
+    required: true
+    maxLength: 200
+    searchOperators: [equals, contains]
+
+  isbn:
+    sortable: true
+    views: [list, detail, edit]
+    required: true
+    unique: true
+    maxLength: 17
+    searchOperators: [equals, contains]
+
+  status:
+    sortable: true
+    views: [list, detail, edit, batchUpdate]
+    required: true
+    maxLength: 32
+    searchOperators: [equals, in]
+
+  pageCount:
+    sortable: true
+    views: [list, detail]
+    searchOperators: [equals, greaterThan, lessThan]
+
+  referenceOnly:
+    sortable: false
+    views: [list, detail, edit, batchUpdate]
+    required: true
+    searchOperators: [equals]
+
+  publishedOn:
+    sortable: true
+    views: [list, detail, edit, batchUpdate]
+    searchOperators: [between, greaterThanOrEqual, lessThanOrEqual]
+
+  authorId:
+    sortable: true
+    views: [list, detail, edit]
+    maxLength: 36
+    searchOperators: [equals, in]
+    reference:
+      entity: Author
+      idField: authorId
+      idType: String
+      nameField: penName
+      multiple: false
+
+  author:
+    sortable: false
+    views: [list, detail]
+    searchOperators: []
+
+  shelfId:
+    sortable: true
+    views: [list, detail, edit]
+    maxLength: 36
+    searchOperators: [equals, in]
+    reference:
+      entity: Shelf
+      idField: shelfId
+      idType: String
+      nameField: label
+      multiple: false
+
+  shelf:
+    sortable: false
+    views: [list, detail]
+    searchOperators: []
+
+  reviews:
+    sortable: false
+    views: [detail, edit]
+    searchOperators: []
+    type: List<BookReview>
+
+  createdAt:
+    sortable: true
+    views: [list, detail, edit, batchUpdate]
+    required: true
+    searchOperators: [between, greaterThanOrEqual, lessThanOrEqual]
+
+  updatedAt:
+    sortable: true
+    views: [list, detail, edit, batchUpdate]
+    required: true
+    searchOperators: [between, greaterThanOrEqual, lessThanOrEqual]
+
+  createdBy:
+    sortable: true
+    views: [list, detail, edit]
+    maxLength: 255
+    searchOperators: [equals, contains]
+
+  updatedBy:
+    sortable: true
+    views: [list, detail, edit]
+    maxLength: 255
+    searchOperators: [equals, contains]
+
+  version:
+    sortable: true
+    views: [list, detail]
+    searchOperators: [equals, greaterThan, lessThan]

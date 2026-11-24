@@ -1,0 +1,66 @@
+entity: Shelf
+
+modulePath: catalog
+promoteModule: <__MODIFY__>
+idField: shelfId
+nameField: label
+thymeleafBaseDir: shelf
+defaultSortField: createdAt
+defaultSortDirection: desc
+
+fields:
+
+  shelfId:
+    sortable: true
+    views: [list, detail, edit]
+    required: true
+    unique: true
+    searchOperators: [equals]
+
+  label:
+    sortable: true
+    views: [list, detail, edit]
+    required: true
+    maxLength: 80
+    searchOperators: [equals, contains]
+
+  parentId:
+    sortable: true
+    views: [list, detail, edit]
+    maxLength: 36
+    searchOperators: [equals, contains]
+
+  sortOrder:
+    sortable: true
+    views: [list, detail, edit]
+    required: true
+    searchOperators: [equals, greaterThan, lessThan]
+
+  createdAt:
+    sortable: true
+    views: [list, detail, edit, batchUpdate]
+    required: true
+    searchOperators: [between, greaterThanOrEqual, lessThanOrEqual]
+
+  updatedAt:
+    sortable: true
+    views: [list, detail, edit, batchUpdate]
+    required: true
+    searchOperators: [between, greaterThanOrEqual, lessThanOrEqual]
+
+  createdBy:
+    sortable: true
+    views: [list, detail, edit]
+    maxLength: 255
+    searchOperators: [equals, contains]
+
+  updatedBy:
+    sortable: true
+    views: [list, detail, edit]
+    maxLength: 255
+    searchOperators: [equals, contains]
+
+  version:
+    sortable: true
+    views: [list, detail]
+    searchOperators: [equals, greaterThan, lessThan]

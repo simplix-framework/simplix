@@ -1,0 +1,78 @@
+package <%= packagePaths['repository'] %>;
+
+import <%= entityPackage %>.<%= entityName %>;<%
+if (hasEmbeddedId) { %>
+import <%= entityPackage %>.<%= entityName %>.<%= embeddedIdType %>;<%
+} %><%
+// Add necessary imports
+if (importsArray && importsArray.length > 0) {
+  importsArray.forEach(importPath => { %>
+import <%= importPath %>;<%
+  });
+} %>
+import dev.simplecore.simplix.core.repository.SimpliXBaseRepository;
+import org.springframework.stereotype.Repository;<%
+// Add Query and Param imports if sortOrderConfig is present
+if (ymlConfig && ymlConfig.sortOrderConfig && ymlConfig.sortOrderConfig.autoIncrement) { %>
+import org.springframework.data.jpa.repository.Query;<%
+  if (ymlConfig.sortOrderConfig.scopeFields && ymlConfig.sortOrderConfig.scopeFields.length > 0) { %>
+import org.springframework.data.repository.query.Param;<%
+  }
+} %>
+
+<%
+if (hasEmbeddedId) { %>
+/**
+ * Note: This entity uses an embedded ID (composite key).
+ * When creating query methods, use path notation for accessing embedded ID fields.
+ *
+ * For example, with your embedded ID class <%= embeddedIdType %>:
+ * - findBy<%= embeddedFieldCapitalized %>(<%= propType1 %> <%= embeddedIdPropertyName1 %>)<%
+  if (embeddedIdPropertyName2) { %>
+ * - findBy<%= embeddedField2Capitalized %>(<%= propType2 %> <%= embeddedIdPropertyName2 %>)<%
+  } %>
+ * - findBy<%= embeddedFieldCapitalized %>And<%= otherFieldCapitalized %>(<%= propType1 %> <%= embeddedIdPropertyName1 %>, String <%= otherEntityField %>)
+ */
+<% } %>
+
+@Repository
+public interface <%= entityName %>Repository extends SimpliXBaseRepository<<%= entityName %>, <%= idType %>> {
+<%
+// Generate findMaxSortOrder method if sortOrderConfig is present
+if (ymlConfig && ymlConfig.sortOrderConfig && ymlConfig.sortOrderConfig.autoIncrement) {
+    const field = ymlConfig.sortOrderConfig.field;
+    const upperField = field.charAt(0).toUpperCase() + field.slice(1);
+    const scopeFields = ymlConfig.sortOrderConfig.scopeFields || [];
+
+    if (scopeFields.length === 0) {
+        // Global scope - no parameters %>
+
+    /**
+     * Finds the maximum <%= field %> value across all <%= entityName %> entities.
+     * Used for auto-incrementing <%= field %> when creating new entities.
+     *
+     * @return The maximum <%= field %> value, or 0 if no entities exist
+     */
+    @Query("SELECT COALESCE(MAX(e.<%= field %>), 0) FROM <%= entityName %> e")
+    Integer findMax<%= upperField %>();
+<%  } else {
+        // Scoped - with parameters
+        const methodSuffix = scopeFields.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join('And');
+        const params = scopeFields.map(f => `@Param("${f}") String ${f}`).join(', ');
+        const whereClause = scopeFields.map(f => `e.${f} = :${f}`).join(' AND ');
+%>
+
+    /**
+     * Finds the maximum <%= field %> value scoped by <%= scopeFields.join(', ') %>.
+     * Used for auto-incrementing <%= field %> when creating new entities.
+     *
+<% scopeFields.forEach(f => { %>
+     * @param <%= f %> The scope parameter for filtering
+<% }); %>
+     * @return The maximum <%= field %> value within the scope, or 0 if none exist
+     */
+    @Query("SELECT COALESCE(MAX(e.<%= field %>), 0) FROM <%= entityName %> e WHERE <%= whereClause %>")
+    Integer findMax<%= upperField %>By<%= methodSuffix %>(<%= params %>);
+<%  }
+} %>
+}
