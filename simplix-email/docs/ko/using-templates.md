@@ -29,6 +29,21 @@ Your loan is due on [[${dueDate}]]
 
 파일은 Thymeleaf 템플릿입니다. 텍스트 파일에서는 값을 `[[${name}]]`으로 작성하고, HTML에서는 `th:text`로 지정합니다. `th:text`는 값을 이스케이프합니다.
 
+### 템플릿 문법
+
+| 텍스트 파일(`subject.txt`, `body.txt`) | `body.html` | 동작 |
+|---|---|---|
+| `[(${name})]` | `th:utext="${name}"` | 값을 그대로 출력합니다 |
+| `[[${name}]]` | `th:text="${name}"` | HTML 문자를 이스케이프해 출력합니다 |
+| `[# th:if="${overdue}"]...[/]` | 요소의 `th:if="${overdue}"` | 조건이 참일 때만 해당 부분을 출력합니다 |
+| `[# th:each="book : ${books}"]...[/]` | 요소의 `th:each="book : ${books}"` | 항목마다 해당 부분을 반복합니다 |
+
+```text
+[(${memberName})], you have [(${books.size()})] books due.[# th:if="${overdue}"] Some are overdue.[/][# th:each="book : ${books}"] - [(${book})][/]
+```
+
+`memberName`이 Ursula, 도서가 Dune과 Kindred, `overdue`가 true이면 이 텍스트는 `Ursula, you have 2 books due. Some are overdue. - Dune - Kindred`로 렌더링됩니다. 전달하지 않은 변수는 오류 없이 빈 값으로 렌더링되므로, 필수 값은 발송 전에 확인하세요.
+
 ## 2단계. 발송
 
 ```java
@@ -107,6 +122,15 @@ preview.getHtmlBody();
 | 속성 | 기본값 | 의미 |
 |---|---|---|
 | `simplix.email.template.base-path` | `templates/email` | 템플릿 파일의 클래스패스 폴더 |
+
+```java
+String message = emailTemplateService.render(
+    "[(${memberName})], your loan is due on [(${dueDate})].",
+    Map.of("memberName", "Ursula", "dueDate", "2 March"),
+    Locale.ENGLISH);
+```
+
+`render(template, variables, locale)`는 템플릿 파일 없이 전달한 텍스트를 위의 텍스트 문법으로 렌더링합니다. 메일과 같은 변수를 사용하는 다른 채널의 짧은 메시지에 사용하세요.
 
 ## 관련 문서
 

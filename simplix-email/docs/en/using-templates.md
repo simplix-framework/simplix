@@ -29,6 +29,21 @@ Your loan is due on [[${dueDate}]]
 
 The files are Thymeleaf templates. In a text file a value is written `[[${name}]]`; in HTML it is set with `th:text`, which also escapes the value.
 
+### Template syntax
+
+| In a text file (`subject.txt`, `body.txt`) | In `body.html` | Does |
+|---|---|---|
+| `[(${name})]` | `th:utext="${name}"` | writes the value as it is |
+| `[[${name}]]` | `th:text="${name}"` | writes the value with HTML characters escaped |
+| `[# th:if="${overdue}"]...[/]` | `th:if="${overdue}"` on an element | keeps the part only when the condition holds |
+| `[# th:each="book : ${books}"]...[/]` | `th:each="book : ${books}"` on an element | repeats the part for every item |
+
+```text
+[(${memberName})], you have [(${books.size()})] books due.[# th:if="${overdue}"] Some are overdue.[/][# th:each="book : ${books}"] - [(${book})][/]
+```
+
+With `memberName` Ursula, the books Dune and Kindred and `overdue` true, this text renders as `Ursula, you have 2 books due. Some are overdue. - Dune - Kindred`. A variable that was not passed renders as nothing, without an error: check required values before sending.
+
 ## Step 2. Send it
 
 ```java
@@ -107,6 +122,15 @@ preview.getHtmlBody();
 | Property | Default | Meaning |
 |---|---|---|
 | `simplix.email.template.base-path` | `templates/email` | the classpath folder of the template files |
+
+```java
+String message = emailTemplateService.render(
+    "[(${memberName})], your loan is due on [(${dueDate})].",
+    Map.of("memberName", "Ursula", "dueDate", "2 March"),
+    Locale.ENGLISH);
+```
+
+`render(template, variables, locale)` renders a text you pass, in the text syntax above, without a template file. Use it for short messages of other channels that share the variables of a mail.
 
 ## Related documents
 
