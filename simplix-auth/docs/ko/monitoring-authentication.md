@@ -61,6 +61,16 @@ public class TokenAuditLog implements TokenAuditEventPublisher {
 
 `AuthRequestCorrelationFilter`는 `requestId`, `sessionId`와, 요청이 인증된 뒤에는 `username`을 로깅 컨텍스트(MDC)에 기록합니다. 로그 패턴에 `%X{requestId} %X{username}`처럼 추가하세요.
 
+## 로그
+
+모듈은 `dev.simplecore.simplix.auth` 로거로 로그를 기록합니다. 발급 엔드포인트의 기본 핸들러는 `Token authentication successful - username: ..., IP: ..., User-Agent: ...`를 `INFO`로, `Token authentication failed - username: ..., IP: ..., User-Agent: ..., reason: ...`를 `WARN`으로 기록합니다. 더 자세한 로그가 필요하면 로거의 레벨을 지정하세요.
+
+```yaml
+logging:
+  level:
+    dev.simplecore.simplix.auth: DEBUG
+```
+
 ## 관련 문서
 
 - [토큰 폐기](./revoking-tokens.md)
