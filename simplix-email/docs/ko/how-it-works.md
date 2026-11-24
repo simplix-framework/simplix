@@ -34,6 +34,8 @@
 - 주소 형식을 검사하지 않으며 발송 금지 주소 목록을 관리하지 않습니다.
 - 발송 속도를 제한하지 않습니다. 대량으로 발송하는 코드에서 프로바이더의 한도를 넘지 않도록 조절하세요.
 
+`EmailTemplateEngine`도 빈입니다. `processText(template, variables, locale)`와 `processHtml(template, variables, locale)`은 텍스트 하나를 텍스트 문법 또는 HTML 문법으로 렌더링합니다. `process(resolvedTemplate, variables, locale)`는 조회된 템플릿의 제목과 본문을 렌더링하며, 본문의 존재 여부는 템플릿의 `hasHtmlBody()`와 `hasTextBody()`로 확인합니다.
+
 ## 관련 문서
 
 - [프로바이더 선택](./choosing-a-provider.md)

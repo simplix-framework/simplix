@@ -27,6 +27,16 @@ Every property of the module, under `simplix.scheduler`.
 
 A bean that implements `SchedulerLoggingStrategy` adds a mode of your own: its `supports(mode)` decides for which `mode` value it is used.
 
+### Methods of `SchedulerLoggingStrategy`
+
+| Method | Asked to |
+|---|---|
+| `getName()`, `supports(mode)` | name the strategy, and say whether it serves the configured `mode` |
+| `ensureRegistryEntry(metadata)` | find or create the registry entry of a job |
+| `createExecutionContext(...)` | open the record of one run and return the context the result is saved against |
+| `saveExecutionResult(context, result)` | store how the run ended |
+| `initialize()`, `shutdown()`, `isReady()`, `clearCache()` | optional: prepare and release resources, report readiness, and drop what the strategy cached |
+
 ## Related documents
 
 - [Getting started](./getting-started.md)
