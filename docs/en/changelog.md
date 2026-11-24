@@ -23,6 +23,22 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
   - The CLI of the Spring Boot 3 line is published under the `spring-boot-3x` tag, and `latest` names the Spring Boot 4 line
   - The `version` command and the version check look up published versions of the running CLI's own line only
 
+#### Fixes
+- **Redis cache mode and distributed sync mode**
+  - `simplix.cache.mode=redis` and `simplix.sync.mode=DISTRIBUTED` take effect; their conditions are evaluated after the Redis and messaging auto-configurations
+
+- **Stream persistence**
+  - The update queries of sessions and subscriptions assign an `Instant`, which Hibernate refused
+
+- **ShedLock with simplix-scheduler**
+  - ShedLock is on the classpath of an application that depends on simplix-scheduler
+
+- **Generated service tests**
+  - A generated service test sets audit timestamps only when the entity has them
+
+#### Build and dependencies
+- searchable-jpa 2.1.0 on the Spring Boot 4 line and 1.2.0 on the Spring Boot 3 line, which add keyword search, server scope, scrolling, projections and aggregates
+
 ### 2026-08
 
 #### New features

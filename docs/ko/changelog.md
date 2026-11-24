@@ -23,6 +23,22 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
   - Spring Boot 3 라인의 CLI를 `spring-boot-3x` 태그로 게시하고, `latest`는 Spring Boot 4 라인을 가리킴
   - `version` 명령과 버전 검사가 실행 중인 CLI와 같은 라인의 게시 버전만 조회
 
+#### 수정 사항
+- **Redis 캐시 모드와 분산 싱크 모드**
+  - `simplix.cache.mode=redis`와 `simplix.sync.mode=DISTRIBUTED` 설정이 적용되도록 조건을 Redis 자동 구성과 메시징 자동 구성 이후에 평가
+
+- **스트림 영속화**
+  - Hibernate가 거부하던 세션·구독 갱신 쿼리가 `Instant` 값을 지정하도록 수정
+
+- **simplix-scheduler의 ShedLock**
+  - simplix-scheduler에 의존하는 애플리케이션의 클래스패스에 ShedLock 포함
+
+- **생성된 서비스 테스트**
+  - 엔티티에 감사 필드가 있을 때만 생성된 서비스 테스트가 감사 시각을 지정
+
+#### 빌드/의존성
+- Spring Boot 4 라인은 searchable-jpa 2.1.0, Spring Boot 3 라인은 searchable-jpa 1.2.0으로 변경(키워드 검색, 서버 범위 조건, 스크롤, 프로젝션, 집계 추가)
+
 ### 2026-08
 
 #### 새로운 기능
