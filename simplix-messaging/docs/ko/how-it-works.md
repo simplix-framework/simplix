@@ -36,6 +36,15 @@
 
 다른 수단으로 메시지를 전달하려면 `BrokerStrategy`를 구현한 빈을 선언하세요. 채널에 헤더와 함께 바이트를 전송하고, 그룹의 리스너를 구독하고, 확인 응답을 처리하며, `BrokerCapabilities`를 실제 기능에 맞게 반환해야 합니다. 특정 기능에 의존하는 코드는 이 값을 조회합니다.
 
+| `BrokerStrategy`의 메서드 | 동작 |
+|---|---|
+| `send(channel, payload, headers)` | 채널에 바이트를 저장하고 `PublishResult`를 반환합니다 |
+| `ensureConsumerGroup(channel, groupName)` | 브로커가 그룹을 지원하면 채널의 그룹을 생성합니다 |
+| `subscribe(request)` | `SubscribeRequest`의 리스너에 채널 메시지 전달을 시작하고 `Subscription`을 반환합니다 |
+| `acknowledge(channel, groupName, messageId)` | 메시지를 처리 완료로 표시합니다 |
+| `capabilities()`, `name()`, `isReady()` | 호출자, 로그, 헬스 인디케이터에 브로커 정보를 제공합니다 |
+| `initialize()`, `shutdown()` | 연결을 열고 닫습니다 |
+
 ## 관련 문서
 
 - [브로커 선택](./choosing-a-broker.md)

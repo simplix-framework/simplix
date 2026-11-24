@@ -20,7 +20,7 @@ shelves.mutate("s1", state -> state.setFreeSlots(4));
 boolean applied = shelves.compute("s1", state -> state.applyIfNewer(change));
 ```
 
-`InMemoryStateStore`는 키를 처음 사용할 때 전달받은 팩토리로 상태를 생성하고, 같은 키의 `mutate`와 `compute`를 한 번에 하나씩 실행합니다. 브로드캐스트를 받는 핸들러와 같은 키를 읽는 요청 스레드는 일부만 반영된 변경을 읽지 않습니다.
+`InMemoryStateStore`는 `get(key)`, `getAll()`, `getAllKeys()`, `size()`로 조회하고 `remove(key)`로 키를 삭제합니다. `InMemoryStateStore`는 키를 처음 사용할 때 전달받은 팩토리로 상태를 생성하고, 같은 키의 `mutate`와 `compute`를 한 번에 하나씩 실행합니다. 브로드캐스트를 받는 핸들러와 같은 키를 읽는 요청 스레드는 일부만 반영된 변경을 읽지 않습니다.
 
 ## 중복 적용에 안전한 메시지
 

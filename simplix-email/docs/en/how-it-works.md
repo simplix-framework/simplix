@@ -34,6 +34,8 @@ The classes behind a send, what the module registers and where a message can sto
 - It does not check the form of an address or keep a list of addresses that must not be mailed.
 - It does not limit the rate of sends. Stay under the limit of the provider in the code that sends many messages.
 
+`EmailTemplateEngine` is a bean as well: `processText(template, variables, locale)` and `processHtml(template, variables, locale)` render one text in the text or the HTML syntax, and `process(resolvedTemplate, variables, locale)` renders the subject and the bodies of a resolved template, whose `hasHtmlBody()` and `hasTextBody()` say which bodies exist.
+
 ## Related documents
 
 - [Choosing a provider](./choosing-a-provider.md)
