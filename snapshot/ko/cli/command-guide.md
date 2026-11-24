@@ -163,13 +163,13 @@ project   service/EntityService.java.template (replaces the built-in template)
 simplix-boot version [--json] [--write] [--update [--to <X.Y.Z>]]
 ```
 
-실행 중인 CLI 버전, 프로젝트가 `generator.version`에 기록한 버전, npm에 게시된 최신 버전을 보고합니다. 프로젝트 밖에서도 실행할 수 있습니다.
+실행 중인 CLI 버전, 프로젝트가 `generator.version`에 기록한 버전, 같은 릴리스 라인에서 npm에 게시된 최신 버전을 보고합니다. 프로젝트 밖에서도 실행할 수 있습니다. 릴리스 라인별 npm 태그는 [개요](overview.md#릴리스-라인)에 있습니다.
 
 | 옵션 | 설명 |
 |------|------|
 | `--json` | 결과를 JSON 한 줄로 출력합니다. |
 | `--write` | 실행 중인 버전을 `generator-simplix.json`의 `generator.version`에 기록합니다. 파일의 다른 내용은 바꾸지 않습니다. |
-| `--update` | npm에 게시된 최신 버전을 전역으로 설치합니다. |
+| `--update` | 같은 릴리스 라인에서 npm에 게시된 최신 버전을 전역으로 설치합니다. |
 | `--to <X.Y.Z>` | `--update`가 설치할 버전을 지정합니다. |
 
 `--json`의 `status` 값은 다음과 같습니다.

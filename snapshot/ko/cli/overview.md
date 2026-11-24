@@ -12,6 +12,17 @@ SimpliX CLI는 JPA 엔티티 소스와 엔티티별 yml을 입력으로 받아 S
 | 전역 설치 | `npm install -g @simplix-boot/cli` | 설치한 시점의 게시 버전 |
 | 체크아웃 연결 | `simplix-cli` 폴더에서 `npm link` | 프레임워크 체크아웃의 현재 소스 |
 
+### 릴리스 라인
+
+CLI는 SimpliX 릴리스 라인마다 별도의 npm 태그로 게시됩니다. 프로젝트가 사용하는 Spring Boot 버전에 맞는 라인을 설치하세요.
+
+| Spring Boot | SimpliX | 설치 |
+|-------------|---------|------|
+| 4 | 2.x | `npm install -g @simplix-boot/cli` |
+| 3 | 1.x | `npm install -g @simplix-boot/cli@spring-boot-3x` |
+
+`npx`에도 같은 표기를 사용합니다(`npx @simplix-boot/cli@spring-boot-3x <명령>`). `version` 명령과 버전 검사는 실행 중인 CLI와 같은 라인의 게시 버전만 조회합니다.
+
 ### 프레임워크 체크아웃 연결
 
 SimpliX 프레임워크를 내려받은 체크아웃이 있으면 그 안의 `simplix-cli` 폴더를 전역 명령으로 연결할 수 있습니다. npm이 전역 패키지 폴더에 체크아웃을 가리키는 심볼릭 링크를 만들기 때문에, 파일을 복사하지 않고 체크아웃의 소스를 그대로 실행합니다.

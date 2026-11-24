@@ -28,6 +28,8 @@ npm install -g @simplix-boot/cli
 simplix-boot help
 ```
 
+Spring Boot 3 기반의 SimpliX 1.x 프로젝트에서는 `@simplix-boot/cli@spring-boot-3x`를 설치하세요. 릴리스 라인별 설치 방법은 [개요](ko/cli/overview.md#릴리스-라인)에 있습니다.
+
 SimpliX 프레임워크 체크아웃이 있으면 그 안의 `simplix-cli`를 전역 명령으로 연결해 사용할 수 있습니다. 게시된 버전을 기다리지 않고 체크아웃의 현재 소스로 실행합니다. 확인과 해제 방법은 [개요](ko/cli/overview.md#설치와-실행)에 있습니다.
 
 ```bash
