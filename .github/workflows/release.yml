@@ -121,6 +121,7 @@ jobs:
       # The CLI is published before the Maven artifacts: a token without publish rights on the
       # @simplix-boot scope then fails while nothing has been released. A version npm already
       # holds is left as it is, so the workflow can be run again after a later step failed.
+      # The dist-tag is the one package.json names for this release line.
       - name: Publish the CLI
         if: steps.cli.outputs.present == 'true'
         working-directory: simplix-cli
@@ -131,7 +132,7 @@ jobs:
           if [ "$PUBLISHED" = "$RELEASE_VERSION" ]; then
             echo "ℹ @simplix-boot/cli@$RELEASE_VERSION is already on npm, skipping"
           else
-            npm publish --access public
+            npm publish --access public --tag "$(node -p "require('./package.json').publishConfig.tag")"
           fi
 
       - name: Publish
