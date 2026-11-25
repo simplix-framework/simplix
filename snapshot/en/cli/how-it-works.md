@@ -9,7 +9,7 @@ This page explains what each command reads and writes, how an entity is analysed
 | Command | Reads | Writes |
 |---|---|---|
 | `config` | the entity source, its parent classes, the entities it refers to | `.simplix/entity/<Name>.yml` |
-| `generate` | the entity source, the yml, the templates | files under `generated/` |
+| `generate` | the entity source, its parent classes, the yml, the templates | files under `generated/` |
 | `promote` | files under `generated/`, the module's files, `.simplix/bases/` | the module's files and `.simplix/bases/` |
 | `generated` | everything `generate` and `promote` read | files under `generated/` and a report |
 

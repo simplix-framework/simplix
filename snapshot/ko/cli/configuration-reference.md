@@ -1,17 +1,19 @@
 # 설정 레퍼런스
 
-프로젝트 설정 `.simplix/generator-simplix.json`과 엔티티 yml `.simplix/entity/<이름>.yml`의 키를 설명합니다. 프로젝트 설정은 프로젝트마다 한 번 작성하고, 엔티티 yml은 `config`가 작성한 뒤 직접 편집합니다.
+프로젝트 설정 `.simplix/simplix-boot.json`과 엔티티 yml `.simplix/entity/<이름>.yml`의 키를 설명합니다. 프로젝트 설정은 프로젝트마다 한 번 작성하고, 엔티티 yml은 `config`가 작성한 뒤 직접 편집합니다.
 
 ```
 project/
 +-- .simplix/
-|   +-- generator-simplix.json   # project configuration
+|   +-- simplix-boot.json        # project configuration
 |   +-- entity/                  # one yml per generated set of classes
 |   +-- templates/               # templates that replace built-in ones
 |   +-- bases/                   # stored renders of promoted files
 +-- generated/                   # output of generate (not committed)
 +-- modules/                     # targets of promote
 ```
+
+> ℹ 프로젝트에 `simplix-boot.json`이 없으면 generator-simplix에서 쓰던 이름인 `generator-simplix.json`을 프로젝트 설정으로 읽고, 이 파일을 읽는 명령은 그 사실을 표준 오류에 출력합니다. `simplix-boot version --write`를 실행하면 이 파일의 이름을 `simplix-boot.json`으로 바꿉니다.
 
 ## 프로젝트 설정
 

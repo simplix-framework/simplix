@@ -23,6 +23,10 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
   - Spring Boot 3 라인의 CLI를 `spring-boot-3x` 태그로 게시하고, `latest`는 Spring Boot 4 라인을 가리킴
   - `version` 명령과 버전 검사가 실행 중인 CLI와 같은 라인의 게시 버전만 조회
 
+- **코드 생성 CLI의 설정 파일**
+  - 프로젝트 설정 파일 이름을 `.simplix/simplix-boot.json`으로 변경
+  - 이 파일이 없으면 `generator-simplix.json`을 읽고, `version --write`가 파일 이름을 새 이름으로 바꿈
+
 #### 수정 사항
 - **Redis 캐시 모드와 분산 싱크 모드**
   - `simplix.cache.mode=redis`와 `simplix.sync.mode=DISTRIBUTED` 설정이 적용되도록 조건을 Redis 자동 구성과 메시징 자동 구성 이후에 평가
@@ -35,6 +39,7 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
 
 - **생성된 서비스 테스트**
   - 엔티티에 감사 필드가 있을 때만 생성된 서비스 테스트가 감사 시각을 지정
+  - 엔티티 yml에 감사 필드가 없어도 부모 클래스가 선언한 감사 시각을 지정
 
 #### 빌드/의존성
 - Spring Boot 4 라인은 searchable-jpa 2.1.0, Spring Boot 3 라인은 searchable-jpa 1.2.0으로 변경(키워드 검색, 서버 범위 조건, 스크롤, 프로젝션, 집계 추가)

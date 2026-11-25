@@ -24,7 +24,7 @@ npx @simplix-boot/cli@spring-boot-3x generate Author
 simplix-boot version --write
 ```
 
-실행 중인 CLI의 버전을 `.simplix/generator-simplix.json`의 `generator.version`에 기록하며, 파일의 다른 내용은 바꾸지 않습니다. 이 파일을 커밋하세요. 이후 `config`, `generate`, `promote`는 파일을 쓰기 전에 실행 중인 CLI와 기록된 버전을 비교합니다.
+실행 중인 CLI의 버전을 `.simplix/simplix-boot.json`의 `generator.version`에 기록하며, 파일의 다른 내용은 바꾸지 않습니다. 이 파일을 커밋하세요. 이후 `config`, `generate`, `promote`는 파일을 쓰기 전에 실행 중인 CLI와 기록된 버전을 비교합니다.
 
 | 실행 중인 CLI | 동작 |
 |---|---|
@@ -56,7 +56,7 @@ SimpliX Boot CLI version status
   running:  <X.Y.Z>
   required: <X.Y.Z>
   latest:   <X.Y.Z>
-  config:   <project>/.simplix/generator-simplix.json
+  config:   <project>/.simplix/simplix-boot.json
 
 ✔ The running CLI matches this project.
 ```

@@ -54,7 +54,7 @@ simplix-boot generate Author --force
 
 ## 다른 이름의 템플릿 사용
 
-구성 요소를 다른 경로의 템플릿으로 생성하려면 `.simplix/generator-simplix.json`의 `template`에 그 경로를 지정하세요. 지정한 경로도 같은 순서로 찾습니다. 프로젝트 폴더를 먼저, 내장 템플릿을 그다음에 확인합니다.
+구성 요소를 다른 경로의 템플릿으로 생성하려면 `.simplix/simplix-boot.json`의 `template`에 그 경로를 지정하세요. 지정한 경로도 같은 순서로 찾습니다. 프로젝트 폴더를 먼저, 내장 템플릿을 그다음에 확인합니다.
 
 ```json
 {

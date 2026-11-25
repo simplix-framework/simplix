@@ -32,7 +32,7 @@ Searched in: <project>/src/main/java
 
 **Cause**: `config` or `generate` found no source file of that name under `entity.scanPath`.
 
-**Fix**: check the spelling of the entity name, then `entity.scanPath` in `.simplix/generator-simplix.json`. In a multi-module project it is the folder that contains every module's entities.
+**Fix**: check the spelling of the entity name, then `entity.scanPath` in `.simplix/simplix-boot.json`. In a multi-module project it is the folder that contains every module's entities.
 
 ## Entity yml not found
 
@@ -73,7 +73,7 @@ Searched in: <project>/src/main/java
 ## A yml key needs a support class
 
 ```
-Book.yml uses statusCounts or aggregates, which needs supportClasses.searchFigures in .simplix/generator-simplix.json
+Book.yml uses statusCounts or aggregates, which needs supportClasses.searchFigures in .simplix/simplix-boot.json
 ```
 
 **Cause**: the yml asks for a feature whose generated code calls a class of your application, and that class is not named.

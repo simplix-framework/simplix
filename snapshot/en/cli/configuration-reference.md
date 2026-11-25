@@ -1,17 +1,19 @@
 # Configuration reference
 
-The keys of the project configuration `.simplix/generator-simplix.json` and of an entity yml `.simplix/entity/<Name>.yml`. The first is written once per project; an entity yml is written by `config` and edited by you.
+The keys of the project configuration `.simplix/simplix-boot.json` and of an entity yml `.simplix/entity/<Name>.yml`. The first is written once per project; an entity yml is written by `config` and edited by you.
 
 ```
 project/
 +-- .simplix/
-|   +-- generator-simplix.json   # project configuration
+|   +-- simplix-boot.json        # project configuration
 |   +-- entity/                  # one yml per generated set of classes
 |   +-- templates/               # templates that replace built-in ones
 |   +-- bases/                   # stored renders of promoted files
 +-- generated/                   # output of generate (not committed)
 +-- modules/                     # targets of promote
 ```
+
+> ℹ A project configuration named `generator-simplix.json`, the name the file had under generator-simplix, is read while the project has no `simplix-boot.json`, and a command that reads it says so on standard error. `simplix-boot version --write` renames it to `simplix-boot.json`.
 
 ## Project configuration
 

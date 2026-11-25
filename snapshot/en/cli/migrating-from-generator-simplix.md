@@ -4,7 +4,7 @@ A project that was generated with `generator-simplix` (the Yeoman generator run 
 
 ## What carries over
 
-- `.simplix/generator-simplix.json`
+- `.simplix/generator-simplix.json`, read under that name until step 3 renames it to `.simplix/simplix-boot.json`
 - `.simplix/entity/*.yml`
 - the EJS templates under `.simplix/templates/`
 - the stored renders under `.simplix/bases/` and the fingerprint lines of promoted files
@@ -29,7 +29,7 @@ Option names are unchanged.
 
 1. Install the CLI of your project's release line ([Managing versions](en/cli/managing-versions.md)).
 2. Run `simplix-boot generated`. The same states as before mean the CLI read your templates and configuration as the old generator did.
-3. Run `simplix-boot version --write` and commit the configuration file. The CLI's version is the SimpliX version, so the recorded number changes.
+3. Run `simplix-boot version --write` and commit the configuration file. The command renames `.simplix/generator-simplix.json` to `.simplix/simplix-boot.json` and records the CLI's version there. The CLI's version is the SimpliX version, so the recorded number changes.
 4. Uninstall the old generator: `npm uninstall -g generator-simplix yo`.
 
 ```bash
@@ -51,6 +51,7 @@ A project template that imported a class of your application directly needs that
 | An option the command does not know | refused with exit code 1 instead of ignored |
 | A template that fails to render | the command ends with exit code 1, and `generated` stops at that entity |
 | Output | progress and reports go to standard output, the reason a command stopped to standard error |
+| Configuration file | `.simplix/simplix-boot.json`. A file named `generator-simplix.json` is read while that one is absent, with a notice on standard error |
 | No controller test template in the project | no controller test is generated and no skip message is printed |
 | Recorded version lower than the CLI | every generating command says so until `version --write` records the new one |
 | Default controller template paths | `controller/rest/EntityRestController.java.template` and `controller/web/EntityWebController.java.template` |

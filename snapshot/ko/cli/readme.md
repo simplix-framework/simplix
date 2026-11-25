@@ -44,7 +44,7 @@ simplix-boot --version
 `Author`라는 JPA 엔티티와 그 저장소가 이미 있는 프로젝트의 루트에서 실행하세요.
 
 ```bash
-# 1. Create the .simplix folder, then write .simplix/generator-simplix.json
+# 1. Create the .simplix folder, then write .simplix/simplix-boot.json
 simplix-boot init
 
 # 2. Write .simplix/entity/Author.yml from the entity
