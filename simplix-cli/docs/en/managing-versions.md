@@ -24,7 +24,7 @@ npx @simplix-boot/cli@spring-boot-3x generate Author
 simplix-boot version --write
 ```
 
-This records the running CLI's version as `generator.version` in `.simplix/generator-simplix.json` and changes nothing else in the file. Commit it. `config`, `generate` and `promote` then compare the running CLI with the recorded version before they write anything.
+This records the running CLI's version as `generator.version` in `.simplix/simplix-boot.json` and changes nothing else in the file. Commit it. `config`, `generate` and `promote` then compare the running CLI with the recorded version before they write anything.
 
 | Running CLI | What happens |
 |---|---|
@@ -56,7 +56,7 @@ SimpliX Boot CLI version status
   running:  <X.Y.Z>
   required: <X.Y.Z>
   latest:   <X.Y.Z>
-  config:   <project>/.simplix/generator-simplix.json
+  config:   <project>/.simplix/simplix-boot.json
 
 ✔ The running CLI matches this project.
 ```

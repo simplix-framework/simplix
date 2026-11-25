@@ -317,7 +317,7 @@ describe('a yml that asks for a member only an application class can answer', ()
     const result = runCli(['generate', 'Book'], root);
 
     assert.strictEqual(result.status, 1);
-    assert.match(result.stdout, /Book\.yml uses statusCounts or aggregates, which needs supportClasses\.searchFigures in \.simplix\/generator-simplix\.json/);
+    assert.match(result.stdout, /Book\.yml uses statusCounts or aggregates, which needs supportClasses\.searchFigures in \.simplix\/simplix-boot\.json/);
   });
 
   it('imports the configured class and calls it by its simple name', () => {
@@ -344,7 +344,7 @@ describe('a yml that asks for a member only an application class can answer', ()
     const result = runCli(['generate', 'Book', '--force'], root);
 
     assert.strictEqual(result.status, 1);
-    assert.match(result.stdout, /supportClasses\.searchFigures in generator-simplix\.json must be a fully qualified Java class name/);
+    assert.match(result.stdout, /supportClasses\.searchFigures in simplix-boot\.json must be a fully qualified Java class name/);
   });
 });
 

@@ -73,7 +73,7 @@ function validate(config, root, log) {
 /**
  * Reads what `generate` needs out of the project configuration.
  *
- * @param {object} config the parsed `.simplix/generator-simplix.json`
+ * @param {object} config the parsed project configuration
  * @param {string} root the project root
  * @param {(message: string) => void} log where warnings go
  * @returns {object} the resolved settings

@@ -62,7 +62,7 @@ public interface AuthorRepository extends SimpliXBaseRepository<Author, String> 
 
 ## 3단계. API 생성
 
-CLI 설정은 프로젝트마다 한 번 만듭니다. `init`을 실행한 뒤, CLI의 [시작하기](../../simplix-cli/docs/ko/getting-started.md)에 있는 대로 `.simplix/generator-simplix.json`을 작성하세요. 그다음 엔티티를 기술합니다.
+CLI 설정은 프로젝트마다 한 번 만듭니다. `init`을 실행한 뒤, CLI의 [시작하기](../../simplix-cli/docs/ko/getting-started.md)에 있는 대로 `.simplix/simplix-boot.json`을 작성하세요. 그다음 엔티티를 기술합니다.
 
 ```bash
 simplix-boot init

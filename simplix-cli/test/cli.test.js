@@ -131,14 +131,14 @@ describe('version', () => {
     assert.strictEqual(report.current, packageJson.version);
     assert.strictEqual(report.required, null);
     assert.strictEqual(report.status, 'unrecorded');
-    assert.strictEqual(report.configPath, path.join(root, '.simplix', 'generator-simplix.json'));
+    assert.strictEqual(report.configPath, path.join(root, '.simplix', 'simplix-boot.json'));
   });
 
   it('records the release it belongs to in the configuration, and then matches it', () => {
     const release = packageJson.version.replace(/-.*$/, '');
 
     assert.strictEqual(runCli(['version', '--write'], root).status, 0);
-    assert.strictEqual(JSON.parse(read(root, '.simplix/generator-simplix.json')).generator.version, release);
+    assert.strictEqual(JSON.parse(read(root, '.simplix/simplix-boot.json')).generator.version, release);
 
     const report = JSON.parse(runCli(['version', '--json'], root).stdout);
     assert.strictEqual(report.required, release);
@@ -146,7 +146,7 @@ describe('version', () => {
   });
 
   it('stops a generating command when the project requires a newer CLI, and runs it with the skip flag', () => {
-    const configPath = path.join(root, '.simplix', 'generator-simplix.json');
+    const configPath = path.join(root, '.simplix', 'simplix-boot.json');
     const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
     config.generator.version = '999.0.0';
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));

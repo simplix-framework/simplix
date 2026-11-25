@@ -35,7 +35,7 @@ simplix-boot --version
 simplix-boot init
 ```
 
-Creates `.simplix/entity` and `.simplix/templates` in the current folder. When `.simplix` already exists it changes nothing. It does not write `.simplix/generator-simplix.json`: write that file yourself ([Configuration reference](./configuration-reference.md)).
+Creates `.simplix/entity` and `.simplix/templates` in the current folder. When `.simplix` already exists it changes nothing. It does not write `.simplix/simplix-boot.json`: write that file yourself ([Configuration reference](./configuration-reference.md)).
 
 ## config
 
@@ -144,7 +144,7 @@ Reports the running version, the version the project records and the newest vers
 | Option | Effect |
 |---|---|
 | `--json` | prints the report as one JSON line |
-| `--write` | records the running version as `generator.version`, leaving the rest of the file byte for byte |
+| `--write` | records the running version as `generator.version`, leaving the rest of the file byte for byte. A configuration file named `generator-simplix.json` is renamed to `simplix-boot.json` first |
 | `--update` | installs the newest version of the same release line globally |
 | `--to <X.Y.Z>` | with `--update`, the version to install |
 

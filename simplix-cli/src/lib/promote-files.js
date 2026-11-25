@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { resolveControllerName } from './controller-name.js';
 import { CliError } from './errors.js';
+import { CONFIG_FILE_NAME } from './project.js';
 
 function resolvePath(template, modulePath) {
   if (!template) throw new Error('Path template is undefined');
@@ -27,7 +28,7 @@ function generatedTestBase(config) {
  *
  * @param {object} target
  * @param {string} target.root the project root
- * @param {object} target.config the parsed `.simplix/generator-simplix.json`
+ * @param {object} target.config the parsed project configuration
  * @param {string} target.entityName the entity class name
  * @param {object} target.entityConfig the parsed entity yml, which carries `modulePath`
  * @param {string} target.moduleName the target module under the module root (`admin/jobs`)
@@ -36,7 +37,7 @@ function generatedTestBase(config) {
 export function promoteFiles({ root, config, entityName, entityConfig, moduleName }) {
   const modulePath = entityConfig?.modulePath;
   if (!modulePath) throw new CliError(`modulePath not found in ${entityName}.yml`);
-  if (!config.target?.targetPath) throw new CliError('target.targetPath not found in generator-simplix.json');
+  if (!config.target?.targetPath) throw new CliError(`target.targetPath not found in ${CONFIG_FILE_NAME}`);
   const moduleRoot = config.promote?.moduleRoot || 'modules';
   const packagePath = config.target.basePackage.replace(/\./g, '/');
   const main = (target, fileName) => ({

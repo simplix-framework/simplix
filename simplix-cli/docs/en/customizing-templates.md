@@ -54,7 +54,7 @@ simplix-boot generate Author --force
 
 ## Use a template of another name
 
-To generate a component from a template with a path of your own, name it under `template` in `.simplix/generator-simplix.json`. The path is looked up the same way: the project folder first, the built-in templates second.
+To generate a component from a template with a path of your own, name it under `template` in `.simplix/simplix-boot.json`. The path is looked up the same way: the project folder first, the built-in templates second.
 
 ```json
 {

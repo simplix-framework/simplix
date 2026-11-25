@@ -78,7 +78,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 <%
-// Build excluded fields set from generator-simplix.json configuration (same as DTO template)
+// Build excluded fields set from the project configuration (same as DTO template)
 const excludedFieldsSet = new Set(dtoExcludeFields || []);
 
 // Helper: Check if a field should be excluded from DTO generation

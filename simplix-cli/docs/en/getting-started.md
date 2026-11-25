@@ -84,7 +84,7 @@ SimpliX Boot CLI v<X.Y.Z> - Initialize
 SimpliX initialized successfully.
 ```
 
-Then write `.simplix/generator-simplix.json`. It tells the CLI where the entities are and where generated code goes.
+Then write `.simplix/simplix-boot.json`. It tells the CLI where the entities are and where generated code goes.
 
 ```json
 {
@@ -142,7 +142,7 @@ simplix-boot version --write
 ```
 
 ```
-✔ Recorded generator version <X.Y.Z> in <project>/.simplix/generator-simplix.json
+✔ Recorded generator version <X.Y.Z> in <project>/.simplix/simplix-boot.json
 ```
 
 The version goes into `generator.version` of the configuration file. From then on a teammate or a CI job with an older CLI is stopped before it writes anything, so everyone generates the same code.

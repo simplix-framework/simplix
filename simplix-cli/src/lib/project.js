@@ -7,7 +7,10 @@ import { CliError } from './errors.js';
 export const SIMPLIX_DIR = '.simplix';
 
 /** The project configuration file, inside {@link SIMPLIX_DIR}. */
-export const CONFIG_FILE_NAME = 'generator-simplix.json';
+export const CONFIG_FILE_NAME = 'simplix-boot.json';
+
+/** The name the configuration file had under generator-simplix, read while a project has no file of the current name. */
+export const EARLIER_CONFIG_FILE_NAME = 'generator-simplix.json';
 
 /**
  * The nearest directory at or above `start` that holds a `.simplix` folder.
@@ -43,9 +46,45 @@ export function requireProjectRoot(start = process.cwd()) {
   return root;
 }
 
-/** Where the project configuration file lives under a project root. */
+/** Where the project configuration file lives under a project root, and where it is written. */
 export function configPathOf(root) {
   return path.join(root, SIMPLIX_DIR, CONFIG_FILE_NAME);
+}
+
+/**
+ * The configuration file a project has: the one of the current name, or else the one of the
+ * earlier name.
+ *
+ * @param {string} root the project root
+ * @returns {{ path: string, name: string, earlier: boolean } | undefined} the file, or undefined
+ *   when the project has neither
+ */
+export function findConfigFile(root) {
+  const current = configPathOf(root);
+  if (fs.existsSync(current)) return { path: current, name: CONFIG_FILE_NAME, earlier: false };
+
+  const earlier = path.join(root, SIMPLIX_DIR, EARLIER_CONFIG_FILE_NAME);
+  if (fs.existsSync(earlier)) return { path: earlier, name: EARLIER_CONFIG_FILE_NAME, earlier: true };
+
+  return undefined;
+}
+
+/**
+ * What a project that still has a configuration file of the earlier name is told.
+ *
+ * @param {string} root the project root
+ * @returns {string | undefined} the notice, or undefined when the project has no such file
+ */
+export function earlierConfigNotice(root) {
+  if (!fs.existsSync(path.join(root, SIMPLIX_DIR, EARLIER_CONFIG_FILE_NAME))) return undefined;
+
+  const current = `${SIMPLIX_DIR}/${CONFIG_FILE_NAME}`;
+  const earlier = `${SIMPLIX_DIR}/${EARLIER_CONFIG_FILE_NAME}`;
+  if (fs.existsSync(configPathOf(root))) {
+    return `${earlier} is not read: ${current} is the configuration file. Delete ${earlier}.`;
+  }
+
+  return `${earlier} is the earlier name of the configuration file. Rename it to ${current}.`;
 }
 
 /** Where an entity's yml lives under a project root. */
@@ -61,14 +100,14 @@ export function entityConfigPathOf(root, entityName) {
  * @throws {CliError} when the file is not valid JSON
  */
 export function readProjectConfig(root) {
-  const configPath = configPathOf(root);
-  if (!fs.existsSync(configPath)) return undefined;
+  const file = findConfigFile(root);
+  if (file === undefined) return undefined;
 
   try {
-    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    return JSON.parse(fs.readFileSync(file.path, 'utf8'));
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
-    throw new CliError(`Failed to parse ${CONFIG_FILE_NAME}: ${error.message}`);
+    throw new CliError(`Failed to parse ${file.name}: ${error.message}`);
   }
 }
 

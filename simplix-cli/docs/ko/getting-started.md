@@ -84,7 +84,7 @@ SimpliX Boot CLI v<X.Y.Z> - Initialize
 SimpliX initialized successfully.
 ```
 
-이어서 `.simplix/generator-simplix.json`을 작성하세요. 엔티티의 위치와 생성 코드의 위치를 CLI에 알려 주는 파일입니다.
+이어서 `.simplix/simplix-boot.json`을 작성하세요. 엔티티의 위치와 생성 코드의 위치를 CLI에 알려 주는 파일입니다.
 
 ```json
 {
@@ -142,7 +142,7 @@ simplix-boot version --write
 ```
 
 ```
-✔ Recorded generator version <X.Y.Z> in <project>/.simplix/generator-simplix.json
+✔ Recorded generator version <X.Y.Z> in <project>/.simplix/simplix-boot.json
 ```
 
 버전은 설정 파일의 `generator.version`에 기록됩니다. 이후에는 더 낮은 버전의 CLI를 쓰는 팀원이나 CI 작업이 파일을 쓰기 전에 중단되므로, 모두가 같은 코드를 생성합니다.

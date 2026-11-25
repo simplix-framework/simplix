@@ -65,16 +65,16 @@ describe('the project a command runs in', () => {
 
   it('answers undefined for a missing configuration, and refuses it where a command needs one', () => {
     assert.strictEqual(readProjectConfig(root), undefined);
-    assert.throws(() => requireProjectConfig(root), { name: 'CliError', message: /generator-simplix\.json not found/ });
+    assert.throws(() => requireProjectConfig(root), { name: 'CliError', message: /simplix-boot\.json not found/ });
   });
 
   it('reads the configuration, and refuses one that is not JSON', () => {
-    const configPath = path.join(root, '.simplix', 'generator-simplix.json');
+    const configPath = path.join(root, '.simplix', 'simplix-boot.json');
 
     fs.writeFileSync(configPath, '{ "target": { "basePackage": "dev.example" } }');
     assert.deepStrictEqual(requireProjectConfig(root), { target: { basePackage: 'dev.example' } });
 
     fs.writeFileSync(configPath, '{ "target": ');
-    assert.throws(() => readProjectConfig(root), { name: 'CliError', message: /^Failed to parse generator-simplix\.json: / });
+    assert.throws(() => readProjectConfig(root), { name: 'CliError', message: /^Failed to parse simplix-boot\.json: / });
   });
 });

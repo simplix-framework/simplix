@@ -4,7 +4,7 @@
 
 ## 그대로 쓰는 파일
 
-- `.simplix/generator-simplix.json`
+- `.simplix/generator-simplix.json`. 3단계에서 이름을 `.simplix/simplix-boot.json`으로 바꾸기 전까지 이 이름으로 읽습니다
 - `.simplix/entity/*.yml`
 - `.simplix/templates/`의 EJS 템플릿
 - `.simplix/bases/`의 기준 렌더와 모듈로 옮긴 파일의 지문 줄
@@ -29,7 +29,7 @@
 
 1. 프로젝트의 릴리스 라인에 맞는 CLI를 설치합니다([버전 관리](./managing-versions.md)).
 2. `simplix-boot generated`를 실행합니다. 전환 전과 같은 상태가 보고되면 CLI가 템플릿과 설정을 기존 생성기와 같게 읽은 것입니다.
-3. `simplix-boot version --write`를 실행하고 설정 파일을 커밋합니다. CLI의 버전은 SimpliX의 버전이므로 기록되는 숫자가 달라집니다.
+3. `simplix-boot version --write`를 실행하고 설정 파일을 커밋합니다. 이 명령은 `.simplix/generator-simplix.json`의 이름을 `.simplix/simplix-boot.json`으로 바꾸고 CLI의 버전을 기록합니다. CLI의 버전은 SimpliX의 버전이므로 기록되는 숫자가 달라집니다.
 4. 기존 생성기를 제거합니다: `npm uninstall -g generator-simplix yo`
 
 ```bash
@@ -51,6 +51,7 @@ simplix-boot version --write
 | 명령이 모르는 옵션 | 무시하지 않고 종료 코드 1로 거부합니다 |
 | 렌더링에 실패한 템플릿 | 명령이 종료 코드 1로 끝나고, `generated`는 해당 엔티티에서 중단합니다 |
 | 출력 | 진행 상황과 보고는 표준 출력에, 중단 사유는 표준 오류에 출력합니다 |
+| 설정 파일 | `.simplix/simplix-boot.json`입니다. 이 파일이 없으면 `generator-simplix.json`을 읽고 표준 오류에 안내를 출력합니다 |
 | 프로젝트에 컨트롤러 테스트 템플릿이 없음 | 컨트롤러 테스트를 생성하지 않으며 건너뛴다는 메시지도 출력하지 않습니다 |
 | 기록된 버전이 CLI보다 낮음 | `version --write`로 새 버전을 기록할 때까지 생성 명령마다 차이를 알립니다 |
 | 컨트롤러 템플릿의 기본 경로 | `controller/rest/EntityRestController.java.template`, `controller/web/EntityWebController.java.template` |
