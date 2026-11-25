@@ -47,10 +47,10 @@ Open `http://localhost:3000`. The site is built by Docsify; `docs/ko/_sidebar.md
 
 ```bash
 # Language parity, links, images, symbols
-node .claude/scripts/validate-docs.mjs
+node scripts/docs/validate-docs.mjs
 
 # Links and images of the built site
-./scripts/build-docs.sh && node .claude/scripts/validate-docs.mjs --site
+./scripts/build-docs.sh && node scripts/docs/validate-docs.mjs --site
 ```
 
 - No emoji; status marks are ✔ ✖ ⚠ ℹ.

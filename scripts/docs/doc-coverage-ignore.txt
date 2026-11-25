@@ -1,0 +1,167 @@
+# Types and properties that are internal on purpose and are not documented for users.
+# One entry per line: <module>:<Type or property key>  # reason
+
+simplix-core:AbstractMessageResolver  # base class of the two message resolvers the guide names
+simplix-core:LabeledEnumDeserializer  # Jackson wiring behind LabeledEnum
+simplix-core:SafeHtmlValidator  # validator behind @SafeHtml
+simplix-core:SimpliXI18nConfigHolder  # static holder filled from simplix.i18n by the starter
+simplix-core:SimpliXI18nProperties  # binding class of simplix.i18n; the keys are documented
+simplix-core:SimpliXI18nTransSerializer  # serializer behind @I18nTrans
+simplix-core:SimpliXJpaRepository  # repository base class created by SimpliXRepositoryFactoryBean
+simplix-core:SimpliXTreeRepositoryImpl  # implementation behind SimpliXTreeRepository
+simplix-core:TreeQueries  # SQL builder of the tree repository
+simplix-core:UniqueCompositeValidator  # validator behind @UniqueComposite
+simplix-core:UniqueFieldsValidator  # validator behind @UniqueFields
+simplix-core:UniqueValidator  # validator behind @Unique
+simplix-core:UuidV7GeneratorImpl  # generator behind @UuidV7Generator
+simplix-core:ValidateWithValidator  # validator behind @ValidateWith
+simplix-core:SimpliXTreeBaseService.ChildrenWithCountSetter  # callback type used inside the tree service
+simplix-core:GenericEvent.Builder  # reached through GenericEvent.builder(); its methods are documented
+
+spring-boot-starter-simplix:AccessExpressionParser  # reads @PreAuthorize for the metadata document
+spring-boot-starter-simplix:ConstraintExtractor  # reads validation annotations for the metadata document
+spring-boot-starter-simplix:DtoMetaBuilder  # builds the metadata document
+spring-boot-starter-simplix:MetaTypeRegistry  # collects the types of the metadata document
+spring-boot-starter-simplix:TypeMetaFactory  # builds TypeMeta entries
+spring-boot-starter-simplix:TypeRefMapper  # maps Java types to TypeRef
+spring-boot-starter-simplix:CreateRequestNullSkipCondition  # ModelMapper condition used by the base service
+spring-boot-starter-simplix:VerbOnlyWriteSkipCondition  # ModelMapper condition behind @VerbOnly
+spring-boot-starter-simplix:I18nMessagesDevRestController  # controller of the documented /dev/i18n endpoints
+spring-boot-starter-simplix:I18nMessagesService  # service behind the /dev/i18n endpoints
+spring-boot-starter-simplix:SimpliXMetaDevController  # controller of the documented /dev/meta/dto endpoint
+spring-boot-starter-simplix:SimpliXDevProperties  # binding class of simplix.dev; the keys are documented
+spring-boot-starter-simplix:SimpliXProperties.CoreProperties  # binding class; the keys are documented
+spring-boot-starter-simplix:SimpliXProperties.DateTimeProperties  # binding class; the keys are documented
+spring-boot-starter-simplix:SimpliXProperties.ExceptionHandlerProperties  # binding class; the keys are documented
+spring-boot-starter-simplix:SimpliXExceptionHandler.ResponseFactory  # created inside the handler and cannot be supplied
+spring-boot-starter-simplix:ValidationArgumentProcessor  # orders constraint attributes for message formatting
+spring-boot-starter-simplix:SimpliXTreeRepositoryAutoConfiguration  # nested types are internal wiring of tree repository support
+
+simplix-auth:SimpliXAuthProperties  # binding class of simplix.auth; the keys are documented
+simplix-auth:SimpliXOAuth2Properties  # binding class of simplix.auth.oauth2; the keys and enum values are documented
+
+simplix-cache:CacheProperties  # binding class of simplix.cache; the keys are documented
+simplix-cache:SimpliXCacheAutoConfiguration.HealthConfiguration  # nested wiring of the auto-configuration
+simplix-cache:SimpliXCacheAutoConfiguration.MetricsConfiguration  # nested wiring of the auto-configuration
+simplix-cache:SimpliXCacheAutoConfiguration.NatsConfiguration  # nested wiring of the auto-configuration
+simplix-cache:SimpliXCacheAutoConfiguration.RedisConfiguration  # nested wiring of the auto-configuration
+
+simplix-encryption:SimpliXEncryptionProperties  # binding class of simplix.encryption; the keys are documented
+simplix-encryption:KeyProviderConfiguration.ConfigurableKeyProviderConfig  # nested wiring of one provider
+simplix-encryption:KeyProviderConfiguration.ManagedKeyProviderConfig  # nested wiring of one provider
+simplix-encryption:KeyProviderConfiguration.SimpleKeyProviderConfig  # nested wiring of one provider
+simplix-encryption:KeyProviderConfiguration.VaultKeyProviderConfig  # nested wiring of one provider
+
+simplix-scheduler:SchedulerProperties  # binding class of simplix.scheduler; the keys are documented
+
+simplix-hibernate:HibernateCacheProperties  # binding class of simplix.hibernate.cache; the keys are documented
+
+simplix-sync:ReconciliationScheduler.Builder  # reached through ReconciliationScheduler.builder(); its methods are documented
+
+simplix-excel:SimplixExcelProperties  # binding class of simplix.excel; the keys are documented
+simplix-excel:ExcelTemplateGenerator.TemplateOptionsBuilder  # builder of the template options bean the properties configure
+
+simplix-email:EmailProperties  # binding class of simplix.email; the keys are documented
+simplix-email:EmailTemplateEngine.ProcessedTemplate  # value the engine hands to the template service
+
+simplix-file:FileProperties.ThumbnailConfig  # binding class; the keys are documented
+simplix-file:ImageProperties.OptimizationConfig  # binding class; the keys are documented
+simplix-file:ImageProperties.ThumbnailConfig  # binding class; the keys are documented
+simplix-file:StorageProperties.LocalStorageConfig  # binding class; the keys are documented
+simplix-file:FileProcessingRequest.Builder  # reached through FileProcessingRequest.builder(file); its methods are documented
+
+simplix-license:LicenseDTOs  # holder of the documented request and response classes
+simplix-license:SetupLicenseDTO  # response of the setup wizard endpoints, the license status with setup fields
+simplix-license:EnvProfileDTOs  # request and response classes of the env profile editor of the setup wizard
+simplix-license:FileLicenseStore.State  # the JSON shape of the file store, not an API
+
+simplix-messaging:MessagingProperties  # binding class of simplix.messaging; the keys are documented
+simplix-messaging:Message.Builder  # reached through Message.builder(); its methods are documented
+simplix-messaging:NatsScheduledMessagePublisher.ScheduledRecord  # stored form of a delayed message in the deprecated NATS scheduler
+simplix-messaging:SubscribeRequest.Builder  # builder of the request a BrokerStrategy receives
+
+simplix-stream:StreamProperties.AdminConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.BroadcastConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.DistributedConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.EventPublishingConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.EventSourceConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.EventsConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.LeaderElectionConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.MonitoringConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.NatsConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.PubSubConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.RegistryConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.SchedulerConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.SecurityConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.SendConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.ServerConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.SessionConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.SubscriptionConfig  # binding class; the keys are documented
+simplix-stream:StreamProperties.WebSocketConfig  # binding class; the keys are documented
+simplix-stream:NatsBroadcaster.BroadcastMessage  # wire form of a message between instances
+simplix-stream:NatsBroadcaster.DirectMessage  # wire form of a message between instances
+simplix-stream:RedisBroadcaster.BroadcastMessage  # wire form of a message between instances
+simplix-stream:RedisBroadcaster.DirectMessage  # wire form of a message between instances
+simplix-stream:SimpliXStreamAdminConfiguration.DistributedAdminConfiguration  # nested wiring of the auto-configuration
+simplix-stream:SimpliXStreamCoreConfiguration.LocalModeConfiguration  # nested wiring of the auto-configuration
+simplix-stream:SimpliXStreamCoreConfiguration.StreamComponentWiring  # nested wiring of the auto-configuration
+simplix-stream:SimpliXStreamDistributedConfiguration.BroadcastMessageHandler  # Redis listener adapter of the auto-configuration
+simplix-stream:SimpliXStreamDistributedConfiguration.NatsEnabledConfiguration  # nested wiring of the auto-configuration
+simplix-stream:SimpliXStreamDistributedConfiguration.RedisEnabledConfiguration  # nested wiring of the auto-configuration
+simplix-stream:SimpliXStreamEventSourceConfiguration.EventSourceEnabledConfiguration  # nested wiring of the auto-configuration
+simplix-stream:SimpliXStreamEventSourceConfiguration.EventSourceWiring  # nested wiring of the auto-configuration
+simplix-stream:SimpliXStreamWebSocketConfiguration.StreamWebSocketConfig  # the default broker configuration the guide describes
+simplix-stream:SubscriberLookup  # lookup the broadcasters use to find the sessions of a key
+simplix-stream:SubscriptionManager.SubscriptionDenied  # result type inside the subscription manager
+simplix-stream:SubscriptionManager.SubscriptionInfo  # result type inside the subscription manager
+simplix-stream:SubscriptionManager.SubscriptionInvalid  # result type inside the subscription manager
+simplix-stream:SubscriptionManager.SubscriptionUpdateResult  # result type inside the subscription manager
+simplix-stream:streamRedisMessageListenerContainer  # listener container of the Redis broker mode, which does not start
+
+# Public methods the module itself calls. <Type>.* covers every method of the type.
+simplix-auth:AuthenticationMetrics.*  # records the meters the monitoring guide lists
+simplix-auth:SimpliXCorsConfigurations.*  # builds the CORS source of the chains from simplix.auth.cors
+simplix-auth:TrustedIssuerAuthenticationManagers.*  # factory behind the resource server configuration
+simplix-encryption:ManagedKeyProvider.validateConfiguration  # start-up check the module calls
+simplix-encryption:AbstractKeyProvider.validateConfiguration  # start-up check the module calls
+simplix-excel:DefaultCellStyle.*  # adds the Normal style while a workbook is written
+simplix-excel:ExcelConverter.configure  # applied from the properties by the auto-configuration
+simplix-excel:ValueFormatter.configure  # applied from the properties by the auto-configuration
+simplix-excel:FormatterCache.*  # cache behind the formatters and converters
+simplix-excel:ExcelTemplateManager.*  # loads and caches templates for the JXLS exporter
+simplix-excel:TypeConverter.registerEnumValueExtractor  # stores an extractor no exporter or importer reads
+simplix-hibernate:TransactionAwareCacheEvictionCollector.collect  # called by the eviction aspect and the entity listeners
+simplix-license:LicenseAuditTrail.*  # written by the module when the license state changes
+simplix-license:VerificationKeys.*  # key material the manager verifies tokens with
+simplix-license:EnvProfileService.*  # serves the setup endpoints
+simplix-license:LicenseActivationClient.*  # HTTP client of the activation service
+simplix-license:ActivationServerProbe.*  # result of the server check during activation
+simplix-license:ActivationFailures.*  # maps activation failures to message keys
+simplix-license:LicenseActivationService.identifyServer  # step of the activation the service runs itself
+simplix-license:LicenseReVerificationScheduler.*  # scheduled by the module
+simplix-license:LicenseHeartbeatScheduler.*  # scheduled by the module
+simplix-license:LicenseState.markChecked  # called by the manager after each judgement
+simplix-messaging:MessagingMetrics.*  # records the meters the monitoring guide lists
+simplix-messaging:RedisStreamSubscriber.*  # polling loop of the Redis broker
+simplix-messaging:RedisConsumerGroupManager.*  # consumer group handling of the Redis broker
+simplix-messaging:SubscriptionHealthTracker.*  # error bookkeeping of a subscription
+simplix-messaging:NatsLeaderElection.*  # leader lock of the NATS scheduler
+simplix-messaging:NatsConsumerGroupManager.*  # stream and consumer handling of the NATS broker
+simplix-messaging:InFlightTracker.*  # bookkeeping of deliveries in progress
+simplix-stream:EventSubscriberRegistry.*  # subscriber bookkeeping of event sources
+simplix-stream:EventStreamHandler.*  # delivers application events to subscribers
+simplix-stream:StreamAuthorizationService.*  # calls the ResourceAuthorizer beans
+simplix-stream:StreamMetrics.*  # records the gauges the monitoring guide lists
+simplix-stream:NatsBroadcaster.*  # broadcaster of the NATS broker mode
+simplix-stream:RedisBroadcaster.*  # broadcaster of the Redis broker mode
+simplix-stream:LocalBroadcaster.*  # broadcaster of one instance
+simplix-stream:LeaderElection.*  # leader lock of the broker modes, which do not start
+simplix-stream:StreamSubscriptionRepository.*  # Spring Data repository of the module
+simplix-stream:StreamServerInstanceRepository.*  # Spring Data repository of the module
+simplix-stream:StreamSessionRepository.*  # Spring Data repository of the module
+simplix-stream:AdminCommandRepository.*  # Spring Data repository of the module
+simplix-stream:DbSessionRegistry.*  # SessionRegistry over the database
+simplix-stream:WebSocketStreamSession.*  # MessageSender of a WebSocket connection
+simplix-stream:SseStreamSession.*  # MessageSender of an SSE connection
+simplix-stream:SubscriptionDiff.*  # difference between two subscription lists
+spring-boot-starter-simplix:SimpliXExceptionHandler.handleSpringMvcClientException  # exception handler method Spring MVC calls

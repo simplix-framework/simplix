@@ -18,7 +18,7 @@ A figure id is `<area>-<document-slug>-<what>`, lowercase with hyphens. The area
 
 ## Adding a figure
 
-1. In the area's module, add an entry to `LABELS` keyed by the figure id, with an `en` and a `ko` table that hold every label the figure prints. Korean labels follow `.claude/GLOSSARY.md`; code identifiers are the same in both languages.
+1. In the area's module, add an entry to `LABELS` keyed by the figure id, with an `en` and a `ko` table that hold every label the figure prints. Korean labels follow `GLOSSARY.md`; code identifiers are the same in both languages.
 2. Write one function that takes `lang`, reads only `LABELS[fid][lang]`, draws on `canvas(1200, h)` and ends with `save(c, f"{fid}.{lang}")`.
 3. Call it for each entry of `LANGS` at the bottom of the module.
 4. Build, verify, render and read both PNGs.
