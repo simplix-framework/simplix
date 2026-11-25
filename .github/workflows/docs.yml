@@ -11,6 +11,8 @@ on:
       - '**/README.ko.md'
       - 'scripts/build-docs.sh'
       - 'scripts/build-docs.mjs'
+      - 'scripts/prepare-docs.mjs'
+      - 'scripts/tests/docs-site.test.mjs'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
     inputs:
@@ -52,6 +54,10 @@ jobs:
           echo "is_release=$IS_RELEASE" >> $GITHUB_OUTPUT
           echo "Building documentation for version: $VERSION (release: $IS_RELEASE)"
 
+      - name: Test the site tooling
+        if: steps.version.outputs.is_release != 'true'
+        run: node --test scripts/tests/docs-site.test.mjs
+
       - name: Build documentation
         env:
           DOCS_VERSION: ${{ steps.version.outputs.version }}
@@ -66,79 +72,27 @@ jobs:
           path: gh-pages
         continue-on-error: true
 
+      # The shell of the site and the script that combines the versions always come from main, so
+      # a release built from its tag is published with the current navigation.
+      - name: Checkout current site tooling
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: .docs-tooling
+          sparse-checkout: |
+            docs/index.html
+            docs/assets
+            scripts/prepare-docs.mjs
+          sparse-checkout-cone-mode: false
+
       - name: Prepare deployment
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          IS_RELEASE: ${{ steps.version.outputs.is_release }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-
-          # Create deployment directory
-          mkdir -p deploy
-
-          # Copy existing versions if gh-pages exists (skip all SNAPSHOT versions)
-          if [ -d "gh-pages" ]; then
-            for dir in gh-pages/*/; do
-              if [ -d "$dir" ]; then
-                dirname=$(basename "$dir")
-                # Skip SNAPSHOT versions (only keep releases)
-                if [[ ! "$dirname" =~ SNAPSHOT ]]; then
-                  cp -r "$dir" "deploy/"
-                fi
-              fi
-            done
-          fi
-
-          # Copy new version (SNAPSHOT goes to fixed 'snapshot' folder)
-          if [[ "$VERSION" =~ SNAPSHOT ]]; then
-            mkdir -p deploy/snapshot
-            cp -r build-docs/* deploy/snapshot/
-            # Store actual version for display in version selector
-            echo "$VERSION" > deploy/snapshot/.version
-          else
-            mkdir -p "deploy/$VERSION"
-            cp -r build-docs/* "deploy/$VERSION/"
-          fi
-
-          # Generate versions.json from folders
-          node -e "
-            const fs = require('fs');
-            const dirs = fs.readdirSync('deploy', { withFileTypes: true })
-              .filter(d => d.isDirectory())
-              .map(d => d.name);
-
-            const versions = { releases: [], snapshotVersion: null };
-
-            dirs.forEach(dir => {
-              if (dir === 'snapshot') {
-                // Read actual version from .version file for display
-                const versionFile = 'deploy/snapshot/.version';
-                if (fs.existsSync(versionFile)) {
-                  versions.snapshotVersion = fs.readFileSync(versionFile, 'utf8').trim();
-                } else {
-                  versions.snapshotVersion = 'SNAPSHOT';
-                }
-              } else if (/^\d+\.\d+/.test(dir)) {
-                versions.releases.push(dir);
-              }
-            });
-
-            // Sort releases descending
-            versions.releases.sort((a, b) => {
-              const partsA = a.split('.').map(Number);
-              const partsB = b.split('.').map(Number);
-              for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
-                if ((partsA[i] || 0) !== (partsB[i] || 0)) return (partsB[i] || 0) - (partsA[i] || 0);
-              }
-              return 0;
-            });
-
-            fs.writeFileSync('deploy/versions.json', JSON.stringify(versions, null, 2));
-            console.log('Generated versions.json:', versions);
-
-            // Create root redirect (use 'snapshot' folder for SNAPSHOT versions)
-            const defaultVersion = versions.releases[0] || (versions.snapshotVersion ? 'snapshot' : null);
-            const html = '<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta http-equiv=\"refresh\" content=\"0; url=./' + defaultVersion + '/\"><script>window.location.href=\"./' + defaultVersion + '/\";</script></head><body><p>Redirecting...</p></body></html>';
-            fs.writeFileSync('deploy/index.html', html);
-            console.log('Root redirect to:', defaultVersion);
-          "
+          if [ "$IS_RELEASE" = "true" ]; then FOLDER_NAME="$VERSION"; else FOLDER_NAME="snapshot"; fi
+          mkdir -p gh-pages
+          node .docs-tooling/scripts/prepare-docs.mjs gh-pages build-docs deploy "$FOLDER_NAME"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

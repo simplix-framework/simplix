@@ -62,3 +62,24 @@ node .claude/scripts/validate-docs.mjs
 **Deploy Documentation** 워크플로는 `main`에 푸시된 변경에 문서, 그림, `docs` 아래의 사이트 파일 또는 빌드 스크립트가 포함되면 사이트를 빌드해 <https://simplix-framework.github.io/simplix/>에 게시합니다. 병합 후 수동으로 처리할 작업은 없습니다.
 
 특정 릴리스의 문서를 다시 게시하려면 Actions 탭에서 워크플로를 실행하고 버전을 입력하세요. 이 경우 `main` 대신 해당 릴리스의 태그에서 빌드합니다.
+
+## 사이트 디자인과 탐색
+
+이 사이트는 Searchable JPA, SimpliX React, UI Kits 문서 사이트와 같은 셸, 스타일, 동작을 사용합니다. 그래서 사이트의 모양이 같고 서로 이동할 수 있습니다. 공유 파일의 원본은 이 저장소에 있습니다.
+
+| 파일 | 내용 |
+|---|---|
+| `docs/index.html` | 모든 페이지가 불러오는 셸 |
+| `docs/assets/site/` | 스타일, 헤더와 사이드바의 동작, 라이브러리 목록, 로고 |
+| `docs/assets/version-selector.js` | 버전 폴더의 경로 계산 |
+| `scripts/prepare-docs.mjs` | GitHub Pages에 올릴 버전 폴더를 합치는 스크립트 |
+| `docs/assets/site-config.js` | 이 사이트의 정보. 저장소마다 따로 둡니다 |
+
+공유 파일을 고친 뒤에는 다른 저장소에 복사하고 복사본을 검사하세요.
+
+```bash
+node scripts/sync-docs-site.mjs ../searchable-jpa ../simplix-react ../simplix-react-ui-kits
+node scripts/sync-docs-site.mjs --check ../searchable-jpa ../simplix-react ../simplix-react-ui-kits
+```
+
+사이트는 개발 버전과 함께 릴리스 라인별 최신 릴리스를 보관합니다. 헤더의 버전 전환기로 버전을 바꾸며, 대상 버전에 같은 페이지가 있으면 읽던 페이지를 그대로 엽니다.

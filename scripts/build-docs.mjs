@@ -122,10 +122,7 @@ function main() {
   rmSync(BUILD_DIR, { recursive: true, force: true });
   mkdirSync(BUILD_DIR, { recursive: true });
 
-  for (const file of ['index.html', '.nojekyll', '_navbar.md']) cpSync(join(ROOT, 'docs', file), join(BUILD_DIR, file));
-  // shields.io reads a hyphen in a badge value as a separator, so it is doubled.
-  const cover = readFileSync(join(ROOT, 'docs/_coverpage.md'), 'utf8').replaceAll('{{VERSION}}', version.replaceAll('-', '--'));
-  writeFileSync(join(BUILD_DIR, '_coverpage.md'), cover);
+  for (const file of ['index.html', '.nojekyll']) cpSync(join(ROOT, 'docs', file), join(BUILD_DIR, file));
 
   const plan = planSite();
   const unresolved = [];
