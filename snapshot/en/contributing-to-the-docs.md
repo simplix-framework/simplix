@@ -62,3 +62,24 @@ node .claude/scripts/validate-docs.mjs
 The workflow **Deploy Documentation** builds the site and publishes it at <https://simplix-framework.github.io/simplix/> whenever a push to `main` changes a document, a figure, the site files under `docs` or the build scripts. Nothing has to be done by hand after a merge.
 
 To publish the documents of a release again, run the workflow from the Actions tab and give it the version: it then builds from the tag of that release instead of `main`.
+
+## The look and navigation of the site
+
+The site shares its shell, its style and its behaviour with the documentation of Searchable JPA, SimpliX React and the UI Kits, so the sites look alike and lead to one another. This repository holds the original of the shared files.
+
+| File | Holds |
+|---|---|
+| `docs/index.html` | the shell every page loads |
+| `docs/assets/site/` | the style, the behaviour of the header and the sidebar, the list of libraries and the logo |
+| `docs/assets/version-selector.js` | the path arithmetic of the version folders |
+| `scripts/prepare-docs.mjs` | the script that combines the versions for GitHub Pages |
+| `docs/assets/site-config.js` | what this site is; each repository has its own |
+
+After you change a shared file, copy it to the other repositories and check the copies:
+
+```bash
+node scripts/sync-docs-site.mjs ../searchable-jpa ../simplix-react ../simplix-react-ui-kits
+node scripts/sync-docs-site.mjs --check ../searchable-jpa ../simplix-react ../simplix-react-ui-kits
+```
+
+The site keeps the newest release of each release line beside the development version. The version switch of the header moves between them and stays on the page being read when the other version has it.
