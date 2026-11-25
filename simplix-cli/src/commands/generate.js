@@ -5,6 +5,7 @@ import lodash from 'lodash';
 import { extractTableComment } from '../lib/comment-extractor.js';
 import { symbols } from '../lib/console.js';
 import { resolveControllerName } from '../lib/controller-name.js';
+import { analyzeParentClass } from '../lib/config/parents.js';
 import { analyzeEntity } from '../lib/entity-analyzer.js';
 import { createEntityTypeResolver } from '../lib/entity-type-resolver.js';
 import { resolveEntityType } from '../lib/entity-type.js';
@@ -170,6 +171,17 @@ export function generate({ root, entityName: ymlName, force = false, test = true
   const entityComment = extractTableComment(entityContent);
   const analysis = analyzeEntity(entityContent, { isEntityType: createEntityTypeResolver(srcPath) });
 
+  // What the entity takes from parent classes whose source is under the scan path. These stay
+  // apart from the entity's own fields, which the DTOs and the search fields are built from.
+  const { parentFields } = analyzeParentClass(
+    { root, config, log: () => {} },
+    analysis.parentClass,
+    settings.baseEntityPath,
+    srcPath,
+    new Set()
+  );
+  const inheritedFields = parentFields.filter(inherited => !analysis.fields.some(own => own.name === inherited.name));
+
   const treeEntityInterface = (analysis.implementedInterfaces || []).find(i => i.name === 'TreeEntity');
   const hasTreeEntity = Boolean(treeEntityInterface);
   if (hasTreeEntity) {
@@ -219,6 +231,7 @@ export function generate({ root, entityName: ymlName, force = false, test = true
     entityComment,
     analysis,
     fields,
+    inheritedFields,
     controllerName: resolveControllerName(ymlName, entityConfig),
     dtoExcludeFields: settings.dtoExcludeFields,
     searchFields,

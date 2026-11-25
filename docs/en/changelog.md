@@ -35,6 +35,7 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
 
 - **Generated service tests**
   - A generated service test sets audit timestamps only when the entity has them
+  - Audit timestamps a parent class declares are set when the entity yml does not list them
 
 #### Build and dependencies
 - searchable-jpa 2.1.0 on the Spring Boot 4 line and 1.2.0 on the Spring Boot 3 line, which add keyword search, server scope, scrolling, projections and aggregates

@@ -9,7 +9,7 @@
 | 명령 | 읽는 것 | 쓰는 것 |
 |---|---|---|
 | `config` | 엔티티 소스, 부모 클래스, 참조하는 엔티티 | `.simplix/entity/<이름>.yml` |
-| `generate` | 엔티티 소스, yml, 템플릿 | `generated/` 아래의 파일 |
+| `generate` | 엔티티 소스, 부모 클래스, yml, 템플릿 | `generated/` 아래의 파일 |
 | `promote` | `generated/` 아래의 파일, 모듈의 파일, `.simplix/bases/` | 모듈의 파일과 `.simplix/bases/` |
 | `generated` | `generate`와 `promote`가 읽는 모든 것 | `generated/` 아래의 파일과 보고 |
 

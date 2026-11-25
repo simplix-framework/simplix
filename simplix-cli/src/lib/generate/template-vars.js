@@ -91,6 +91,19 @@ function generatedAt() {
 }
 
 /**
+ * The lookup a template asks whether the entity carries a field, declared by the entity itself or
+ * by a parent class.
+ *
+ * @param {object[]} fields the entity's own fields
+ * @param {object[]} inheritedFields the fields of its parent classes
+ * @returns {(name: string) => boolean} whether a field of that name exists
+ */
+export function entityFieldLookup(fields, inheritedFields) {
+  const names = new Set([...fields, ...inheritedFields].map(field => field.name));
+  return name => names.has(name);
+}
+
+/**
  * Builds the variables every template is rendered with.
  *
  * @param {object} input
@@ -99,6 +112,8 @@ function generatedAt() {
  * @param {string} input.entityComment the entity's table comment
  * @param {object} input.analysis what the entity analyzer read from the source
  * @param {object[]} input.fields the entity fields, with service imports resolved
+ * @param {object[]} [input.inheritedFields] the fields of the entity's parent classes whose source is
+ *   under the scan path, without those the entity declares again
  * @param {string} input.controllerName the REST controller's class name
  * @param {string[]} input.dtoExcludeFields the fields every DTO leaves out
  * @param {object} input.searchFields the embedded id and entity search fields
@@ -113,6 +128,7 @@ export function buildTemplateVars({
   entityComment,
   analysis,
   fields,
+  inheritedFields = [],
   controllerName,
   dtoExcludeFields,
   searchFields,
@@ -133,6 +149,8 @@ export function buildTemplateVars({
     fields,
     idType,
     entityFields: fields,
+    inheritedFields,
+    entityHasField: entityFieldLookup(fields, inheritedFields),
     entityNameLowerFirst: props.entityName.charAt(0).toLowerCase() + props.entityName.slice(1),
     idFieldName: entityConfig?.idField || 'id',
     controllerName,

@@ -1,6 +1,6 @@
 import lodash from 'lodash';
 import { createSupportClasses } from '../../src/lib/generate/support-classes.js';
-import { capitalizeFirstLetter } from '../../src/lib/generate/template-vars.js';
+import { capitalizeFirstLetter, entityFieldLookup } from '../../src/lib/generate/template-vars.js';
 
 /**
  * The variables a whole template needs to render, for an entity with a String id and no embedded
@@ -14,6 +14,8 @@ export function templateVars(overrides) {
     entityComment: overrides.entityName,
     fields: [],
     entityFields: [],
+    inheritedFields: [],
+    entityHasField: entityFieldLookup(overrides.fields ?? [], overrides.inheritedFields ?? []),
     idType: 'String',
     capitalizeFirstLetter,
     hasEmbeddedId: false,

@@ -86,6 +86,12 @@ function isExcludedField(fieldName) {
     return excludedFieldsSet.has(fieldName);
 }
 
+// Helper: whether the entity carries an audit timestamp. The yml lists it, or the entity or a
+// parent class whose source is under the scan path declares it.
+function hasTimestamp(fieldName) {
+    return Boolean(ymlConfig.fields?.[fieldName]) || entityHasField(fieldName);
+}
+
 // Helper: Check if field name already ends with 'Id' (to avoid 'IdId' pattern)
 function fieldNameEndsWithId(fieldName) {
     return fieldName.endsWith('Id') && fieldName !== 'Id';
@@ -250,8 +256,8 @@ class <%= classPrefix %>ServiceTest {
         entity.set<%= setterSuffix %>(true);
         <%      }
             }
-        }); %><% if (ymlConfig.fields?.createdAt) { %>
-        entity.setCreatedAt(Instant.now());<% } %><% if (ymlConfig.fields?.updatedAt) { %>
+        }); %><% if (hasTimestamp('createdAt')) { %>
+        entity.setCreatedAt(Instant.now());<% } %><% if (hasTimestamp('updatedAt')) { %>
         entity.setUpdatedAt(Instant.now());<% } %>
 
         // Setup DTOs

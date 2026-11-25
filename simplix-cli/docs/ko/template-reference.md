@@ -43,7 +43,9 @@ public class <%= classPrefix %>Service extends SimpliXBaseService<<%= entityName
 | `entityPackage`, `entityBasePackage` | 엔티티의 패키지와 `entity.basePackage` |
 | `templatePath` | 요청 경로. yml의 `thymeleafBaseDir` 또는 클래스 이름의 케밥 표기 |
 | `entityComment` | 엔티티의 테이블 주석 |
-| `fields`, `entityFields` | 분석한 필드 목록 |
+| `fields`, `entityFields` | 엔티티가 직접 선언한 필드를 분석한 목록 |
+| `inheritedFields` | 소스가 `entity.scanPath` 아래에 있는 부모 클래스의 필드를 분석한 목록. 엔티티가 다시 선언한 필드는 제외 |
+| `entityHasField` | 지정한 이름의 필드가 `fields`나 `inheritedFields`에 있는지 판정하는 함수 |
 | `idType`, `idFieldName` | 식별자의 타입과 필드 이름 |
 | `hasEmbeddedId`, `embeddedIdField`, `embeddedIdType`, `embeddedIdFields`, `embeddedIdPropertyNames` | 복합 식별자 정보 |
 | `embeddedIdPropertyName1`, `embeddedIdPropertyName2`, `propType1`, `propType2` | 복합 식별자의 첫 번째 속성과 두 번째 속성의 이름과 타입. 해당 속성이 없으면 이름은 `propertyName1`, `propertyName2`입니다 |
