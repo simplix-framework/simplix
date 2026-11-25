@@ -17,7 +17,7 @@ const NPM_LOOKUP_TIMEOUT_MS = 15000;
 
 /**
  * Version of the CLI this project is built against, as recorded in
- * generator-simplix.json under `generator.version`. Null when not recorded.
+ * project configuration under `generator.version`. Null when not recorded.
  */
 export function readRequiredVersion(config) {
   const recorded = config?.generator?.version;
@@ -28,7 +28,7 @@ const GENERATOR_VERSION_FIELD = /("generator"\s*:\s*\{[^{}]*?"version"\s*:\s*)"[
 const GENERATOR_BLOCK_OPEN = /"generator"\s*:\s*\{/;
 
 /**
- * Write `generator.version` into generator-simplix.json.
+ * Write `generator.version` into the project configuration file.
  * The surrounding text is preserved byte for byte so recording a version never
  * reformats a configuration file the project maintains by hand.
  */

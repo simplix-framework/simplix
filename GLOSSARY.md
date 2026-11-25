@@ -27,7 +27,7 @@ audit:
 | base render | 기준 렌더 | 베이스 렌더, 기준 렌더링 | the render `promote` last laid down for a file, stored under `.simplix/bases/` and used as the base of the three-way merge. First use is written 「기준 렌더(base render)」 |
 | render fingerprint | 렌더 지문 | 렌더 핑거프린트, 렌더링 지문 | the twelve hex characters on the `@simplix-render` line of a promoted file. First use is written 「렌더 지문(render fingerprint)」 |
 | fresh render | 새 렌더 | 프레시 렌더, 신규 렌더 | what `simplix-boot generate` writes now from the current templates and yml, as opposed to the base render stored at the last promote |
-| support class | 지원 클래스 | 서포트 클래스, 보조 클래스 | an application class generated code calls, named under `supportClasses` in `.simplix/generator-simplix.json` |
+| support class | 지원 클래스 | 서포트 클래스, 보조 클래스 | an application class generated code calls, named under `supportClasses` in `.simplix/simplix-boot.json` |
 | release line | 릴리스 라인 | 릴리즈 라인, 릴리스 계열 | one SimpliX major line built on one Spring Boot generation (2.x on Spring Boot 4, 1.x on Spring Boot 3), with its own branch and npm dist-tag |
 | generated tree | 생성 트리 | 제너레이티드 트리, 생성물 트리 | the folder under `target.generatedBasePath` that `simplix-boot generate` writes into. First use is written 「생성 트리(generated tree)」 |
 

@@ -65,7 +65,7 @@ public class <%= classPrefix %>Service extends SimpliXBaseService<<%= entityName
 
 ## 지원 클래스
 
-생성 코드의 일부 멤버는 프레임워크가 제공하지 않아 애플리케이션이 직접 작성하는 클래스를 호출합니다. 그 클래스의 전체 이름을 `.simplix/generator-simplix.json`의 `supportClasses`에 지정합니다.
+생성 코드의 일부 멤버는 프레임워크가 제공하지 않아 애플리케이션이 직접 작성하는 클래스를 호출합니다. 그 클래스의 전체 이름을 `.simplix/simplix-boot.json`의 `supportClasses`에 지정합니다.
 
 ```json
 {

@@ -1,7 +1,7 @@
 import { parseArguments } from './lib/args.js';
 import { createOutput, style, symbols } from './lib/console.js';
 import { CliError } from './lib/errors.js';
-import { requireProjectRoot } from './lib/project.js';
+import { earlierConfigNotice, requireProjectRoot } from './lib/project.js';
 import { getGeneratorVersion } from './lib/version-utils.js';
 import * as config from './commands/config.js';
 import * as generate from './commands/generate.js';
@@ -93,6 +93,8 @@ export function main(argv, { cwd = process.cwd() } = {}) {
     const { positionals, options } = parseArguments(rest, command.argumentSpec);
     const output = createOutput();
     const root = command.needsProject === false ? undefined : requireProjectRoot(cwd);
+    const notice = root === undefined ? undefined : earlierConfigNotice(root);
+    if (notice !== undefined) output.notice(notice);
 
     return command.run({ cwd, root, positionals, options, output }) ?? 0;
   } catch (error) {

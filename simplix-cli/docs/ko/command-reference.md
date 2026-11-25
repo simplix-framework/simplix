@@ -35,7 +35,7 @@ simplix-boot --version
 simplix-boot init
 ```
 
-현재 폴더에 `.simplix/entity`와 `.simplix/templates`를 만듭니다. `.simplix`가 이미 있으면 아무것도 바꾸지 않습니다. `.simplix/generator-simplix.json`은 만들지 않으므로 직접 작성하세요([설정 레퍼런스](./configuration-reference.md)).
+현재 폴더에 `.simplix/entity`와 `.simplix/templates`를 만듭니다. `.simplix`가 이미 있으면 아무것도 바꾸지 않습니다. `.simplix/simplix-boot.json`은 만들지 않으므로 직접 작성하세요([설정 레퍼런스](./configuration-reference.md)).
 
 ## config
 
@@ -144,7 +144,7 @@ simplix-boot version [--json] [--write] [--update [--to <X.Y.Z>]]
 | 옵션 | 동작 |
 |---|---|
 | `--json` | 보고를 JSON 한 줄로 출력합니다 |
-| `--write` | 실행 중인 버전을 `generator.version`에 기록합니다. 파일의 나머지 내용은 바꾸지 않습니다 |
+| `--write` | 실행 중인 버전을 `generator.version`에 기록합니다. 파일의 나머지 내용은 바꾸지 않습니다. 설정 파일 이름이 `generator-simplix.json`이면 먼저 `simplix-boot.json`으로 바꿉니다 |
 | `--update` | 같은 릴리스 라인의 최신 버전을 전역으로 설치합니다 |
 | `--to <X.Y.Z>` | `--update`가 설치할 버전 |
 

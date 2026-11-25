@@ -23,6 +23,10 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
   - The CLI of the Spring Boot 3 line is published under the `spring-boot-3x` tag, and `latest` names the Spring Boot 4 line
   - The `version` command and the version check look up published versions of the running CLI's own line only
 
+- **Configuration file of the code generation CLI**
+  - The project configuration is `.simplix/simplix-boot.json`
+  - A `generator-simplix.json` is read while that file is absent, and `version --write` renames it
+
 #### Fixes
 - **Redis cache mode and distributed sync mode**
   - `simplix.cache.mode=redis` and `simplix.sync.mode=DISTRIBUTED` take effect; their conditions are evaluated after the Redis and messaging auto-configurations

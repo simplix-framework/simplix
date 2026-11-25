@@ -65,7 +65,7 @@ public class <%= classPrefix %>Service extends SimpliXBaseService<<%= entityName
 
 ## Support classes
 
-Some generated members call a class the framework does not provide and the application writes. Its fully qualified name is set under `supportClasses` in `.simplix/generator-simplix.json`.
+Some generated members call a class the framework does not provide and the application writes. Its fully qualified name is set under `supportClasses` in `.simplix/simplix-boot.json`.
 
 ```json
 {

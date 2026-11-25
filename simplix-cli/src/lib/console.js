@@ -69,12 +69,17 @@ export function tolerateClosedReader(stream) {
  * Where a command writes: progress and reports as lines, and a machine-readable result as the one
  * line a script reads.
  *
- * @returns {{ log: (message?: string) => void, result: (text: string) => void }}
+ * A notice goes to standard error, so the report or the result on standard output stays whole.
+ *
+ * @returns {{ log: (message?: string) => void, result: (text: string) => void, notice: (message: string) => void }}
  */
 export function createOutput() {
   return {
     log(message = '') {
       process.stdout.write(`${message}\n`);
+    },
+    notice(message) {
+      process.stderr.write(`${symbols.warning} ${message}\n`);
     },
     result(text) {
       process.stdout.write(`${text}\n`);

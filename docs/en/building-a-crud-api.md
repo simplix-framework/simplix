@@ -62,7 +62,7 @@ public interface AuthorRepository extends SimpliXBaseRepository<Author, String> 
 
 ## Step 3. Generate the API
 
-Create the CLI configuration once per project: run `init`, then write `.simplix/generator-simplix.json` as the CLI's [getting started](../../simplix-cli/docs/en/getting-started.md) shows. Then describe the entity.
+Create the CLI configuration once per project: run `init`, then write `.simplix/simplix-boot.json` as the CLI's [getting started](../../simplix-cli/docs/en/getting-started.md) shows. Then describe the entity.
 
 ```bash
 simplix-boot init

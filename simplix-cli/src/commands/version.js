@@ -1,7 +1,16 @@
 import fs from 'node:fs';
 import { style, symbols } from '../lib/console.js';
 import { CliError } from '../lib/errors.js';
-import { CONFIG_FILE_NAME, configPathOf, findProjectRoot, readProjectConfig } from '../lib/project.js';
+import {
+  CONFIG_FILE_NAME,
+  EARLIER_CONFIG_FILE_NAME,
+  SIMPLIX_DIR,
+  configPathOf,
+  earlierConfigNotice,
+  findConfigFile,
+  findProjectRoot,
+  readProjectConfig,
+} from '../lib/project.js';
 import {
   collectVersionStatus,
   fetchLatestPublishedVersion,
@@ -107,20 +116,31 @@ export function run({ cwd, options, output }) {
   }
 
   const root = findProjectRoot(cwd);
-  const configPath = root !== undefined && fs.existsSync(configPathOf(root)) ? configPathOf(root) : null;
+  const file = root === undefined ? undefined : findConfigFile(root);
+  const configPath = file?.path ?? null;
 
   if (options.write) {
-    if (!configPath) {
+    if (!file) {
       throw new CliError(
         `${CONFIG_FILE_NAME} not found. Run "simplix-boot init" first and create the configuration file.`
       );
     }
 
+    // The file is written under its current name: one of the earlier name is renamed first.
+    const target = configPathOf(root);
+    if (file.earlier) {
+      fs.renameSync(file.path, target);
+      log(`${symbols.success} Renamed ${SIMPLIX_DIR}/${EARLIER_CONFIG_FILE_NAME} to ${SIMPLIX_DIR}/${CONFIG_FILE_NAME}`);
+    }
+
     const version = toReleaseVersion(getGeneratorVersion());
-    recordGeneratorVersion(configPath, version);
-    log(`${symbols.success} Recorded generator version ${style.cyan(version)} in ${configPath}`);
+    recordGeneratorVersion(target, version);
+    log(`${symbols.success} Recorded generator version ${style.cyan(version)} in ${target}`);
     return;
   }
+
+  const notice = root === undefined ? undefined : earlierConfigNotice(root);
+  if (notice !== undefined) output.notice(notice);
 
   const config = configPath ? readProjectConfig(root) : null;
   const status = collectVersionStatus({ config, includeLatest: true });

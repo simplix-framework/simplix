@@ -155,7 +155,7 @@ const isTreeEntity = typeof hasTreeEntity !== 'undefined' ? hasTreeEntity :
 // Build entityFields name set for quick lookup
 const entityFieldNames = new Set(entityFields.map(f => f.name));
 
-// Build excluded fields set from generator-simplix.json configuration
+// Build excluded fields set from the project configuration
 const excludedFieldsSet = new Set(dtoExcludeFields || []);
 
 // Helper: Check if a field should be excluded from DTO generation

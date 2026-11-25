@@ -32,7 +32,7 @@ Searched in: <project>/src/main/java
 
 **원인**: `config`나 `generate`가 `entity.scanPath` 아래에서 그 이름의 소스 파일을 찾지 못했습니다.
 
-**해결**: 엔티티 이름의 철자를 확인하고, `.simplix/generator-simplix.json`의 `entity.scanPath`를 확인하세요. 멀티 모듈 프로젝트에서는 모든 모듈의 엔티티를 포함하는 폴더를 지정합니다.
+**해결**: 엔티티 이름의 철자를 확인하고, `.simplix/simplix-boot.json`의 `entity.scanPath`를 확인하세요. 멀티 모듈 프로젝트에서는 모든 모듈의 엔티티를 포함하는 폴더를 지정합니다.
 
 ## 엔티티 yml을 찾을 수 없음
 
@@ -73,7 +73,7 @@ Searched in: <project>/src/main/java
 ## yml 키에 지원 클래스가 필요함
 
 ```
-Book.yml uses statusCounts or aggregates, which needs supportClasses.searchFigures in .simplix/generator-simplix.json
+Book.yml uses statusCounts or aggregates, which needs supportClasses.searchFigures in .simplix/simplix-boot.json
 ```
 
 **원인**: yml이 요청한 기능의 생성 코드가 애플리케이션 클래스를 호출하는데, 그 클래스를 지정하지 않았습니다.

@@ -29,7 +29,7 @@ afterEach(() => {
 });
 
 function writeConfig(contents) {
-  const configPath = path.join(workDir, 'generator-simplix.json');
+  const configPath = path.join(workDir, 'simplix-boot.json');
   fs.writeFileSync(configPath, contents);
   return configPath;
 }

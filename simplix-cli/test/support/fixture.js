@@ -103,7 +103,7 @@ export function write(root, relativePath, content) {
 
 /** Rewrites the project configuration of a fixture copy through a function over its parsed form. */
 export function editConfig(root, change) {
-  const relativePath = '.simplix/generator-simplix.json';
+  const relativePath = '.simplix/simplix-boot.json';
   const config = JSON.parse(read(root, relativePath));
   change(config);
   write(root, relativePath, `${JSON.stringify(config, null, 2)}\n`);

@@ -44,7 +44,7 @@ To run it without installing, use `npx @simplix-boot/cli <command>` with the sam
 Run these in the root of a project that already has a JPA entity named `Author` and its repository.
 
 ```bash
-# 1. Create the .simplix folder, then write .simplix/generator-simplix.json
+# 1. Create the .simplix folder, then write .simplix/simplix-boot.json
 simplix-boot init
 
 # 2. Write .simplix/entity/Author.yml from the entity
