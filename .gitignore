@@ -93,3 +93,13 @@ bin/
 spring-boot-starter-simplix-excel/templates/default-template.xlsx
 *.log
 **/logs/*.log
+
+### Agent instruction files ###
+.claude/
+CLAUDE.md
+AGENTS.md
+AGENT.md
+GEMINI.md
+.cursor/
+.cursorrules
+.codex/
