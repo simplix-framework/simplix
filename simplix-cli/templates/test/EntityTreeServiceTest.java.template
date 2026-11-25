@@ -65,6 +65,12 @@ const excludedFieldsSet = new Set(dtoExcludeFields || []);
 function isExcludedField(fieldName) {
     return excludedFieldsSet.has(fieldName);
 }
+
+// Helper: whether the entity carries an audit timestamp. The yml lists it, or the entity or a
+// parent class whose source is under the scan path declares it.
+function hasTimestamp(fieldName) {
+    return Boolean(ymlConfig.fields?.[fieldName]) || entityHasField(fieldName);
+}
 %>
 /**
  * Unit tests for <%= classPrefix %>TreeService
@@ -161,8 +167,8 @@ class <%= classPrefix %>TreeServiceTest {
         entity.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(true);
         <%      }
             }
-        }); %><% if (ymlConfig.fields?.createdAt) { %>
-        entity.setCreatedAt(Instant.now());<% } %><% if (ymlConfig.fields?.updatedAt) { %>
+        }); %><% if (hasTimestamp('createdAt')) { %>
+        entity.setCreatedAt(Instant.now());<% } %><% if (hasTimestamp('updatedAt')) { %>
         entity.setUpdatedAt(Instant.now());<% } %>
 
         // Setup child entity
@@ -185,8 +191,8 @@ class <%= classPrefix %>TreeServiceTest {
         childEntity.set<%= field.name.charAt(0).toUpperCase() + field.name.slice(1) %>(true);
         <%      }
             }
-        }); %><% if (ymlConfig.fields?.createdAt) { %>
-        childEntity.setCreatedAt(Instant.now());<% } %><% if (ymlConfig.fields?.updatedAt) { %>
+        }); %><% if (hasTimestamp('createdAt')) { %>
+        childEntity.setCreatedAt(Instant.now());<% } %><% if (hasTimestamp('updatedAt')) { %>
         childEntity.setUpdatedAt(Instant.now());<% } %>
 
         // Setup DTOs

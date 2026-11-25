@@ -43,7 +43,9 @@ public class <%= classPrefix %>Service extends SimpliXBaseService<<%= entityName
 | `entityPackage`, `entityBasePackage` | the entity's package and `entity.basePackage` |
 | `templatePath` | the request path: the yml's `thymeleafBaseDir`, or the kebab-case class name |
 | `entityComment` | the entity's table comment |
-| `fields`, `entityFields` | the analysed fields |
+| `fields`, `entityFields` | the analysed fields the entity declares itself |
+| `inheritedFields` | the analysed fields of the entity's parent classes whose source is under `entity.scanPath`, without those the entity declares again |
+| `entityHasField` | a function that answers whether a field of a given name is among `fields` or `inheritedFields` |
 | `idType`, `idFieldName` | the type and the field name of the identifier |
 | `hasEmbeddedId`, `embeddedIdField`, `embeddedIdType`, `embeddedIdFields`, `embeddedIdPropertyNames` | a composite identifier |
 | `embeddedIdPropertyName1`, `embeddedIdPropertyName2`, `propType1`, `propType2` | the names and the types of the first two properties of a composite identifier; the names are `propertyName1` and `propertyName2` when the identifier has no such property |
