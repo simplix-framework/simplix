@@ -47,10 +47,10 @@ cd build-docs && python3 -m http.server 3000
 
 ```bash
 # Language parity, links, images, symbols
-node .claude/scripts/validate-docs.mjs
+node scripts/docs/validate-docs.mjs
 
 # Links and images of the built site
-./scripts/build-docs.sh && node .claude/scripts/validate-docs.mjs --site
+./scripts/build-docs.sh && node scripts/docs/validate-docs.mjs --site
 ```
 
 - 이모지는 쓰지 않습니다. 상태 표시는 ✔ ✖ ⚠ ℹ만 사용합니다.
