@@ -108,42 +108,42 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
   - `@SchedulerName` gives a method a name of its own
   - Spring `${...}` placeholders are stored with their resolved values
 
-- **Nested mode of @I18nTrans** [`9d3e4e9`](https://github.com/simplix-framework/simplix/commit/9d3e4e9)
+- **Nested mode of @I18nTrans** [`799936f`](https://github.com/simplix-framework/simplix/commit/799936f)
   - The `target` attribute translates a field of a nested object
   - Dot notation paths (for example `tagGroup.nameI18n`)
   - Works with a field-level `@JsonIncludeProperties`
   - The original object is restored after serialisation, so there is no side effect
 
-- **Sortable tree service** [`e5774bd`](https://github.com/simplix-framework/simplix/commit/e5774bd)
+- **Sortable tree service** [`22c4864`](https://github.com/simplix-framework/simplix/commit/22c4864)
   - The `SortableTreeEntity` interface for entities whose order can change
   - `SimpliXSortableTreeBaseService` with a default `reorderChildren()`
   - Tree utilities: `normalizeParentId()`, `validateNoCircularReference()`, `validateNoChildren()`
   - Tree conversion: `buildTreeFromFlatList()`, `mapToTreeDto()`
 
-- **Custom logout handlers** [`1e7ceef`](https://github.com/simplix-framework/simplix/commit/1e7ceef)
+- **Custom logout handlers** [`9b2e2e1`](https://github.com/simplix-framework/simplix/commit/9b2e2e1)
   - A `LogoutHandler` bean is called on logout (audit logging, token blacklist)
   - A `LogoutSuccessHandler` bean replaces the default redirect
   - The logout endpoint of the token controller calls the `LogoutHandler`
 
-- **Hibernate6Module** [`4ad33b2`](https://github.com/simplix-framework/simplix/commit/4ad33b2)
+- **Hibernate6Module** [`ef23597`](https://github.com/simplix-framework/simplix/commit/ef23597)
   - Registered with the Jackson ObjectMapper automatically
   - Lazily loaded entities serialise correctly
 
-- **Soft delete in unique validation** [`3581791`](https://github.com/simplix-framework/simplix/commit/3581791)
+- **Soft delete in unique validation** [`dd56b31`](https://github.com/simplix-framework/simplix/commit/dd56b31)
   - `@UniqueField` and `@UniqueFields` take soft delete into account
   - Deleted records are left out of the check
 
-- **I18n translation settings** [`8fe7bd2`](https://github.com/simplix-framework/simplix/commit/8fe7bd2)
+- **I18n translation settings** [`d093d92`](https://github.com/simplix-framework/simplix/commit/d093d92)
   - Central settings through `SimpliXI18nConfigHolder`
   - The default locale and the supported locales can be set
 
-- **Unique validation annotations** [`d5fd78a`](https://github.com/simplix-framework/simplix/commit/d5fd78a)
+- **Unique validation annotations** [`9f4033d`](https://github.com/simplix-framework/simplix/commit/9f4033d)
   - `@UniqueField`: a unique check on one field
   - `@UniqueFields`: a unique check across fields
   - The check queries through the JPA repository
 
 #### Build and dependencies
-- **searchable-jpa** [`04705c6`](https://github.com/simplix-framework/simplix/commit/04705c6)
+- **searchable-jpa** [`f22c4fe`](https://github.com/simplix-framework/simplix/commit/f22c4fe)
   - searchableJpaVersion moved to 1.0.5
 
 ---

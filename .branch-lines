@@ -13,4 +13,4 @@ sync_paths=simplix-cli
 exempt_subjects=^(release: v[0-9]|chore: prepare for next development version )
 # Commits that belong to one line and were made before their type had to declare it
 # (space separated).
-exempt_commits=de7fcb3
+exempt_commits=d157221
