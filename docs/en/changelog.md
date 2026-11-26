@@ -16,6 +16,9 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
   - A template that fails to render ends the command with exit code 1
 
 #### Improvements
+- **Imports kept across a template change**
+  - `promote` keeps an import a template dropped while code written into the file still names the class
+
 - **Labels of computed properties**
   - `@FieldLabel` can sit on a getter, for a property no field holds, and SimpliX Meta reads the label from there
 

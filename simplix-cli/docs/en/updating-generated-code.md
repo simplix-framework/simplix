@@ -42,6 +42,8 @@ A promoted file opens with two comment lines: a mark that it was generated and a
 
 > ℹ The merge runs `git merge-file`, so Git has to be installed. The project does not have to be a Git repository.
 
+A template change can drop an import. The import stays in your file while code you wrote there still names the class, and goes when nothing names it any more.
+
 ## Read the state of promoted files
 
 ```bash
