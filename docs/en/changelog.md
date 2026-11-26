@@ -16,6 +16,10 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
   - A template that fails to render ends the command with exit code 1
 
 #### Improvements
+- **JSON columns that hold value objects**
+  - simplix-hibernate hands the JSON column type of hypersistence-utils a mapper that keeps the stored form and a copy that works for values that are not `Serializable`
+  - `simplix.hibernate.json-column.enabled` switches it off
+
 - **Imports kept across a template change**
   - `promote` keeps an import a template dropped while code written into the file still names the class
 

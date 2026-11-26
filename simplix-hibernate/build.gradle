@@ -36,6 +36,10 @@ dependencies {
 
     // Hibernate - core provided by domain module, jcache needed for 2nd level cache
     compileOnly 'org.hibernate.orm:hibernate-core'
+
+    // JSON column type (optional): its mapper and its copy of a value
+    compileOnly 'io.hypersistence:hypersistence-utils-hibernate-73'
+    compileOnly 'tools.jackson.core:jackson-databind'
     implementation 'org.hibernate.orm:hibernate-jcache'
 
     // Default cache provider - Ehcache
@@ -75,6 +79,8 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind'
     testImplementation 'com.h2database:h2'
+    testImplementation 'io.hypersistence:hypersistence-utils-hibernate-73'
+    testImplementation 'tools.jackson.core:jackson-databind'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

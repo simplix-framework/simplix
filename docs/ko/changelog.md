@@ -16,6 +16,10 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
   - 템플릿 렌더링에 실패하면 종료 코드 1로 종료
 
 #### 개선 사항
+- **값 객체를 저장하는 JSON 컬럼**
+  - simplix-hibernate가 hypersistence-utils의 JSON 컬럼 타입에 저장 형식을 유지하는 매퍼와 `Serializable`이 아닌 값도 복제하는 복제기를 지정
+  - `simplix.hibernate.json-column.enabled`로 끌 수 있음
+
 - **템플릿 변경 시 import 유지**
   - 템플릿이 import를 삭제해도 파일에 직접 작성한 코드가 그 클래스를 사용하면 `promote`가 import를 남김
 
