@@ -7,6 +7,7 @@ import dev.simplecore.searchable.core.condition.operator.SearchOperator;
 import dev.simplecore.simplix.core.annotation.References;
 import dev.simplecore.simplix.core.exception.SimpliXGeneralException;
 import dev.simplecore.simplix.core.model.SimpliXApiResponse;
+import dev.simplecore.simplix.web.advice.SimpliXExceptionHandler;
 import dev.simplecore.simplix.web.controller.SimpliXBaseController;
 import dev.simplecore.simplix.web.controller.SimpliXDefaultSort;
 import dev.simplecore.simplix.web.controller.SimpliXListFigures;
@@ -15,9 +16,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.support.StaticMessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
@@ -31,8 +35,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.assertj.core.api.InstanceOfAssertFactories.LIST;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /** One request names every declaration SimpliX Meta refuses, and the endpoint answers with them. */
 class MetaViolationsTest {
@@ -192,6 +200,29 @@ class MetaViolationsTest {
         assertThatThrownBy(() -> builder().build(handlers))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Default sort of Shelf names 'room', which its search DTO does not declare sortable");
+    }
+
+    @RestControllerAdvice
+    static class Advice extends SimpliXExceptionHandler<SimpliXApiResponse<Object>> {
+        Advice() {
+            super(new StaticMessageSource(), new ObjectMapper());
+        }
+    }
+
+    @Test
+    void theAnswerListsTheViolationsUnderErrorDetail() throws Exception {
+        RequestMappingHandlerMapping mapping = mock(RequestMappingHandlerMapping.class);
+        when(mapping.getHandlerMethods()).thenReturn(handlers(new ShelfByRoom(), new CrateByWeight()));
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new SimpliXMetaDevController(
+                        mapping, new ObjectMapper(), List.of(), new StaticMessageSource()))
+                .setControllerAdvice(new Advice())
+                .build();
+
+        mockMvc.perform(get("/dev/meta/dto"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value("GEN_CONFLICT"))
+                .andExpect(jsonPath("$.message", containsString("Default sort of Shelf")))
+                .andExpect(jsonPath("$.errorDetail.length()").value(3));
     }
 
     @Test
