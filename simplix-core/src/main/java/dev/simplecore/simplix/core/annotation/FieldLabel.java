@@ -6,7 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies a human-readable label for a DTO field.
+ * Specifies a human-readable label for a DTO field, or for a property a getter computes and no
+ * field holds.
  *
  * <p>Two modes:
  * <ol>
@@ -17,7 +18,7 @@ import java.lang.annotation.Target;
  * <p>Consumed by validation error enhancement and by the dev meta endpoint
  * (message-key mode becomes {@code labelKey}, direct mode becomes {@code label} in SimpliX Meta).
  */
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FieldLabel {
 

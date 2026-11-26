@@ -71,7 +71,7 @@ Placed on the entity field, a format reaches every DTO field mapped to it. Place
 | `@ReferencesByKind` | a field | the field holds the id of one of several entities, and `kindField` names the sibling field that says which |
 | `@MappingEntity` | an entity | the rows map one record to another and own nothing themselves, so the entity is not listed as a holder of the records it joins |
 | `@VerbOnly` | a field | the value changes only through an action of its own, such as enable and disable, never through the create or update form |
-| `@FieldLabel` | a DTO field | a label for the field |
+| `@FieldLabel` | a DTO field, or the getter of a property no field holds | a label for the field |
 
 ### A reference the mapping does not show
 
