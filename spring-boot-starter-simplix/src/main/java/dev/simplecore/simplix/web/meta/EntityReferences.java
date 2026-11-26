@@ -68,12 +68,12 @@ final class EntityReferences {
         Class<?> named(String name, String declaredAt) {
             List<Class<?>> named = byName.getOrDefault(name, List.of());
             if (named.isEmpty()) {
-                throw new IllegalStateException(declaredAt + " declares @References(entity = \"" + name
+                throw new SimpliXMetaViolationException(declaredAt + " declares @References(entity = \"" + name
                         + "\"), and SimpliX Meta serves no entity of that simple name");
             }
             if (named.size() > 1) {
                 List<String> classes = named.stream().map(Class::getName).sorted().toList();
-                throw new IllegalStateException(declaredAt + " declares @References(entity = \"" + name
+                throw new SimpliXMetaViolationException(declaredAt + " declares @References(entity = \"" + name
                         + "\"), which names more than one served entity: " + String.join(", ", classes)
                         + "; name the target by class instead");
             }
@@ -152,12 +152,12 @@ final class EntityReferences {
         boolean byClass = declared.value() != void.class;
         boolean byName = !declared.entity().isEmpty();
         if (byClass && byName) {
-            throw new IllegalStateException(declaredAt + " declares @References with both a class ("
+            throw new SimpliXMetaViolationException(declaredAt + " declares @References with both a class ("
                     + declared.value().getName() + ") and an entity name (\"" + declared.entity()
                     + "\"); set exactly one");
         }
         if (!byClass && !byName) {
-            throw new IllegalStateException(declaredAt
+            throw new SimpliXMetaViolationException(declaredAt
                     + " declares @References with neither a class nor an entity name; set exactly one");
         }
         return byClass ? declared.value() : entities.named(declared.entity(), declaredAt);
@@ -207,7 +207,7 @@ final class EntityReferences {
         }
         if (found.size() > 1) {
             List<String> names = found.stream().map(a -> "@" + a.annotationType().getSimpleName()).toList();
-            throw new IllegalStateException(deciding.getDeclaringClass().getName() + "." + deciding.getName()
+            throw new SimpliXMetaViolationException(deciding.getDeclaringClass().getName() + "." + deciding.getName()
                     + " declares more than one value format (" + String.join(", ", names)
                     + "); a field is drawn one way, so keep exactly one");
         }
@@ -279,12 +279,12 @@ final class EntityReferences {
         NameFields listed = listedNameFieldsOf(entity);
         if (listed == null) return marked;
         if (marked != null) {
-            throw new IllegalStateException(entity.getName() + " declares @NameFields and marks @NameField on "
+            throw new SimpliXMetaViolationException(entity.getName() + " declares @NameFields and marks @NameField on "
                     + String.join(", ", marked));
         }
         for (String name : listed.value()) {
             if (findField(entity, name) == null) {
-                throw new IllegalStateException(entity.getName() + " lists " + name + " in @NameFields, which it does not declare");
+                throw new SimpliXMetaViolationException(entity.getName() + " lists " + name + " in @NameFields, which it does not declare");
             }
         }
         return listed.value().length == 0 ? null : List.of(listed.value());
@@ -309,7 +309,7 @@ final class EntityReferences {
         List<String> named = new ArrayList<>();
         for (Map.Entry<Integer, List<String>> position : byOrder.entrySet()) {
             if (position.getValue().size() > 1) {
-                throw new IllegalStateException(entity.getName() + " marks more than one field with @NameField(order = "
+                throw new SimpliXMetaViolationException(entity.getName() + " marks more than one field with @NameField(order = "
                         + position.getKey() + "): " + String.join(", ", position.getValue()));
             }
             named.add(position.getValue().get(0));

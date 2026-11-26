@@ -1,6 +1,8 @@
 package dev.simplecore.simplix.web.meta;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.simplecore.simplix.core.exception.ErrorCode;
+import dev.simplecore.simplix.core.exception.SimpliXGeneralException;
 import dev.simplecore.simplix.core.model.SimpliXApiResponse;
 import dev.simplecore.simplix.web.meta.model.DtoMeta;
 import org.springframework.context.MessageSource;
@@ -16,9 +18,10 @@ import java.util.Map;
 
 /**
  * Serves the SimpliX Meta document for frontend code generation. Registered only by
- * {@code SimpliXDevMetaAutoConfiguration} — property-gated, never under a production profile.
+ * {@code SimpliXDevMetaAutoConfiguration}: property-gated, never under a production profile.
  * The mapped path sits under the same {@code /dev/**} convention as the i18n dev endpoint, so an
- * application's existing dev-profile permit rule covers it.
+ * application's existing dev-profile permit rule covers it. A document SimpliX Meta refuses is
+ * answered with status 409, the violations as the message and one entry each as the detail.
  */
 @RestController
 @RequestMapping("/dev/meta")
@@ -42,8 +45,14 @@ public class SimpliXMetaDevController {
     @GetMapping("/dto")
     public SimpliXApiResponse<DtoMeta> dto() {
         Map<RequestMappingInfo, HandlerMethod> handlerMethods = handlerMapping.getHandlerMethods();
-        DtoMeta meta = new DtoMetaBuilder(objectMapper, contributors, DtoMetaBuilder.bundlesThen(messageSource))
-                .build(handlerMethods);
-        return SimpliXApiResponse.success(meta);
+        try {
+            DtoMeta meta = new DtoMetaBuilder(objectMapper, contributors, DtoMetaBuilder.bundlesThen(messageSource))
+                    .build(handlerMethods);
+            return SimpliXApiResponse.success(meta);
+        } catch (SimpliXMetaViolationException refused) {
+            // The caller is the developer who corrects the declarations, so the answer names them.
+            throw new SimpliXGeneralException(ErrorCode.GEN_CONFLICT, refused.getMessage(), refused,
+                    refused.violations());
+        }
     }
 }
