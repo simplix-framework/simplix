@@ -10,7 +10,7 @@ ext {
     // Project Coordinates
     // ============================================================
     projectGroup = 'dev.simplecore.simplix'
-    projectVersion = '2.0.5'
+    projectVersion = '2.0.6-SNAPSHOT'
 
     // ============================================================
     // Spring Framework
