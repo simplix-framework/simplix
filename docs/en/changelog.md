@@ -59,7 +59,7 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
   - Audit timestamps a parent class declares are set when the entity yml does not list them
 
 #### Build and dependencies
-- searchable-jpa 2.1.0 on the Spring Boot 4 line and 1.2.0 on the Spring Boot 3 line, which add keyword search, server scope, scrolling, projections and aggregates
+- searchable-jpa 2.1.2 on the Spring Boot 4 line and 1.2.2 on the Spring Boot 3 line, which add keyword search, server scope, scrolling, projections and aggregates, and leave ordered inserts off by default
 
 ### 2026-08
 

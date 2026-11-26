@@ -59,7 +59,7 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
   - 엔티티 yml에 감사 필드가 없어도 부모 클래스가 선언한 감사 시각을 지정
 
 #### 빌드/의존성
-- Spring Boot 4 라인은 searchable-jpa 2.1.0, Spring Boot 3 라인은 searchable-jpa 1.2.0으로 변경(키워드 검색, 서버 범위 조건, 스크롤, 프로젝션, 집계 추가)
+- Spring Boot 4 라인은 searchable-jpa 2.1.2, Spring Boot 3 라인은 searchable-jpa 1.2.2로 변경(키워드 검색, 서버 범위 조건, 스크롤, 프로젝션, 집계 추가, 삽입 순서 정렬은 기본으로 비활성화)
 
 ### 2026-08
 
