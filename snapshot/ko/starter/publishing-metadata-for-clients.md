@@ -53,7 +53,7 @@ simplix:
 
 이 문서의 이름 필드, 형식, 색조, 참조 정보는 [화면을 위한 엔티티 설명](ko/core/describing-entities-for-screens.md)의 어노테이션으로 지정합니다. 애플리케이션의 정보를 추가하려면 `SimpliXMetaContributor`를 구현한 빈을 등록하세요. 이 빈이 반환한 값은 `extensions`에 포함됩니다.
 
-문서로 기술할 수 없는 선언은 거부합니다. 검색 DTO가 정렬할 수 없는 필드를 지정한 기본 정렬, 컨트롤러가 제공하지 않는 엔티티를 지정한 참조, 단순 이름이 같은 두 DTO 클래스가 여기에 해당합니다. 이 경우 요청에 상태 409와 코드 `GEN_CONFLICT`로 응답합니다. `message`에는 거부한 선언을 모두 기재하고 `detail`에는 하나씩 나열하므로, 요청 한 번으로 수정할 선언을 모두 확인할 수 있습니다. 기본 정렬과 수치는 모든 타입을 승인한 뒤에 검사하므로, 거부한 타입을 먼저 보고합니다. `SimpliXMetaContributor`가 자체 규칙으로 선언을 거부하려면 `SimpliXMetaViolationException`을 던지세요. 같은 형식으로 응답하며, 예외의 `violations()`가 `detail`에 나열되는 목록을 반환합니다.
+문서로 기술할 수 없는 선언은 거부합니다. 검색 DTO가 정렬할 수 없는 필드를 지정한 기본 정렬, 컨트롤러가 제공하지 않는 엔티티를 지정한 참조, 단순 이름이 같은 두 DTO 클래스가 여기에 해당합니다. 이 경우 요청에 상태 409와 코드 `GEN_CONFLICT`로 응답합니다. `message`에는 거부한 선언을 모두 기재하고 `errorDetail`에는 하나씩 나열하므로, 요청 한 번으로 수정할 선언을 모두 확인할 수 있습니다. 기본 정렬과 수치는 모든 타입을 승인한 뒤에 검사하므로, 거부한 타입을 먼저 보고합니다. `SimpliXMetaContributor`가 자체 규칙으로 선언을 거부하려면 `SimpliXMetaViolationException`을 던지세요. 같은 형식으로 응답하며, 예외의 `violations()`가 `errorDetail`에 나열되는 목록을 반환합니다.
 
 ## 모든 언어의 라벨
 

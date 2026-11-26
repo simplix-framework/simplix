@@ -34,7 +34,7 @@
 | 증상 | 원인 | 조치 |
 |---|---|---|
 | `/dev/meta/dto`나 `/dev/i18n/messages`가 404로 응답함 | 엔드포인트는 기본으로 비활성화되어 있습니다 | 개발 환경에서 `simplix.dev.meta.enabled`와 `simplix.dev.i18n.enabled`를 `true`로 지정하세요 |
-| `/dev/meta/dto`가 409로 응답함 | SimpliX Meta가 선언을 거부했습니다 | 응답의 `detail`에 나열된 선언을 모두 수정한 뒤 문서를 다시 요청하세요 |
+| `/dev/meta/dto`가 409로 응답함 | SimpliX Meta가 선언을 거부했습니다 | 응답의 `errorDetail`에 나열된 선언을 모두 수정한 뒤 문서를 다시 요청하세요 |
 | 라벨의 `translations`가 비어 있음 | 해당 키가 어느 번들에도 없습니다 | `messages/entities/**/*-messages.properties` 또는 `messages/enums/**/*-messages.properties`에 추가하세요 |
 | `springdoc.info`에 지정한 제목이 API 문서에 반영되지 않음 | 스타터는 `springdoc.info`를 읽지 않습니다 | `OpenAPI` 빈을 선언하세요. [API 문서화](ko/starter/documenting-the-api.md)를 참고하세요 |
 

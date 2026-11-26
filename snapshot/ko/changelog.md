@@ -22,7 +22,7 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
   - `@DataJpaTest` 슬라이스에도 애플리케이션과 같은 매퍼와 복제기를 적용
 
 - **거부한 선언을 한 번에 응답**
-  - `GET /dev/meta/dto`가 문서를 거부할 때 상태 409와 함께 거부한 선언을 모두 응답: `message`에 전체, `detail`에 하나씩
+  - `GET /dev/meta/dto`가 문서를 거부할 때 상태 409와 함께 거부한 선언을 모두 응답: `message`에 전체, `errorDetail`에 하나씩
 
 - **템플릿 변경 시 import 유지**
   - 템플릿이 import를 삭제해도 파일에 직접 작성한 코드가 그 클래스를 사용하면 `promote`가 import를 남김
