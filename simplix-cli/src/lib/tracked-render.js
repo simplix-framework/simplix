@@ -137,6 +137,32 @@ export function mergeThreeWay(base, ours, theirs) {
   }
 }
 
+const SINGLE_IMPORT = /^import (?:static )?[\w.]+\.(\w+);$/;
+
+/**
+ * Puts back each import the edited file had and the merge dropped while the merged code still names
+ * the imported class or member: a template that stops importing a class cannot see that code
+ * written into the file by hand still uses it.
+ *
+ * @param {string} ours the edited file
+ * @param {string} merged the result of the three-way merge
+ * @returns {string} the merge with those imports after its last import line
+ */
+export function keepUsedImports(ours, merged) {
+  const mergedLines = merged.split('\n');
+  const present = new Set(mergedLines.filter(line => SINGLE_IMPORT.test(line)));
+  const code = mergedLines.filter(line => !line.startsWith('import ')).join('\n');
+  const dropped = ours.split('\n').filter(line => {
+    const name = SINGLE_IMPORT.exec(line)?.[1];
+    return name !== undefined && !present.has(line) && new RegExp(`\\b${name}\\b`).test(code);
+  });
+  if (dropped.length === 0) return merged;
+  const lastImport = mergedLines.findLastIndex(line => line.startsWith('import '));
+  if (lastImport < 0) return merged;
+  mergedLines.splice(lastImport + 1, 0, ...new Set(dropped));
+  return mergedLines.join('\n');
+}
+
 /**
  * What a promote of one fresh render into one file comes to, without writing anything.
  *
@@ -164,7 +190,9 @@ export function planTracked(root, filePath, stamped) {
   if (base === undefined) return { outcome: 'no-base' };
   // The stamp lines name the render a file was read against and are not content: every side takes
   // the fresh render's, so a fingerprint that moved never collides with one an edit carried.
-  const { text, hunks } = mergeThreeWay(carryStamp(base, stamped), carryStamp(ours, stamped), stamped);
+  const merge = mergeThreeWay(carryStamp(base, stamped), carryStamp(ours, stamped), stamped);
+  const hunks = merge.hunks;
+  const text = filePath.endsWith('.java') ? keepUsedImports(ours, merge.text) : merge.text;
   if (hunks.length > 0) return { outcome: 'conflict', text, hunks };
   if (text === ours || text === carryStamp(ours, stamped)) return { outcome: 'current', text: ours };
   return { outcome: 'merged', text };

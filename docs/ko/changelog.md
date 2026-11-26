@@ -16,6 +16,9 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
   - 템플릿 렌더링에 실패하면 종료 코드 1로 종료
 
 #### 개선 사항
+- **템플릿 변경 시 import 유지**
+  - 템플릿이 import를 삭제해도 파일에 직접 작성한 코드가 그 클래스를 사용하면 `promote`가 import를 남김
+
 - **계산 속성의 라벨**
   - 필드 없이 getter가 계산하는 속성은 getter에 `@FieldLabel`을 지정할 수 있고, SimpliX Meta가 그 라벨을 읽음
 

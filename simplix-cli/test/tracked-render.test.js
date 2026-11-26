@@ -6,6 +6,7 @@ import path from 'node:path';
 import {
   carryStamp,
   isUntouched,
+  keepUsedImports,
   readBase,
   recordBase,
   renderFingerprint,
@@ -117,6 +118,37 @@ describe('writeTracked', () => {
     assert.strictEqual(promote(v2).outcome, 'merged');
     assert.ok(held().includes('void create() { check(); }'));
     assert.ok(held().includes('void search() {}'));
+  });
+});
+
+describe('an import the template stops using', () => {
+  const withImport =
+    'package a;\n\nimport java.util.Locale;\nimport java.util.Map;\n\nclass JobService {\n    String create() { return Locale.ROOT.toString(); }\n\n    void delete() {}\n}\n';
+  // The template no longer uses Locale and drops its import.
+  const withoutImport =
+    'package a;\n\nimport java.util.Map;\n\nclass JobService {\n    String create() { return ""; }\n\n    void delete() {}\n}\n';
+  const handWritten = file => file.replace('    void delete() {}', '    void delete() {}\n\n    String tag() { return Locale.KOREA.toLanguageTag(); }');
+
+  it('stays when code written into the file by hand still names the class', () => {
+    promote(withImport);
+    fs.writeFileSync(dest, handWritten(held()));
+
+    assert.strictEqual(promote(withoutImport).outcome, 'merged');
+    assert.match(held(), /^import java\.util\.Locale;$/m);
+    assert.match(held(), /return "";/);
+    assert.match(held(), /Locale\.KOREA/);
+  });
+
+  it('goes when nothing in the file names the class any more', () => {
+    promote(withImport);
+    fs.writeFileSync(dest, held().replace('    void delete() {}', '    void delete() { check(); }'));
+
+    assert.strictEqual(promote(withoutImport).outcome, 'merged');
+    assert.doesNotMatch(held(), /import java\.util\.Locale;/);
+  });
+
+  it('leaves a merge that dropped no import as it is', () => {
+    assert.strictEqual(keepUsedImports(withImport, withImport), withImport);
   });
 });
 
