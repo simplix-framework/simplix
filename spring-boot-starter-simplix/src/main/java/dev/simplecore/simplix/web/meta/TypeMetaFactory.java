@@ -176,7 +176,7 @@ public class TypeMetaFactory {
      */
     private static void requireNotDemanded(Class<?> type, FieldMeta field) {
         if (!field.required()) return;
-        throw new IllegalStateException(type.getName() + "." + field.name()
+        throw new SimpliXMetaViolationException(type.getName() + "." + field.name()
                 + " is @VerbOnly and also required; a form leaves a verb-only field out and the server"
                 + " ignores it on a create and an update, so drop the requirement and let the entity default start it");
     }

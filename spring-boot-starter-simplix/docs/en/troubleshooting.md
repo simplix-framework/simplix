@@ -34,6 +34,7 @@ Symptoms an application meets with the starter, the cause of each and what to ch
 | Symptom | Cause | What to do |
 |---|---|---|
 | `/dev/meta/dto` or `/dev/i18n/messages` answers 404 | the endpoints are off by default | set `simplix.dev.meta.enabled` and `simplix.dev.i18n.enabled` to `true` in development |
+| `/dev/meta/dto` answers 409 | SimpliX Meta refuses a declaration | read `detail` of the response, which lists every refused declaration, correct them and request the document again |
 | A label has empty `translations` | no bundle carries the key | add it to `messages/entities/**/*-messages.properties` or `messages/enums/**/*-messages.properties` |
 | The title set under `springdoc.info` is not in the API document | the starter does not read `springdoc.info` | declare an `OpenAPI` bean; see [Documenting the API](./documenting-the-api.md) |
 

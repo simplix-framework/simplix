@@ -20,6 +20,9 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
   - simplix-hibernate hands the JSON column type of hypersistence-utils a mapper that keeps the stored form and a copy that works for values that are not `Serializable`
   - `simplix.hibernate.json-column.enabled` switches it off
 
+- **Every refused declaration in one answer**
+  - `GET /dev/meta/dto` answers a refused document with status 409 and every refused declaration, in `message` and one by one in `detail`
+
 - **Imports kept across a template change**
   - `promote` keeps an import a template dropped while code written into the file still names the class
 

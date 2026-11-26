@@ -20,6 +20,9 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
   - simplix-hibernate가 hypersistence-utils의 JSON 컬럼 타입에 저장 형식을 유지하는 매퍼와 `Serializable`이 아닌 값도 복제하는 복제기를 지정
   - `simplix.hibernate.json-column.enabled`로 끌 수 있음
 
+- **거부한 선언을 한 번에 응답**
+  - `GET /dev/meta/dto`가 문서를 거부할 때 상태 409와 함께 거부한 선언을 모두 응답: `message`에 전체, `detail`에 하나씩
+
 - **템플릿 변경 시 import 유지**
   - 템플릿이 import를 삭제해도 파일에 직접 작성한 코드가 그 클래스를 사용하면 `promote`가 import를 남김
 

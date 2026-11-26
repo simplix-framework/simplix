@@ -27,7 +27,7 @@ public class MetaTypeRegistry {
             pending.add(type);
             Class<?> incumbent = byName.putIfAbsent(name, type);
             if (incumbent != null) {
-                throw new IllegalStateException(
+                throw new SimpliXMetaViolationException(
                         "Duplicate DTO simple name '" + name + "': "
                         + incumbent.getName() + " and " + type.getName()
                         + ". SimpliX Meta keys types by simple name, so one would overwrite the other."

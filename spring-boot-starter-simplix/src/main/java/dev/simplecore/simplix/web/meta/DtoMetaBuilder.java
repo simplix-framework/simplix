@@ -49,6 +49,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -56,6 +57,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Assembles the whole document: walks handler methods for operations, drains the type registry for
@@ -100,6 +102,8 @@ public class DtoMetaBuilder {
         List<Class<?>> servedEntities = new ArrayList<>();
         Map<String, SimpliXDefaultSort> defaultSorts = new TreeMap<>();
         Map<String, SimpliXListFigures> figures = new TreeMap<>();
+        // A set: an entity and each of its search operations check the same declaration.
+        Set<String> violations = new LinkedHashSet<>();
         handlerMethods.values().forEach(handler -> {
             if (skip(handler)) return;
             Class<?> entity = entityOf(handler.getBeanType());
@@ -122,7 +126,8 @@ public class DtoMetaBuilder {
                     : null;
             if (path == null) return;
             for (RequestMethod method : info.getMethodsCondition().getMethods()) {
-                OperationMeta operation = toOperation(path, method.name(), handler, info);
+                OperationMeta operation = attempt(violations, () -> toOperation(path, method.name(), handler, info));
+                if (operation == null) continue;
                 operations.add(operation);
                 SimpliXDefaultSort sort = operation.request().searchDto() == null ? null
                         : AnnotatedElementUtils.findMergedAnnotation(handler.getBeanType(), SimpliXDefaultSort.class);
@@ -139,11 +144,15 @@ public class DtoMetaBuilder {
         while (registry.hasPending()) {
             Class<?> type = registry.next();
             String name = MetaTypeRegistry.typeName(type);
-            TypeMeta meta = withFieldLabels(factory.create(type));
+            TypeMeta meta = attempt(violations, () -> withFieldLabels(factory.create(type)));
+            if (meta == null) continue;
             types.put(name, meta);
             contributors.forEach(c -> c.contributeType(type, name, extensions));
         }
-        requireAnsweredNames(factory.unresolvedNames(), types, operations);
+        // The checks below read the operations and the types. A refused one is missing from them,
+        // and a check run without it would report a declaration that is correct.
+        if (!violations.isEmpty()) throw new SimpliXMetaViolationException(violations);
+        violations.addAll(unansweredNames(factory.unresolvedNames(), types, operations));
 
         Map<String, EnumMeta> enums = new LinkedHashMap<>();
         registry.enums().forEach((enumClass, name) -> enums.put(name, toEnumMeta(enumClass)));
@@ -159,7 +168,7 @@ public class DtoMetaBuilder {
                 .thenComparing(OperationMeta::method)
                 .thenComparing(OperationMeta::id));
 
-        Map<String, EntityMeta> entities = entities(entityClasses, defaultSorts, figures, types, operations);
+        Map<String, EntityMeta> entities = entities(entityClasses, defaultSorts, figures, types, operations, violations);
 
         // Each search operation carries its own controller's order and figures, checked against its
         // own search DTO.
@@ -169,34 +178,37 @@ public class DtoMetaBuilder {
             if (sort == null && listFigures == null) return operation;
             Class<?> type = entityClasses.get(operation.entity());
             OperationMeta result = operation;
+            List<OperationMeta> own = List.of(operation);
             if (sort != null) {
-                result = result.withDefaultSort(defaultSort(operation.entity(), type, sort, types, List.of(operation)));
+                result = result.withDefaultSort(
+                        attempt(violations, () -> defaultSort(operation.entity(), type, sort, types, own)));
             }
             if (listFigures != null) {
                 result = result.withFigures(
-                        statusCounts(operation.entity(), type, listFigures, types, List.of(operation)),
-                        aggregates(operation.entity(), type, listFigures, types, List.of(operation)),
-                        timeAxis(operation.entity(), type, listFigures));
+                        attempt(violations, () -> statusCounts(operation.entity(), type, listFigures, types, own)),
+                        attempt(violations, () -> aggregates(operation.entity(), type, listFigures, types, own)),
+                        attempt(violations, () -> timeAxis(operation.entity(), type, listFigures)));
             }
             return result;
         });
+        if (!violations.isEmpty()) throw new SimpliXMetaViolationException(violations);
 
         return new DtoMeta(1, new TreeMap<>(enums), new TreeMap<>(types), operations,
                 extensions.isEmpty() ? null : extensions, entities.isEmpty() ? null : entities);
     }
 
     /**
-     * Refuses a declared reference name that a DTO an operation answers with does not carry. A
+     * Names each declared reference name that a DTO an operation answers with does not carry. A
      * client pairs the reference with its name in every record it receives, so a response without
      * the declared path would draw a bare key; a request body or a search DTO carries no names and
      * is not held to it. A type counts as answered when it is reachable from a response, through
      * type arguments, nested fields and supertypes.
      *
-     * @throws IllegalStateException naming the entity field, the DTO and the path
+     * @return one violation per miss, naming the entity field, the DTO and the path
      */
-    static void requireAnsweredNames(List<TypeMetaFactory.UnresolvedName> unresolved, Map<String, TypeMeta> types,
-                                     List<OperationMeta> operations) {
-        if (unresolved.isEmpty()) return;
+    static List<String> unansweredNames(List<TypeMetaFactory.UnresolvedName> unresolved, Map<String, TypeMeta> types,
+                                        List<OperationMeta> operations) {
+        if (unresolved.isEmpty()) return List.of();
         Set<String> answered = new HashSet<>();
         Deque<TypeRef> pending = new ArrayDeque<>();
         for (OperationMeta operation : operations) {
@@ -212,12 +224,29 @@ public class DtoMetaBuilder {
             if (type.extendsType() != null) pending.add(TypeRef.ref(type.extendsType()));
             for (FieldMeta field : type.fields()) pending.add(field.type());
         }
+        List<String> violations = new ArrayList<>();
         for (TypeMetaFactory.UnresolvedName miss : unresolved) {
             if (!answered.contains(miss.type())) continue;
-            throw new IllegalStateException(miss.declaredAt() + " declares nameField \"" + miss.nameField()
+            violations.add(miss.declaredAt() + " declares nameField \"" + miss.nameField()
                     + "\", and " + miss.type() + " carries " + miss.field()
                     + " but neither a property nor a nested record path of that name; an operation answers with "
                     + miss.type() + ", so add the property or correct the path");
+        }
+        return violations;
+    }
+
+    /**
+     * Runs one check and keeps what it refuses, so the checks beside it still run. A failure that
+     * is not a refused declaration is not caught.
+     *
+     * @return what the check produced, or {@code null} when it refused
+     */
+    private static <T> T attempt(Set<String> violations, Supplier<T> check) {
+        try {
+            return check.get();
+        } catch (SimpliXMetaViolationException refused) {
+            violations.addAll(refused.violations());
+            return null;
         }
     }
 
@@ -236,7 +265,8 @@ public class DtoMetaBuilder {
                                              Map<String, SimpliXDefaultSort> defaultSorts,
                                              Map<String, SimpliXListFigures> figures,
                                              Map<String, TypeMeta> types,
-                                             List<OperationMeta> operations) {
+                                             List<OperationMeta> operations,
+                                             Set<String> violations) {
         Map<String, List<HolderMeta>> holders = new TreeMap<>();
         for (OperationMeta operation : operations) {
             String searchDto = operation.request().searchDto();
@@ -278,9 +308,9 @@ public class DtoMetaBuilder {
                     plural.isEmpty() ? null : plural,
                     description.isEmpty() ? null : description,
                     held == null ? null : List.copyOf(held),
-                    defaultSort(name, type, defaultSorts.get(name), types, operations),
-                    statusCounts(name, type, figures.get(name), types, operations),
-                    aggregates(name, type, figures.get(name), types, operations)));
+                    attempt(violations, () -> defaultSort(name, type, defaultSorts.get(name), types, operations)),
+                    attempt(violations, () -> statusCounts(name, type, figures.get(name), types, operations)),
+                    attempt(violations, () -> aggregates(name, type, figures.get(name), types, operations))));
         });
         return result;
     }
@@ -328,7 +358,7 @@ public class DtoMetaBuilder {
                 return declared.timeAxis();
             }
         }
-        throw new IllegalStateException("The time axis of " + entity + " names '" + declared.timeAxis()
+        throw new SimpliXMetaViolationException("The time axis of " + entity + " names '" + declared.timeAxis()
                 + "', which is not a field of the entity");
     }
 
@@ -348,7 +378,7 @@ public class DtoMetaBuilder {
                 .flatMap(dto -> dto.fields().stream())
                 .anyMatch(f -> f.name().equals(field));
         if (!searchable) {
-            throw new IllegalStateException("List figures of " + entity + " name '" + field
+            throw new SimpliXMetaViolationException("List figures of " + entity + " name '" + field
                     + "', which is neither a field of the entity nor of its search DTO");
         }
     }
@@ -366,11 +396,11 @@ public class DtoMetaBuilder {
         String field = declared.field();
         String direction = declared.direction().toLowerCase(Locale.ROOT);
         if (!direction.equals("asc") && !direction.equals("desc")) {
-            throw new IllegalStateException("Default sort of " + entity + " has direction '"
+            throw new SimpliXMetaViolationException("Default sort of " + entity + " has direction '"
                     + declared.direction() + "'; it must be asc or desc");
         }
         if (field.equals(EntityReferences.idFieldOf(type))) {
-            throw new IllegalStateException("Default sort of " + entity + " names its id field '"
+            throw new SimpliXMetaViolationException("Default sort of " + entity + " names its id field '"
                     + field + "'; an id orders a list in no order a reader can use");
         }
         boolean sortable = operations.stream()
@@ -382,7 +412,7 @@ public class DtoMetaBuilder {
                 .anyMatch(f -> f.searchable().sortable()
                         || (f.searchable().sortAlias() != null && !f.searchable().sortAlias().isEmpty()));
         if (!sortable) {
-            throw new IllegalStateException("Default sort of " + entity + " names '" + field
+            throw new SimpliXMetaViolationException("Default sort of " + entity + " names '" + field
                     + "', which its search DTO does not declare sortable");
         }
         return new DefaultSortMeta(field, direction);
