@@ -15,6 +15,7 @@ import dev.simplecore.searchable.core.condition.SearchCondition;
 import dev.simplecore.searchable.openapi.annotation.SearchableParams;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -91,13 +92,14 @@ public class ShelfRestController extends SimpliXBaseController<Shelf, String> {
     /**
      * Updates multiple Shelf entities in a single operation.
      *
-     * @param updateDtos set of DTOs containing update data
+     * @param updateDtos set of DTOs containing update data; {@code @Valid} on the element validates
+     *                   each one as a single update is, since a bare set is not validated
      * @return response containing the list of updated ShelfDetailDTOs
      */
     @PatchMapping
     @Operation(summary = "Update Multiple Shelf", description = "Updates multiple existing Shelf")
     @PreAuthorize("hasPermission('CATALOG', 'edit')")
-    public SimpliXApiResponse<List<ShelfDetailDTO>> multiUpdate(@RequestBody Set<ShelfUpdateDTO> updateDtos) {
+    public SimpliXApiResponse<List<ShelfDetailDTO>> multiUpdate(@RequestBody Set<@Valid ShelfUpdateDTO> updateDtos) {
 
         // TreeService doesn't support multiUpdate - use service instead
         List<ShelfDetailDTO> updatedItems = service.multiUpdate(updateDtos);
@@ -211,7 +213,7 @@ public class ShelfRestController extends SimpliXBaseController<Shelf, String> {
     @PreAuthorize("hasPermission('CATALOG', 'edit')")
     public SimpliXApiResponse<List<ShelfListDTO>> updateTreeOrder(
             @RequestParam(required = false) String parentId,
-            @RequestBody @Validated List<ShelfOrderUpdateDTO> orderUpdateDtos) {
+            @RequestBody List<@Valid ShelfOrderUpdateDTO> orderUpdateDtos) {
         try {
             List<ShelfListDTO> updatedEntities = treeService.updateOrders(parentId, orderUpdateDtos);
             return SimpliXApiResponse.success(updatedEntities, "Shelf orders updated successfully");

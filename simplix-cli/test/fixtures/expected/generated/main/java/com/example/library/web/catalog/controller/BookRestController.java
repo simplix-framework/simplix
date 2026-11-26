@@ -13,6 +13,7 @@ import dev.simplecore.searchable.core.condition.SearchCondition;
 import dev.simplecore.searchable.openapi.annotation.SearchableParams;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import dev.simplecore.simplix.excel.export.ExportFormat;
 import jakarta.servlet.http.HttpServletResponse;
@@ -88,13 +89,14 @@ public class BookRestController extends SimpliXBaseController<Book, String> {
     /**
      * Updates multiple Book entities in a single operation.
      *
-     * @param updateDtos set of DTOs containing update data
+     * @param updateDtos set of DTOs containing update data; {@code @Valid} on the element validates
+     *                   each one as a single update is, since a bare set is not validated
      * @return response containing the list of updated BookDetailDTOs
      */
     @PatchMapping
     @Operation(summary = "Update Multiple Book", description = "Updates multiple existing Book")
     @PreAuthorize("hasPermission('CATALOG', 'edit')")
-    public SimpliXApiResponse<List<BookDetailDTO>> multiUpdate(@RequestBody Set<BookUpdateDTO> updateDtos) {
+    public SimpliXApiResponse<List<BookDetailDTO>> multiUpdate(@RequestBody Set<@Valid BookUpdateDTO> updateDtos) {
 
         List<BookDetailDTO> updatedItems = service.multiUpdate(updateDtos);
 

@@ -28,6 +28,10 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
   - 이 파일이 없으면 `generator-simplix.json`을 읽고, `version --write`가 파일 이름을 새 이름으로 바꿈
 
 #### 수정 사항
+- **컬렉션 본문의 검증**
+  - 컬렉션 요소가 검증에 실패한 요청에 내부 서버 오류 대신 상태 400과 `VAL_VALIDATION_FAILED`로 응답하고, 실패한 필드마다 요소의 위치를 포함한 항목을 반환
+  - 생성된 컨트롤러가 `PATCH <path>`와 `PATCH <path>/order` 본문의 모든 요소를 검증. 이전에는 검증 없이 받았음
+
 - **Redis 캐시 모드와 분산 싱크 모드**
   - `simplix.cache.mode=redis`와 `simplix.sync.mode=DISTRIBUTED` 설정이 적용되도록 조건을 Redis 자동 구성과 메시징 자동 구성 이후에 평가
 

@@ -23,6 +23,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.method.ParameterErrors;
+import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,6 +33,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -175,78 +179,126 @@ public class SimpliXExceptionHandler<T> {
     public T handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request) {
         Locale currentLocale = LocaleContextHolder.getLocale();
         List<ValidationFieldError> errors = new ArrayList<>();
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
-            String message = error.getDefaultMessage();
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+            errors.add(toValidationFieldError(error.getField(), error, currentLocale)));
+        return validationFailedResponse(errors, request);
+    }
 
-            // Process message based on placeholder type
-            if (message != null) {
-                // Check for named placeholders like {min}, {max}, {value}
-                if (message.matches(".*\\{[a-zA-Z]+\\}.*")) {
-                    try {
-                        // Get constraint attributes as map
-                        Map<String, Object> attributeMap = ValidationArgumentProcessor.extractConstraintAttributes(error);
+    /**
+     * Answers a request whose handler method arguments failed validation: a constraint on a
+     * parameter itself, or {@code @Valid} on the elements of a collection or map parameter such as
+     * {@code @RequestBody List<@Valid ItemDTO>}. The response has the shape of a failed request
+     * body: status 400, the code {@code VAL_VALIDATION_FAILED} and one entry per failing field.
+     * A field of a collection element is named with its position, such as {@code [0].name}; an
+     * element of a set has no position and is named by the field alone.
+     */
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    @Order(1)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public T handleHandlerMethodValidationException(HandlerMethodValidationException ex, HttpServletRequest request) {
+        Locale currentLocale = LocaleContextHolder.getLocale();
+        List<ValidationFieldError> errors = new ArrayList<>();
+        for (ParameterValidationResult result : ex.getParameterValidationResults()) {
+            if (result instanceof ParameterErrors parameterErrors) {
+                String prefix = containerPrefix(parameterErrors);
+                parameterErrors.getFieldErrors().forEach(error ->
+                    errors.add(toValidationFieldError(prefix + error.getField(), error, currentLocale)));
+            } else {
+                String parameterName = result.getMethodParameter().getParameterName();
+                result.getResolvableErrors().forEach(error -> errors.add(new ValidationFieldError(
+                    parameterName,
+                    error.getDefaultMessage(),
+                    result.getArgument(),
+                    constraintCode(error.getCodes()))));
+            }
+        }
+        return validationFailedResponse(errors, request);
+    }
 
-                        // Replace named placeholders with actual values
-                        String processedMessage = message;
-                        for (Map.Entry<String, Object> entry : attributeMap.entrySet()) {
-                            String placeholder = "{" + entry.getKey() + "}";
-                            if (processedMessage.contains(placeholder)) {
-                                processedMessage = processedMessage.replace(placeholder, String.valueOf(entry.getValue()));
-                            }
+    /** The position of a validated element inside its collection or map, as a field name prefix. */
+    private String containerPrefix(ParameterValidationResult result) {
+        if (result.getContainerIndex() != null) {
+            return "[" + result.getContainerIndex() + "].";
+        }
+        if (result.getContainerKey() != null) {
+            return "[" + result.getContainerKey() + "].";
+        }
+        return "";
+    }
+
+    /** The constraint name a validation error carries as the last part of its last code. */
+    private String constraintCode(String[] codes) {
+        if (codes == null || codes.length == 0) {
+            return null;
+        }
+        String lastCode = codes[codes.length - 1];
+        int lastDot = lastCode.lastIndexOf('.');
+        return (lastDot > 0) ? lastCode.substring(lastDot + 1) : lastCode;
+    }
+
+    /**
+     * Builds the response entry of one failed field: the message with its placeholders filled or
+     * its key translated, the rejected value and the constraint name.
+     */
+    private ValidationFieldError toValidationFieldError(String fieldName, FieldError error, Locale currentLocale) {
+        String message = error.getDefaultMessage();
+
+        // Process message based on placeholder type
+        if (message != null) {
+            // Check for named placeholders like {min}, {max}, {value}
+            if (message.matches(".*\\{[a-zA-Z]+\\}.*")) {
+                try {
+                    // Get constraint attributes as map
+                    Map<String, Object> attributeMap = ValidationArgumentProcessor.extractConstraintAttributes(error);
+
+                    // Replace named placeholders with actual values
+                    String processedMessage = message;
+                    for (Map.Entry<String, Object> entry : attributeMap.entrySet()) {
+                        String placeholder = "{" + entry.getKey() + "}";
+                        if (processedMessage.contains(placeholder)) {
+                            processedMessage = processedMessage.replace(placeholder, String.valueOf(entry.getValue()));
                         }
-                        message = processedMessage;
-                        log.trace("Substituted named placeholders to: '{}'", message);
-                    } catch (Exception e) {
-                        log.trace("Failed to substitute named placeholders: {}", e.getMessage());
                     }
-                }
-                // Check for numeric placeholders like {0}, {1}, {2}
-                else if (message.contains("{0}") || message.contains("{1}") || message.contains("{2}")) {
-                    try {
-                        // Get constraint annotation attributes for parameter substitution
-                        Object[] messageArguments = ValidationArgumentProcessor.processArguments(error);
-
-                        // Use MessageFormat to replace {0}, {1} placeholders
-                        message = MessageFormat.format(message, messageArguments);
-                        log.trace("Substituted numeric placeholders to: '{}'", message);
-                    } catch (Exception e) {
-                        log.trace("Failed to substitute numeric placeholders: {}", e.getMessage());
-                    }
-                }
-                // If message is in {key} format, try to translate with proper arguments
-                else if (message.startsWith("{") && message.endsWith("}")) {
-                    String messageKey = message.substring(1, message.length() - 1);
-                    try {
-                        // Get constraint annotation attributes for parameter substitution
-                        Object[] messageArguments = ValidationArgumentProcessor.processArguments(error);
-                        message = messageSource.getMessage(messageKey, messageArguments, currentLocale);
-                        log.trace("Translated validation message key '{}' to: '{}'", messageKey, message);
-                    } catch (Exception e) {
-                        log.trace("Failed to translate validation message key '{}': {}", messageKey, e.getMessage());
-                    }
+                    message = processedMessage;
+                    log.trace("Substituted named placeholders to: '{}'", message);
+                } catch (Exception e) {
+                    log.trace("Failed to substitute named placeholders: {}", e.getMessage());
                 }
             }
+            // Check for numeric placeholders like {0}, {1}, {2}
+            else if (message.contains("{0}") || message.contains("{1}") || message.contains("{2}")) {
+                try {
+                    // Get constraint annotation attributes for parameter substitution
+                    Object[] messageArguments = ValidationArgumentProcessor.processArguments(error);
 
-            // Extract constraint code from error codes
-            String code = null;
-            if (error.getCodes() != null && error.getCodes().length > 0) {
-                String lastCode = error.getCodes()[error.getCodes().length - 1];
-                int lastDot = lastCode.lastIndexOf('.');
-                code = (lastDot > 0) ? lastCode.substring(lastDot + 1) : lastCode;
+                    // Use MessageFormat to replace {0}, {1} placeholders
+                    message = MessageFormat.format(message, messageArguments);
+                    log.trace("Substituted numeric placeholders to: '{}'", message);
+                } catch (Exception e) {
+                    log.trace("Failed to substitute numeric placeholders: {}", e.getMessage());
+                }
             }
+            // If message is in {key} format, try to translate with proper arguments
+            else if (message.startsWith("{") && message.endsWith("}")) {
+                String messageKey = message.substring(1, message.length() - 1);
+                try {
+                    // Get constraint annotation attributes for parameter substitution
+                    Object[] messageArguments = ValidationArgumentProcessor.processArguments(error);
+                    message = messageSource.getMessage(messageKey, messageArguments, currentLocale);
+                    log.trace("Translated validation message key '{}' to: '{}'", messageKey, message);
+                } catch (Exception e) {
+                    log.trace("Failed to translate validation message key '{}': {}", messageKey, e.getMessage());
+                }
+            }
+        }
 
-            // Create ValidationFieldError object
-            ValidationFieldError fieldError = new ValidationFieldError(
-                error.getField(),
-                message,
-                error.getRejectedValue(),
-                code
-            );
+        String code = constraintCode(error.getCodes());
 
-            log.trace("Field validation - Field: {}, Message: {}, Code: {}", error.getField(), message, code);
-            errors.add(fieldError);
-        });
-        
+        log.trace("Field validation - Field: {}, Message: {}, Code: {}", fieldName, message, code);
+        return new ValidationFieldError(fieldName, message, error.getRejectedValue(), code);
+    }
+
+    private T validationFailedResponse(List<ValidationFieldError> errors, HttpServletRequest request) {
         T errorResponse = responseFactory.createErrorResponse(
             HttpStatus.BAD_REQUEST,
             ErrorCode.VAL_VALIDATION_FAILED.getCode(),

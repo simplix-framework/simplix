@@ -51,12 +51,15 @@
 
 항목의 Java 클래스는 `ValidationFieldError`입니다.
 
+본문이 컬렉션이면 `@RequestBody List<@Valid AuthorUpdateDTO>`처럼 요소 타입에 `@Valid`를 지정해야 요소마다 검증합니다. `@Valid`가 없는 컬렉션 매개변수는 검증하지 않습니다. 검증에 실패한 요소도 같은 형식으로 응답하며, 필드 이름에 `[1].penName`처럼 요소의 위치를 포함합니다. `Set`의 요소는 위치가 없으므로 필드 이름만 씁니다.
+
 ## 예외별 응답
 
 | 예외 | 상태 | 코드 |
 |---|---|---|
 | `SimpliXGeneralException` | `ErrorCode`의 상태 | `ErrorCode`의 코드 |
 | `MethodArgumentNotValidException` | 400 | `VAL_VALIDATION_FAILED` |
+| `HandlerMethodValidationException`(컬렉션 요소나 매개변수의 검증 실패) | 400 | `VAL_VALIDATION_FAILED` |
 | `AccessDeniedException` | 403 | `AUTHZ_INSUFFICIENT_PERMISSIONS` |
 | `BadCredentialsException` | 401 | `AUTH_INVALID_CREDENTIALS` |
 | 그 밖의 `AuthenticationException` | 401 | `AUTH_AUTHENTICATION_REQUIRED` |
