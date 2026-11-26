@@ -91,6 +91,17 @@ class TypeMetaFactoryTest {
         public void setNote(String note) { this.note = note; }
     }
 
+    /** A property a getter computes: no field holds it, so the getter carries its label. */
+    static class ComputedDTO {
+        private String givenName;
+
+        public String getGivenName() { return givenName; }
+        public void setGivenName(String givenName) { this.givenName = givenName; }
+
+        @FieldLabel("{entities.Person.displayName}")
+        public String getDisplayName() { return givenName == null ? null : givenName.trim(); }
+    }
+
     private final MetaTypeRegistry registry = new MetaTypeRegistry();
     private final TypeMetaFactory factory =
             new TypeMetaFactory(new ObjectMapper(), new TypeRefMapper(registry), registry);
@@ -112,6 +123,13 @@ class TypeMetaFactoryTest {
         TypeMeta create = factory.create(CreateDTO.class);
         assertThat(create.fields()).extracting(FieldMeta::name)
             .containsExactlyInAnyOrder("name", "occupancyMax", "renamed");
+    }
+
+    @Test
+    void labelOfAComputedPropertyIsReadFromItsGetter() {
+        TypeMeta computed = factory.create(ComputedDTO.class);
+        assertThat(field(computed, "displayName").labelKey()).isEqualTo("entities.Person.displayName");
+        assertThat(field(computed, "givenName").labelKey()).isNull();
     }
 
     @Test

@@ -16,6 +16,9 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
   - A template that fails to render ends the command with exit code 1
 
 #### Improvements
+- **Labels of computed properties**
+  - `@FieldLabel` can sit on a getter, for a property no field holds, and SimpliX Meta reads the label from there
+
 - **Piped output of the code generation CLI**
   - When the reader of the output ends first (`simplix-boot generate Book | head`), the command finishes its work and keeps its exit code
 

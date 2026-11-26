@@ -314,11 +314,6 @@ public class TypeMetaFactory {
                 if (!schema.description().isEmpty()) description = schema.description();
                 if (schema.requiredMode() == Schema.RequiredMode.REQUIRED) required = true;
             }
-            FieldLabel fieldLabel = backing.getAnnotation(FieldLabel.class);
-            if (fieldLabel != null) {
-                Matcher key = MESSAGE_KEY.matcher(fieldLabel.value());
-                if (key.matches()) labelKey = key.group(1); else label = fieldLabel.value();
-            }
             if (backing.isAnnotationPresent(NotNull.class)
                     || backing.isAnnotationPresent(NotBlank.class)
                     || backing.isAnnotationPresent(NotEmpty.class)) {
@@ -334,10 +329,26 @@ public class TypeMetaFactory {
             }
         }
 
+        FieldLabel fieldLabel = declaredLabel(backing, member);
+        if (fieldLabel != null) {
+            Matcher key = MESSAGE_KEY.matcher(fieldLabel.value());
+            if (key.matches()) labelKey = key.group(1); else label = fieldLabel.value();
+        }
+
         boolean nullable = !required;
         return new FieldMeta(property.getName(), type, required, nullable,
                 description, labelKey, label,
                 constraints.isEmpty() ? null : constraints, searchable);
+    }
+
+    /**
+     * The label a property declares: on its field, or on its getter when the field carries none or
+     * the property is computed and has no field.
+     */
+    private static FieldLabel declaredLabel(Field backing, AnnotatedMember member) {
+        FieldLabel onField = backing == null ? null : backing.getAnnotation(FieldLabel.class);
+        if (onField != null || member == null) return onField;
+        return member.getAnnotation(FieldLabel.class);
     }
 
     /**

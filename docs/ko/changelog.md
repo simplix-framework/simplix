@@ -16,6 +16,9 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
   - 템플릿 렌더링에 실패하면 종료 코드 1로 종료
 
 #### 개선 사항
+- **계산 속성의 라벨**
+  - 필드 없이 getter가 계산하는 속성은 getter에 `@FieldLabel`을 지정할 수 있고, SimpliX Meta가 그 라벨을 읽음
+
 - **코드 생성 CLI의 파이프 출력**
   - 표준 출력을 읽는 프로세스가 먼저 종료해도(`simplix-boot generate Book | head`) 작업을 끝까지 수행하고 원래의 종료 코드로 종료
 
