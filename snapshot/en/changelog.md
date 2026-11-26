@@ -16,6 +16,19 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
   - A template that fails to render ends the command with exit code 1
 
 #### Improvements
+- **JSON columns that hold value objects**
+  - simplix-hibernate hands the JSON column type of hypersistence-utils a mapper that keeps the stored form and a copy that works for values that are not `Serializable`
+  - `simplix.hibernate.json-column.enabled` switches it off
+
+- **Every refused declaration in one answer**
+  - `GET /dev/meta/dto` answers a refused document with status 409 and every refused declaration, in `message` and one by one in `detail`
+
+- **Imports kept across a template change**
+  - `promote` keeps an import a template dropped while code written into the file still names the class
+
+- **Labels of computed properties**
+  - `@FieldLabel` can sit on a getter, for a property no field holds, and SimpliX Meta reads the label from there
+
 - **Piped output of the code generation CLI**
   - When the reader of the output ends first (`simplix-boot generate Book | head`), the command finishes its work and keeps its exit code
 
@@ -28,6 +41,10 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
   - A `generator-simplix.json` is read while that file is absent, and `version --write` renames it
 
 #### Fixes
+- **Validation of collection bodies**
+  - A request whose collection element fails validation is answered with status 400 and `VAL_VALIDATION_FAILED`, one entry per failing field with the position of its element, instead of an internal server error
+  - A generated controller validates every element of the bodies of `PATCH <path>` and `PATCH <path>/order`, which were accepted unchecked
+
 - **Redis cache mode and distributed sync mode**
   - `simplix.cache.mode=redis` and `simplix.sync.mode=DISTRIBUTED` take effect; their conditions are evaluated after the Redis and messaging auto-configurations
 
@@ -42,7 +59,7 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
   - Audit timestamps a parent class declares are set when the entity yml does not list them
 
 #### Build and dependencies
-- searchable-jpa 2.1.0 on the Spring Boot 4 line and 1.2.0 on the Spring Boot 3 line, which add keyword search, server scope, scrolling, projections and aggregates
+- searchable-jpa 2.1.2 on the Spring Boot 4 line and 1.2.2 on the Spring Boot 3 line, which add keyword search, server scope, scrolling, projections and aggregates, and leave ordered inserts off by default
 
 ### 2026-08
 

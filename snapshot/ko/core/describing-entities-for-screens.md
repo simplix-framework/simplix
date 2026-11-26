@@ -71,7 +71,7 @@ public enum LoanStatus {
 | `@ReferencesByKind` | 필드 | 필드에 여러 엔티티 중 한 엔티티의 식별자가 저장되어 있으며, `kindField`로 지정한 필드가 그 엔티티를 결정합니다 |
 | `@MappingEntity` | 엔티티 | 레코드와 레코드를 연결하는 매핑 행만 보관하는 엔티티입니다. 연결한 레코드의 보유 엔티티 목록에 포함하지 않습니다 |
 | `@VerbOnly` | 필드 | 활성화와 비활성화처럼 전용 동작으로만 값이 바뀌며, 생성이나 수정 폼으로는 바뀌지 않습니다 |
-| `@FieldLabel` | DTO 필드 | 필드의 라벨 |
+| `@FieldLabel` | DTO 필드, 또는 필드 없이 getter가 계산하는 속성의 getter | 필드의 라벨 |
 
 ### 매핑에 나타나지 않는 참조
 

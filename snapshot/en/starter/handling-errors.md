@@ -51,12 +51,15 @@ The messages are read from the message bundles in the language of the request; s
 
 The Java class of an entry is `ValidationFieldError`.
 
+A body that is a collection is validated element by element when the element type carries `@Valid`, as in `@RequestBody List<@Valid AuthorUpdateDTO>`; a collection parameter without it is not validated. A failing element is answered in the same shape, and its field carries the position of the element, such as `[1].penName`. An element of a `Set` has no position, so its field is named alone.
+
 ## Which exception becomes which answer
 
 | Exception | Status | Code |
 |---|---|---|
 | `SimpliXGeneralException` | the status of its `ErrorCode` | the code of its `ErrorCode` |
 | `MethodArgumentNotValidException` | 400 | `VAL_VALIDATION_FAILED` |
+| `HandlerMethodValidationException` (a collection element or a parameter fails validation) | 400 | `VAL_VALIDATION_FAILED` |
 | `AccessDeniedException` | 403 | `AUTHZ_INSUFFICIENT_PERMISSIONS` |
 | `BadCredentialsException` | 401 | `AUTH_INVALID_CREDENTIALS` |
 | other `AuthenticationException` | 401 | `AUTH_AUTHENTICATION_REQUIRED` |

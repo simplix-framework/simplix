@@ -16,6 +16,19 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
   - 템플릿 렌더링에 실패하면 종료 코드 1로 종료
 
 #### 개선 사항
+- **값 객체를 저장하는 JSON 컬럼**
+  - simplix-hibernate가 hypersistence-utils의 JSON 컬럼 타입에 저장 형식을 유지하는 매퍼와 `Serializable`이 아닌 값도 복제하는 복제기를 지정
+  - `simplix.hibernate.json-column.enabled`로 끌 수 있음
+
+- **거부한 선언을 한 번에 응답**
+  - `GET /dev/meta/dto`가 문서를 거부할 때 상태 409와 함께 거부한 선언을 모두 응답: `message`에 전체, `detail`에 하나씩
+
+- **템플릿 변경 시 import 유지**
+  - 템플릿이 import를 삭제해도 파일에 직접 작성한 코드가 그 클래스를 사용하면 `promote`가 import를 남김
+
+- **계산 속성의 라벨**
+  - 필드 없이 getter가 계산하는 속성은 getter에 `@FieldLabel`을 지정할 수 있고, SimpliX Meta가 그 라벨을 읽음
+
 - **코드 생성 CLI의 파이프 출력**
   - 표준 출력을 읽는 프로세스가 먼저 종료해도(`simplix-boot generate Book | head`) 작업을 끝까지 수행하고 원래의 종료 코드로 종료
 
@@ -28,6 +41,10 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
   - 이 파일이 없으면 `generator-simplix.json`을 읽고, `version --write`가 파일 이름을 새 이름으로 바꿈
 
 #### 수정 사항
+- **컬렉션 본문의 검증**
+  - 컬렉션 요소가 검증에 실패한 요청에 내부 서버 오류 대신 상태 400과 `VAL_VALIDATION_FAILED`로 응답하고, 실패한 필드마다 요소의 위치를 포함한 항목을 반환
+  - 생성된 컨트롤러가 `PATCH <path>`와 `PATCH <path>/order` 본문의 모든 요소를 검증. 이전에는 검증 없이 받았음
+
 - **Redis 캐시 모드와 분산 싱크 모드**
   - `simplix.cache.mode=redis`와 `simplix.sync.mode=DISTRIBUTED` 설정이 적용되도록 조건을 Redis 자동 구성과 메시징 자동 구성 이후에 평가
 
@@ -42,7 +59,7 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
   - 엔티티 yml에 감사 필드가 없어도 부모 클래스가 선언한 감사 시각을 지정
 
 #### 빌드/의존성
-- Spring Boot 4 라인은 searchable-jpa 2.1.0, Spring Boot 3 라인은 searchable-jpa 1.2.0으로 변경(키워드 검색, 서버 범위 조건, 스크롤, 프로젝션, 집계 추가)
+- Spring Boot 4 라인은 searchable-jpa 2.1.2, Spring Boot 3 라인은 searchable-jpa 1.2.2로 변경(키워드 검색, 서버 범위 조건, 스크롤, 프로젝션, 집계 추가, 삽입 순서 정렬은 기본으로 비활성화)
 
 ### 2026-08
 
