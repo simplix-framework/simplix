@@ -28,6 +28,10 @@ The notable changes of SimpliX. An entry that links a GitHub commit shows the ch
   - A `generator-simplix.json` is read while that file is absent, and `version --write` renames it
 
 #### Fixes
+- **Validation of collection bodies**
+  - A request whose collection element fails validation is answered with status 400 and `VAL_VALIDATION_FAILED`, one entry per failing field with the position of its element, instead of an internal server error
+  - A generated controller validates every element of the bodies of `PATCH <path>` and `PATCH <path>/order`, which were accepted unchecked
+
 - **Redis cache mode and distributed sync mode**
   - `simplix.cache.mode=redis` and `simplix.sync.mode=DISTRIBUTED` take effect; their conditions are evaluated after the Redis and messaging auto-configurations
 

@@ -50,6 +50,7 @@ import dev.simplecore.searchable.core.condition.SearchCondition;
 import dev.simplecore.searchable.openapi.annotation.SearchableParams;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 <% if (exportConfig.enabled) { -%>
 import dev.simplecore.simplix.excel.export.ExportFormat;
@@ -179,13 +180,14 @@ public class <%= controllerName %> extends SimpliXBaseController<<%= entityName 
     /**
      * Updates multiple <%= entityName %> entities in a single operation.
      *
-     * @param updateDtos set of DTOs containing update data
+     * @param updateDtos set of DTOs containing update data; {@code @Valid} on the element validates
+     *                   each one as a single update is, since a bare set is not validated
      * @return response containing the list of updated <%= classPrefix %>DetailDTOs
      */
     @PatchMapping
     @Operation(summary = "Update Multiple <%= entityName %>", description = "Updates multiple existing <%= entityName %>")
     @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'edit')")
-    public SimpliXApiResponse<List<<%= classPrefix %>DetailDTO>> multiUpdate(@RequestBody Set<<%= classPrefix %>UpdateDTO> updateDtos) {
+    public SimpliXApiResponse<List<<%= classPrefix %>DetailDTO>> multiUpdate(@RequestBody Set<@Valid <%= classPrefix %>UpdateDTO> updateDtos) {
 <% if (hasTreeEntity) { %>
         // TreeService doesn't support multiUpdate - use service instead
         List<<%= classPrefix %>DetailDTO> updatedItems = service.multiUpdate(updateDtos);
@@ -329,7 +331,7 @@ public class <%= controllerName %> extends SimpliXBaseController<<%= entityName 
     @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'edit')")
     public SimpliXApiResponse<List<<%= classPrefix %>ListDTO>> updateTreeOrder(
             @RequestParam(required = false) <%= idType %> parentId,
-            @RequestBody @Validated List<<%= classPrefix %>OrderUpdateDTO> orderUpdateDtos) {
+            @RequestBody List<@Valid <%= classPrefix %>OrderUpdateDTO> orderUpdateDtos) {
         try {
             List<<%= classPrefix %>ListDTO> updatedEntities = treeService.updateOrders(parentId, orderUpdateDtos);
             return SimpliXApiResponse.success(updatedEntities, "<%= entityName %> orders updated successfully");
@@ -350,7 +352,7 @@ public class <%= controllerName %> extends SimpliXBaseController<<%= entityName 
     @SimpliXStandardApi
     @PreAuthorize("hasPermission('<%= ymlConfig.permissionGroup || entityName %>', 'edit')")
     public SimpliXApiResponse<List<<%= classPrefix %>DetailDTO>> updateOrder(
-            @RequestBody @Validated List<<%= classPrefix %>OrderUpdateDTO> orderUpdateDtos) {
+            @RequestBody List<@Valid <%= classPrefix %>OrderUpdateDTO> orderUpdateDtos) {
         List<<%= classPrefix %>DetailDTO> updatedEntities = service.updateOrders(orderUpdateDtos);
         return SimpliXApiResponse.success(updatedEntities, "<%= entityName %> orders updated successfully");
     }

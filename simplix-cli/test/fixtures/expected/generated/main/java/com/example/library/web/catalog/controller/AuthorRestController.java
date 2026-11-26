@@ -12,6 +12,7 @@ import dev.simplecore.searchable.core.condition.SearchCondition;
 import dev.simplecore.searchable.openapi.annotation.SearchableParams;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -83,13 +84,14 @@ public class AuthorRestController extends SimpliXBaseController<Author, String> 
     /**
      * Updates multiple Author entities in a single operation.
      *
-     * @param updateDtos set of DTOs containing update data
+     * @param updateDtos set of DTOs containing update data; {@code @Valid} on the element validates
+     *                   each one as a single update is, since a bare set is not validated
      * @return response containing the list of updated AuthorDetailDTOs
      */
     @PatchMapping
     @Operation(summary = "Update Multiple Author", description = "Updates multiple existing Author")
     @PreAuthorize("hasPermission('CATALOG', 'edit')")
-    public SimpliXApiResponse<List<AuthorDetailDTO>> multiUpdate(@RequestBody Set<AuthorUpdateDTO> updateDtos) {
+    public SimpliXApiResponse<List<AuthorDetailDTO>> multiUpdate(@RequestBody Set<@Valid AuthorUpdateDTO> updateDtos) {
 
         List<AuthorDetailDTO> updatedItems = service.multiUpdate(updateDtos);
 
