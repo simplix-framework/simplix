@@ -49,10 +49,12 @@ With hypersistence-utils and Jackson 3 on the classpath, `SimpliXJsonColumnAutoC
 
 | Persistence unit property | Value the module adds | What it does |
 |---|---|---|
-| `hypersistence.utils.jackson.object.mapper` | `JsonColumnObjectMapperSupplier` | supplies a mapper that keeps the Jackson 2 defaults, so rows written before stay readable and new rows have the same form, and that reads a labeled enum stored as its name or as an object |
+| `hypersistence.utils.jackson.object.mapper` | `JsonColumnObjectMapperSupplier` | supplies a mapper that stores a value in the form the Spring Boot 3 line stored it in: dates as timestamps, an `OffsetDateTime` as ISO-8601 text. Rows written there stay readable and new rows have the same form. It reads a labeled enum stored as its name or as an object |
 | `hypersistence.utils.json.serializer` | `JsonColumnCloner` | copies a value that is not `Serializable` by writing it as JSON and reading it back |
 
-A value you set for either property under `spring.jpa.properties` is kept. The labeled enum is read by `LabeledEnumJsonColumnDeserializer`, attached through `LabeledEnumJsonColumnMixIn`. An `EntityManagerFactory` you build yourself receives the two properties when it is built with the `EntityManagerFactoryBuilder` bean of Spring Boot.
+A value you set for either property under `spring.jpa.properties` is kept. The labeled enum is read by `LabeledEnumJsonColumnDeserializer`, attached through `LabeledEnumJsonColumnMixIn`. An `OffsetDateTime` is read by `OffsetDateTimeJsonColumnDeserializer`, from ISO-8601 text with its offset and from a timestamp. An `EntityManagerFactory` you build yourself receives the two properties when it is built with the `EntityManagerFactoryBuilder` bean of Spring Boot.
+
+The default mapper of the column type on the Spring Boot 4 line writes every date as ISO-8601 text. Rows it stored are read as well, and a row saved afterwards takes the form above. To keep the default mapper, set `simplix.hibernate.json-column.enabled` to `false`; the values then have to be `Serializable`.
 
 ## Related documents
 
