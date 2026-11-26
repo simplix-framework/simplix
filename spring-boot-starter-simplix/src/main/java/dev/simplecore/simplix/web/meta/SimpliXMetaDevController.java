@@ -21,7 +21,7 @@ import java.util.Map;
  * {@code SimpliXDevMetaAutoConfiguration}: property-gated, never under a production profile.
  * The mapped path sits under the same {@code /dev/**} convention as the i18n dev endpoint, so an
  * application's existing dev-profile permit rule covers it. A document SimpliX Meta refuses is
- * answered with status 409, the violations as the message and one entry each as the detail.
+ * answered with status 409, the violations as the message and one entry each as the error detail.
  */
 @RestController
 @RequestMapping("/dev/meta")
