@@ -19,6 +19,7 @@ SimpliX의 주요 변경 내용을 기록합니다. 항목에 연결된 GitHub �
 - **값 객체를 저장하는 JSON 컬럼**
   - simplix-hibernate가 hypersistence-utils의 JSON 컬럼 타입에 저장 형식을 유지하는 매퍼와 `Serializable`이 아닌 값도 복제하는 복제기를 지정
   - `simplix.hibernate.json-column.enabled`로 끌 수 있음
+  - `@DataJpaTest` 슬라이스에도 애플리케이션과 같은 매퍼와 복제기를 적용
 
 - **거부한 선언을 한 번에 응답**
   - `GET /dev/meta/dto`가 문서를 거부할 때 상태 409와 함께 거부한 선언을 모두 응답: `message`에 전체, `detail`에 하나씩
